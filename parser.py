@@ -22,15 +22,30 @@ class MalStatement:
         time          = float(jobj["usec"])
         size          = int(jobj["size"])
         short         = jobj["short"]
-        (stype,alist) = parse_stmt(jobj["short"])
+        (stype,_)     = parse_stmt(jobj["short"])
+        # try:
+        if "arg" in jobj:
+            alist = [Arg.fromJsonObj(e) for e in jobj["arg"]]
+            # alist = parse_stmt_args(jobj["arg"])
+        else:
+            alist = []
         return MalStatement(short, stype, time, size, alist)
 
 #@attr atype: String
 #@attr aval : Object
 class Arg:
-    def __init__(self, type, val):
+    def __init__(self, name, atype, val):
+        self.name  = name
         self.atype = atype
-        self.aval  = aval
+        self.aval  = val
+
+    @staticmethod
+    def fromJsonObj(jobj):
+        # pprint(jobj)
+        name  = jobj['name']
+        atype = jobj['type']
+        aval  = jobj.get('value',None)
+        return Arg(name,atype,aval)
 
 #TODO error checking
 #readline until you reach '}' or EOF
@@ -46,9 +61,6 @@ def parse_single(f):
             rbrace = True
     return ''.join(lines)
 
-#
-# def parse_stmt_args(args
-
 def parse_stmt(stmt):
     # print(stmt)
     args = []
@@ -61,7 +73,9 @@ def parse_stmt(stmt):
     else:
         fname = stmt
 
-    return (fname,args)
+    return (fname.strip(),args)
+
+
 
 def get_top_N(mal_list, n):
     mal_list.sort(key = lambda k:  -k.time)
@@ -98,9 +112,12 @@ with open(inp) as f:
 
 mlist  = flatten(maldict)
 smlist = get_top_N(mlist,15)
-print("------------------------------------------------------------------------")
+print("-----------------------------TOP 15-------------------------------------------")
 for e in smlist:
-    print("{}: {}".format(e.time,e.stype))
+    print("time:{} instr: {}".format(e.time,e.stype))
+    print("nargs: {}".format(len(e.arg_list)))
+# if len(e.arg_list) > 0:
+    # pprint(e.arg_list[0])
 # print("---------------------------------------------------------------------x")
 # for k in refd.keys():
 #     print("{}: {}".format(k,refd[k]))
