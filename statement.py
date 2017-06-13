@@ -1,14 +1,11 @@
-#@arg type: type of statement(assign, thetaselect etc)
-#@arg time: how much time did the statement last
-#@arg size: memory footprint
-#@arg list: the arguments of the query (list for now TODO change)
+from functools import reduce
 
 def parse_stmt(stmt):
     # print(stmt)
     args = []
     if ":=" in stmt:
         fname = stmt.split(':=')[1].split("(")[0]
-        args  = stmt.split(':=')[1].split("(")[1].split(")")[0].strip().split(" ")
+        args  = stmt.split(':=')[1].split("(")[1].split(")")[0].strip().split(" ") #TODO remove
     elif "(" in stmt:
         fname = stmt.split("(")[0]
         args  = stmt.split("(")[1].split(")")[0].strip().split(" ")
@@ -17,6 +14,16 @@ def parse_stmt(stmt):
 
     return (fname.strip(),args)
 
+def cmp_arg_list(l1, l2):
+    if(len(l1) != len(l2)):
+        return False
+    else:
+        return reduce(lambda x,y: x and y, [e1==e2 for (e1,e2) in zip(l1,l2)], True)
+
+#@arg type: type of statement(assign, thetaselect etc)
+#@arg time: how much time did the statement last
+#@arg size: memory footprint
+#@arg list: the arguments of the query (list for now TODO change)
 class MalStatement:
     def __init__(self, short, stype, time, size, alist):
         self.stype    = stype
@@ -24,8 +31,9 @@ class MalStatement:
         self.size     = size
         self.arg_list = alist
         self.short    = short
+
     def distance(other_mstmt):
-        return 0 #TODO fix this
+        return 0 #TODO fix this, future work
 
     @staticmethod
     def fromJsonObj(jobj):
@@ -42,15 +50,9 @@ class MalStatement:
         return MalStatement(short, stype, time, size, alist)
 
 
-    def cmp_arg_list(l1, l2):
-        if(len(l1) != len(l2)):
-            return False
-        else:
-            # cmp =
-            return reduce(lambda x,y: x and y, [e1==e2 for (e1,e2) in zip(l1,l2)])
 
     def __eq__(self, other):
-        if(self.stype == other.stype and cmp_arg_list(self.alist,other.alist) == True):
+        if(self.stype == other.stype and cmp_arg_list(self.arg_list,other.arg_list) == True):
             return True
         else:
             return False

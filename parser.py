@@ -22,8 +22,6 @@ def parse_single(f):
 
 
 
-
-
 def get_top_N(mal_list, n):
     mal_list.sort(key = lambda k:  -k.time)
     return mal_list[0:n] #ignore the first 2(dataflow, user function)
@@ -38,17 +36,18 @@ if __name__ == '__main__':
     inp = sys.argv[1]
 
     with open(inp) as f:
-        refd = {} #TODO remove
         maldict = {}
+        inslist = []
         while 1:
             jsons = parse_single(f)
             if jsons is None:
                 break
-            jobj                = json.loads(jsons)
+            jobj    = json.loads(jsons)
             # (comm,_)          = parse_stmt(jobj["short"]) #for debugging
             # refd[comm]    = refd.get(comm, 0) + 1
-            new_mals                = MalStatement.fromJsonObj(jobj)
+            new_mals = MalStatement.fromJsonObj(jobj)
             if new_mals.stype != 'dataflow' and new_mals.stype != 'function user.main':
+                inslist.append(new_mals)
                 maldict[new_mals.stype] = maldict.get(new_mals.stype,[]) + [new_mals]
 
     mlist  = flatten(maldict)
@@ -57,6 +56,12 @@ if __name__ == '__main__':
     for e in smlist:
         print("time:{} instr: {}".format(e.time,e.stype))
         print("nargs: {}".format(len(e.arg_list)))
+
+#asserts
+    for ins in inslist:
+        if ins not in maldict[ins.stype]:
+            print("Ins not found {}".format(ins.stype))
+
 # if len(e.arg_list) > 0:
     # pprint(e.arg_list[0])
 # print("---------------------------------------------------------------------x")
