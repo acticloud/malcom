@@ -1,0 +1,30 @@
+operator        args
+projection      C   X
+projection      X   C
+projection      X   X
+subavg          X   X   C     bool    bool
+subsum          X   X   C     bool    bool
+subgroupdone    X   X
+dbl             int X
+select          X   C   val   X=val   bool  bool  bool
+select          X   C   bool  bool    bool  bool  bool
+projectionpath  X   X   C     C       X
+projectionpath  C   C   X
+thetaselect     X   C   val   str(op)
+thetaselect     X   val str(op)
+projectdelta    C   X   X     X
+join            X   C   val   val     bool  val
+join            X   X   val   val     bool  val
+bind            X   str str   str     int   int   int
+thetajoin       X   X   val   val     int   bool  val
+difference      X   X   val   val     bool  val
+groupdone       X
+likeselect      X   val str   str     bool
+like            X   str
+append          X   X   bool
+intersect       X   X   val val bool  val
+resultSet       X   X   X   X   X     X   X   X   X
+substring       X   val val
+<               X   X
+>               X   X
+*               X   X
