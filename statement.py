@@ -31,9 +31,10 @@ class MalStatement:
         self.size     = size
         self.arg_list = alist
         self.short    = short
+        self.metric   = Metric.fromMalStatement(self.stype,self.arg_list)
 
     def distance(other_mstmt):
-        return 0 #TODO fix this, future work
+        return 0 #TODO fix this
 
     @staticmethod
     def fromJsonObj(jobj):
@@ -64,11 +65,10 @@ class MalStatement:
 #@attr aval : Object
 class Arg:
     def __init__(self, name, atype, val, size):
-        self.name  = name
-        self.atype = atype
-        self.aval  = val
-        self.size  = size
-
+        self.name   = name
+        self.atype  = atype
+        self.aval   = val
+        self.size   = size
     @staticmethod
     def fromJsonObj(jobj):
         # pprint(jobj)
@@ -83,9 +83,45 @@ class Arg:
             self.atype == other.atype and
             self.aval  == other.aval  and
             self.size  == other.size):
-                return True
+            return True
         else:
             return False
 
     def __ne__(self, other):
         return not self.__eq__(other)
+
+"""
+@arg itype: intstuction type: String
+@arg value:
+@arg op: type of operator(e.g thetaselect)
+@arg vtype: type of value(short, int, boolean, date...)
+"""
+class Metric:
+    def __init__(self, itype, op, vtype, value):
+        self.itype = itype #maybe remove??
+        self.op    = op
+        self.vtype = vtype
+        self.value = value
+
+    def distance(self, other):
+        if( self.itype == other.itype and
+            self.op == other.op and
+            self.vtype == other.vtype):
+            if(self.vtype == "int"):
+                return float((other.value-self.value) ** 2)
+        else:
+            return float("inf")
+
+    @staticmethod
+    def fromMalStatement(sname, arg_list):
+        if(sname == 'thetaselect'):
+            print("thetaselect found")
+            if(len(arg_list) == 4):
+                return None
+            else if(len(arg_list) == 3):
+                return Metric(sname, arg_list[3].val, arg_list[2].atype, arg_list[2].val)
+            else:
+                print("wtf")
+                return None
+        else:
+            return None
