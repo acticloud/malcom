@@ -20,37 +20,44 @@ def cmp_arg_list(l1, l2):
     else:
         return reduce(lambda x,y: x and y, [e1==e2 for (e1,e2) in zip(l1,l2)], True)
 
-#@arg type: type of statement(assign, thetaselect etc)
-#@arg time: how much time did the statement last
-#@arg size: memory footprint
-#@arg list: the arguments of the query (list for now TODO change)
+    """ Mal Statement Class:
+@arg type(string)   : type of statement(assign, thetaselect etc)
+@arg time(float)    : how much time did the statement last
+@arg size(int)      : memory footprint
+@arg list(List<Arg>): the arguments of the query (list for now TODO change)
+@arg short(string)  : the short mal statement, str representation
+@var metric(Metric) : var that can define a distance between two queries
+    """
 class MalStatement:
-    def __init__(self, short, stype, time, size, alist):
+    def __init__(self, short, stype, size, usec, alist):
         self.stype    = stype
-        self.time     = time
+        self.time     = 0
         self.size     = size
+        self.usec     = usec
         self.arg_list = alist
         self.short    = short
         self.metric   = Metric.fromMalStatement(self.stype,self.arg_list)
 
-    def distance(other_mstmt):
-        return 0 #TODO fix this
+    def distance(self,other):
+        return self.metric.distance(other.metric) #TODO fix this
 
     @staticmethod
     def fromJsonObj(jobj):
-        time          = float(jobj["usec"])
-        size          = int(jobj["size"])
+        # time          = float(jobj["usec"])
+        size          = int(jobj["rss"])
         short         = jobj["short"]
         (stype,_)     = parse_stmt(jobj["short"])
+        usec          = jobj["usec"]
         # try:
         if "arg" in jobj:
             alist = [Arg.fromJsonObj(e) for e in jobj["arg"]]
             # alist = parse_stmt_args(jobj["arg"])
         else:
             alist = []
-        return MalStatement(short, stype, time, size, alist)
+        return MalStatement(short, stype, size, usec, alist)
 
-
+    def print_stmt(self):
+        print("Instr: {} args: {} time: {} size: {}".format(self.stype,len(self.arg_list),self.time, self.size))
 
     def __eq__(self, other):
         if(self.stype == other.stype and cmp_arg_list(self.arg_list,other.arg_list) == True):
@@ -60,6 +67,8 @@ class MalStatement:
 
     def __ne__(self, other):
         return self.__ne__(other)
+
+    
 """ Arg class """
 #@attr atype: String
 #@attr aval : Object
@@ -90,6 +99,8 @@ class Arg:
     def __ne__(self, other):
         return not self.__eq__(other)
 
+#TODO rename Metric, wtf name is this ?
+#TODO maybe input output operator: Arg format ???
 """
 @arg itype: intstuction type: String
 @arg value:
@@ -115,11 +126,11 @@ class Metric:
     @staticmethod
     def fromMalStatement(sname, arg_list):
         if(sname == 'thetaselect'):
-            print("thetaselect found")
             if(len(arg_list) == 4):
                 return None
-            else if(len(arg_list) == 3):
-                return Metric(sname, arg_list[3].val, arg_list[2].atype, arg_list[2].val)
+            elif len(arg_list) == 3:
+                # print("thetaselect found {} {} {} {}".format(sname, arg_list[2].aval, arg_list[1].atype, arg_list[1].aval))
+                return Metric(sname, arg_list[2].aval, arg_list[1].atype, arg_list[1].aval)
             else:
                 print("wtf")
                 return None
