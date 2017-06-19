@@ -33,8 +33,22 @@ def flatten(mal_dict):
         l.extend(v)
     return l
 
+def init_blacklist(blfile):
+    blacklist = []
+    for line in open(blfile).readlines():
+        blacklist.append(line.strip())
+        # print(line.strip())
+    return blacklist
 
-def parse_dataset(dfile):
+def is_blacklisted(blacklist,instr):
+    for mali in blacklist:
+        if mali in instr:
+            return True
+    # print(line.strip())
+    return False
+
+
+def parse_dataset(dfile,blacklist):
     with open(dfile) as f:
         maldict = {}
         startd  = {}
@@ -44,14 +58,17 @@ def parse_dataset(dfile):
                 break
             jobj     = json.loads(jsons)
             new_mals = MalStatement.fromJsonObj(jobj)
-            if new_mals.stype != 'dataflow' and not "function user" in new_mals.stype:
+            
+            # if new_mals.stype != 'dataflow' and not "function user" in new_mals.stype and not "end user" in new_mals.stype:
+            if not is_blacklisted(blacklist,new_mals.stype):
                 if jobj["state"] == "start":
                     startd[jobj["pc"]] = jobj["clk"]
                 if jobj["state"] == "done":
                     assert jobj["pc"] in startd
                     new_mals.time = float(jobj["clk"]) - float(startd[jobj["pc"]])
                     maldict[new_mals.stype] = maldict.get(new_mals.stype,[]) + [new_mals]
-
+            # else:
+            #     print("instr {} blacklisted",new_mals.stype)
     return maldict
 
 def print_method(dic, method, nargs):
@@ -76,34 +93,37 @@ if __name__ == '__main__':
 
     print("Using dataset {} as train set".format(trainset))
     print("Using dataset {} as test set".format(testset))
+
+    blacklist = init_blacklist("mal_blacklist.txt")
     
-    traind   = parse_dataset(trainset)
+    traind   = parse_dataset(trainset,blacklist)
     print_method(traind, "thetaselect", 3)
     print("--------------------------------------------------------------------------------------")
-    testd    = parse_dataset(testset)
+    testd    = parse_dataset(testset,blacklist)
     print_method(testd,"thetaselect", 3)
 
     m1 = get_all_method(traind, "thetaselect", 3)[2]
     m1.print_stmt()
     m  = find_instr(testd,m1)[0]
+    if len(find_instr(testd,m1)) > 1:
+        print("FOUND ins with {}".format(len(find_instr(testd,m1))))
     print("JUST TESTING")
     m.print_stmt()
     print("time diff: {} size diff {}".format(m1.time-m.time,m1.size-m.size))
-    # testd    = parse_dataset(testset)
-    # with open(trainset) as f:
-    #     maldict = {}
-    #     inslist = []
-    #     while 1:
-    #         jsons = parse_single(f)
-    #         if jsons is None:
-    #             break
-    #         jobj    = json.loads(jsons)
-    #         # (comm,_)          = parse_stmt(jobj["short"]) #for debugging
-    #         # refd[comm]    = refd.get(comm, 0) + 1
-    #         new_mals = MalStatement.fromJsonObj(jobj)
-    #         if new_mals.stype != 'dataflow' and not "function user" in new_mals.stype:
-    #             inslist.append(new_mals)
-    #             maldict[new_mals.stype] = maldict.get(new_mals.stype,[]) + [new_mals]
+
+    for l in testd.values():
+        for m1 in l:
+            assert len(find_instr(traind,m1)) == 1
+                # print("FOUND ins with {}".format(len(find_instr(traind,m1))))
+                # for i in find_instr(traind,m1):
+                #     print(i.short)
+
+            try:
+                m  = find_instr(traind,m1)[0]
+                print("q: {:<25s} tdiff: {:8.0f} / {:8.0f} sdiff {:5d} / {:5d}".format(m.stype,abs(m1.time-m.time),m.time,abs(m1.size-m.size),m.size))
+            except IndexError:
+                print("Index Error: {}".format(m1.short))
+        
 
     mlist  = flatten(traind)
     smlist = get_top_N(mlist,15)
