@@ -1,5 +1,6 @@
-from functools import reduce
+from utils import Utils
 
+#TODO Utils 
 def parse_stmt(stmt):
     # print(stmt)
     args = []
@@ -14,11 +15,6 @@ def parse_stmt(stmt):
 
     return (fname.strip(),args)
 
-def cmp_arg_list(l1, l2):
-    if(len(l1) != len(l2)):
-        return False
-    else:
-        return reduce(lambda x,y: x and y, [e1==e2 for (e1,e2) in zip(l1,l2)], True)
 
     """ Mal Statement Class:
 @arg type(string)   : type of statement(assign, thetaselect etc)
@@ -60,7 +56,7 @@ class MalStatement:
         print("Instr: {} args: {} time: {} size: {}".format(self.stype,len(self.arg_list),self.time, self.size))
 
     def __eq__(self, other):
-        if(self.stype == other.stype and cmp_arg_list(self.arg_list,other.arg_list) == True):
+        if(self.stype == other.stype and Utils.cmp_arg_list(self.arg_list,other.arg_list) == True):
             return True
         else:
             return False
