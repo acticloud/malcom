@@ -33,9 +33,9 @@ class MalDictionary:
                     m   = self.findInstr(m1)[0]
                     ins = m.stype
                     td  = abs(m1.time-m.time)
-                    sd  = abs(m1.size-m.size)
+                    sd  = abs(m1.tot_size-m.tot_size)
                     fs  = "q: {:<25s} tdiff: {:8.0f}/{:<8.0f} sdiff {:5d}/{:<5d}"
-                    print(fs.format(ins,td,m.time,sd,m.size))
+                    print(fs.format(ins,td,m.time,sd,m.tot_size))
                 except IndexError:
                     print("Index Error: {}".format(m1.short))
 

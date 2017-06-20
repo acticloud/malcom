@@ -1,4 +1,5 @@
 from utils import Utils
+from functools import reduce
 
 #TODO Utils
 def parse_stmt(stmt):
@@ -25,13 +26,15 @@ def parse_stmt(stmt):
 @var metric(Metric) : var that can define a distance between two queries
     """
 class MalInstruction:
-    def __init__(self, short, stype, size, usec, alist):
+    def __init__(self, short, stype, size, ret_size, usec, alist):
         self.stype    = stype
         self.time     = 0
         self.size     = size
+        self.ret_size = ret_size
         self.usec     = usec
         self.arg_list = alist
         self.short    = short
+        self.tot_size = self.size + self.ret_size
         self.metric   = Metric.fromMalInstruction(self.stype,self.arg_list)#TODO rethink
 
     def distance(self,other):
@@ -44,13 +47,16 @@ class MalInstruction:
         short         = jobj["short"]
         (stype,_)     = parse_stmt(jobj["short"])
         usec          = jobj["usec"]
-        # try:
+        
+        rv            = [rv.get("size",0) for rv in jobj["ret"]]
+        ret_size      = reduce(lambda x,y: x+y, rv, 0)#total size of return vals
+        
         if "arg" in jobj:
             alist = [Arg.fromJsonObj(e) for e in jobj["arg"]]
             # alist = parse_stmt_args(jobj["arg"])
         else:
             alist = []
-        return MalInstruction(short, stype, size, usec, alist)
+        return MalInstruction(short, stype, size, ret_size, usec, alist)
 
     def print_stmt(self):
         print("Instr: {} args: {} time: {} size: {}".format(self.stype,len(self.arg_list),self.time, self.size))
