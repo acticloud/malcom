@@ -1,6 +1,6 @@
 from utils import Utils
 
-#TODO Utils 
+#TODO Utils
 def parse_stmt(stmt):
     # print(stmt)
     args = []
@@ -16,7 +16,7 @@ def parse_stmt(stmt):
     return (fname.strip(),args)
 
 
-    """ Mal Statement Class:
+    """ MalInstruction Class:
 @arg type(string)   : type of statement(assign, thetaselect etc)
 @arg time(float)    : how much time did the statement last
 @arg size(int)      : memory footprint
@@ -24,7 +24,7 @@ def parse_stmt(stmt):
 @arg short(string)  : the short mal statement, str representation
 @var metric(Metric) : var that can define a distance between two queries
     """
-class MalStatement:
+class MalInstruction:
     def __init__(self, short, stype, size, usec, alist):
         self.stype    = stype
         self.time     = 0
@@ -32,7 +32,7 @@ class MalStatement:
         self.usec     = usec
         self.arg_list = alist
         self.short    = short
-        self.metric   = Metric.fromMalStatement(self.stype,self.arg_list)
+        self.metric   = Metric.fromMalInstruction(self.stype,self.arg_list)#TODO rethink
 
     def distance(self,other):
         return self.metric.distance(other.metric) #TODO fix this
@@ -40,7 +40,7 @@ class MalStatement:
     @staticmethod
     def fromJsonObj(jobj):
         # time          = float(jobj["usec"])
-        size          = int(jobj["rss"])
+        size          = int(jobj["size"])
         short         = jobj["short"]
         (stype,_)     = parse_stmt(jobj["short"])
         usec          = jobj["usec"]
@@ -50,7 +50,7 @@ class MalStatement:
             # alist = parse_stmt_args(jobj["arg"])
         else:
             alist = []
-        return MalStatement(short, stype, size, usec, alist)
+        return MalInstruction(short, stype, size, usec, alist)
 
     def print_stmt(self):
         print("Instr: {} args: {} time: {} size: {}".format(self.stype,len(self.arg_list),self.time, self.size))
@@ -120,7 +120,7 @@ class Metric:
             return float("inf")
 
     @staticmethod
-    def fromMalStatement(sname, arg_list):
+    def fromMalInstruction(sname, arg_list):
         if(sname == 'thetaselect'):
             if(len(arg_list) == 4):
                 return None

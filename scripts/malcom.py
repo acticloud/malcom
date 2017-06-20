@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 import json
 import sys
-from statement import MalStatement
+from mal_instr import MalInstruction
 from pprint import pprint
 from utils import Utils
 from mal_dict import MalDictionary
@@ -23,7 +23,7 @@ if __name__ == '__main__':
     train_class = MalDictionary.fromJsonFile(trainset,blacklist)
     test_class  = MalDictionary.fromJsonFile(testset,blacklist)
 
-    # train_class.printDiff(test_class)
+    train_class.printDiff(test_class)
 
     smlist = train_class.getTopN(lambda k: -k.time,15)
 

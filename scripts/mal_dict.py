@@ -1,11 +1,15 @@
 from utils import Utils
 import json
-from statement import MalStatement
+from mal_instr import MalInstruction
+
+#TODO add method find closest instruction
 
 class MalDictionary:
+    """ @arg mal_dict: dict<List<MalInstruction>>"""
     def __init__(self, mal_dict):
         self.mal_dict = mal_dict
 
+    """ @arg mals: MalInstruction"""
     def findInstr(self, mals):
         dic = self.mal_dict
         return [x for x in dic[mals.stype] if x == mals]
@@ -42,7 +46,7 @@ class MalDictionary:
         )
 
     """
-    @arg f: lamdba k: MalStatement
+    @arg f: lamdba k: MalInstruction
     """
     def getTopN(self, f, n):
         mal_list = Utils.flatten(self.mal_dict)
@@ -64,7 +68,7 @@ class MalDictionary:
                 if jsons is None:
                     break
                 jobj     = json.loads(jsons)
-                new_mals = MalStatement.fromJsonObj(jobj)
+                new_mals = MalInstruction.fromJsonObj(jobj)
                 fname    = new_mals.stype
 
                 if not Utils.is_blacklisted(blacklist,fname):
