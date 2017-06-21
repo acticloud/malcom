@@ -2,7 +2,7 @@ from utils import Utils
 from functools import reduce
 
 #TODO Utils
-def parse_stmt(stmt):
+def extract_name(stmt):
     # print(stmt)
     args = []
     if ":=" in stmt:
@@ -14,19 +14,21 @@ def parse_stmt(stmt):
     else:
         fname = stmt
 
-    return (fname.strip(),args)
+    return fname.strip()
 
 
     """ MalInstruction Class:
-@arg type(string)   : type of statement(assign, thetaselect etc)
-@arg time(float)    : how much time did the statement last
-@arg size(int)      : memory footprint
-@arg list(List<Arg>): the arguments of the query (list for now TODO change)
-@arg short(string)  : the short mal statement, str representation
-@var metric(Metric) : var that can define a distance between two queries
+@arg type: string    // type of statement(assign, thetaselect etc)
+@arg time: float     // how much time did the statement last
+@arg size: int       // memory footprint
+@arg list: List<Arg>)// the arguments of the query (list for now TODO change)
+@arg short: string   // the short mal statement, str representation
+@arg tag: int        //the query identifier
+@arg arg_size: int   //total argument size(bytes)
+@var metric: Metric  // var that can define a distance between two queries
     """
 class MalInstruction:
-    def __init__(self, short, stype, size, ret_size, usec, alist):
+    def __init__(self, short, stype, size, ret_size, usec, tag, arg_size, alist):
         self.stype    = stype
         self.time     = 0
         self.size     = size
@@ -34,7 +36,10 @@ class MalInstruction:
         self.usec     = usec
         self.arg_list = alist
         self.short    = short
+        self.tag      = tag
         self.tot_size = self.size + self.ret_size
+        self.arg_size = arg_size
+        self.nargs    = len(alist)
         self.metric   = Metric.fromMalInstruction(self.stype,self.arg_list)#TODO rethink
 
     def distance(self,other):
@@ -43,20 +48,22 @@ class MalInstruction:
     @staticmethod
     def fromJsonObj(jobj):
         # time          = float(jobj["usec"])
-        size          = int(jobj["size"])
-        short         = jobj["short"]
-        (stype,_)     = parse_stmt(jobj["short"])
-        usec          = jobj["usec"]
-        
-        rv            = [rv.get("size",0) for rv in jobj["ret"]]
-        ret_size      = reduce(lambda x,y: x+y, rv, 0)#total size of return vals
+        size     = int(jobj["size"])
+        short    = jobj["short"]
+        stype    = extract_name(jobj["short"])
+        usec     = jobj["usec"]
+        tag      = int(jobj["tag"])
+        rv       = [rv.get("size",0) for rv in jobj["ret"]]
+        sumf     = lambda x,y: x+y
+        ret_size = Utils.sumJsonList(jobj["ret"],"size")
+        arg_size = Utils.sumJsonList(jobj["arg"],"size")
         
         if "arg" in jobj:
             alist = [Arg.fromJsonObj(e) for e in jobj["arg"]]
             # alist = parse_stmt_args(jobj["arg"])
         else:
             alist = []
-        return MalInstruction(short, stype, size, ret_size, usec, alist)
+        return MalInstruction(short, stype, size, ret_size, usec, tag, arg_size, alist)
 
     def print_stmt(self):
         print("Instr: {} args: {} time: {} size: {}".format(self.stype,len(self.arg_list),self.time, self.size))
@@ -80,6 +87,7 @@ class Arg:
         self.atype  = atype
         self.aval   = val
         self.size   = size
+
     @staticmethod
     def fromJsonObj(jobj):
         # pprint(jobj)

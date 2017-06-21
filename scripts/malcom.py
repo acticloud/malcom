@@ -23,10 +23,23 @@ if __name__ == '__main__':
     train_class = MalDictionary.fromJsonFile(trainset,blacklist)
     test_class  = MalDictionary.fromJsonFile(testset,blacklist)
 
-    train_class.printDiff(test_class)
+    qtags = train_class.query_tags
+    print("tags: {}".format(train_class.query_tags))
+ 
+    split_i = int(len(qtags)/2)
+   
+    (split1,split2) = train_class.split(qtags[0:split_i],qtags[split_i+1:])
 
-    smlist = train_class.getTopN(lambda k: -k.time,15)
+    print("tags1: {}".format(split1.query_tags))
 
-    print("-----------------------------TOP 15-------------------------------------------")
-    for e in smlist:
-        print("time:{} instr: {}".format(e.time,e.stype))
+    sel3 = train_class.findMethod("thetaselect",4)
+    for i in sel3:
+        print("s: {:<80} arg_size: {:10d}, ret_size {:10d}".format(i.short,int(i.arg_size/1024), int(i.tot_size / 1024)))
+
+    # train_class.printDiff(test_class)
+
+    # smlist = train_class.getTopN(lambda k: -k.time,15)
+
+    # print("-----------------------------TOP 15-------------------------------------------")
+    # for e in smlist:
+    #     print("time:{} instr: {}".format(e.time,e.stype))

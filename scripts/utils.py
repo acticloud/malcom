@@ -44,3 +44,8 @@ class Utils:
             blacklist.append(line.strip())
 
         return blacklist
+
+    @staticmethod
+    def sumJsonList(jlist, sfield):
+        sumf = lambda x,y: x+y
+        return reduce(sumf, map(lambda var: var.get(sfield,0),jlist), 0)
