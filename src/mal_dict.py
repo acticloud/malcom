@@ -1,11 +1,9 @@
 from utils import Utils
 import json
 from mal_instr import MalInstruction
-from mal_instr import extract_name
 #TODO add method find closest instruction
 
 class MalDictionary:
-
     """
     @arg mal_dict: dict<List<MalInstruction>>
     @arg q_tags  : list<int> //list of the unique query tags
@@ -20,14 +18,14 @@ class MalDictionary:
     """
     def findInstr(self, mals):
         dic = self.mal_dict
-        return [x for x in dic[mals.stype] if x == mals]
+        return [x for x in dic[mals.fname] if x == mals]
 
     def getInsList(self):
         ilist = []
         for l in self.mal_dict.values():
             ilist.extend(l)
         return ilist
-    
+
     """
     @arg mals: string //method name
     @arg nags: int    //nof arguments
@@ -42,14 +40,14 @@ class MalDictionary:
 
 
     def findClosestSize(self, target):
-        mlist     = self.mal_dict[target.stype]
+        mlist     = self.mal_dict[target.fname]
         dist_list = [abs(i.arg_size-tsize) for x in mlist]
         nn_index  = dist_list.index(min(dist_list))
         return mlist[nn_index]
 
     #@arg
     def kNN(self, ins, k):
-        mlist     = self.mal_dict[ins.stype]
+        mlist     = self.mal_dict[ins.fname]
         l         = len(ins.arg_list)
         dist_list = list(filter(lambda ins: len(ins.arg_list) == l, mlist))
         dist_list.sort( key = lambda i: ins.argDist(i) )
@@ -60,7 +58,7 @@ class MalDictionary:
         # try:
         nn1 = self.kNN(ins,1)[0].mem_fprint
         # except Exception:
-            # print("method not found {}".format(ins.stype))
+            # print("method not found {}".format(ins.fname))
             # nn1 = 0
         return nn1
 
@@ -69,7 +67,7 @@ class MalDictionary:
     def printAll(self, method, nargs):
         dic = self.mal_dict
         for s in dic[method]:
-            if s.stype == method and nargs == len(s.arg_list):
+            if s.fname == method and nargs == len(s.arg_list):
                 a2val = s.arg_list[2].aval
                 a1val = s.arg_list[1].aval
                 a1_t  = s.arg_list[1].atype
@@ -82,7 +80,7 @@ class MalDictionary:
                 assert len(self.findInstr(m1)) == 1
                 try:
                     m   = self.findInstr(m1)[0]
-                    ins = m.stype
+                    ins = m.fname
                     td  = abs(m1.time-m.time)
                     sd  = abs(m1.mem_fprint-m.mem_fprint)
                     fs  = "q: {:<25s} tdiff: {:8.0f}/{:<8.0f} sdiff {:5d}/{:<5d}"
@@ -93,7 +91,7 @@ class MalDictionary:
     def getAll(self, method, nargs):
         d = self.mal_dict
         return filter(
-            lambda s: s.stype == method and len(s.arg_list) == nargs, d[method]
+            lambda s: s.fname == method and len(s.arg_list) == nargs, d[method]
         )
 
     """
@@ -117,11 +115,10 @@ class MalDictionary:
             query_tags = set()
 
             while 1: #while not EOF
-                jsons = Utils.read_json_object(f)
-                if jsons is None:
+                jobj = Utils.read_json_object(f)
+                if jobj is None:
                     break
-                jobj     = json.loads(jsons)
-                fname    = extract_name(jobj["short"])
+                fname    = Utils.extract_fname(jobj["short"])
 
                 if not Utils.is_blacklisted(blacklist,fname):
                     new_mals = MalInstruction.fromJsonObj(jobj)
@@ -151,18 +148,5 @@ class MalDictionary:
                 if mali.tag in test_tags:
                     # assert not mali.tag in train_tags
                     s2[k] = s2.get(k,[]) + [mali]
-
-        # s1tags = set()
-        # for l in s1.values():
-        #     for e in l:
-        #         s1tags.add(e.tag)
-
-        # s2tags = set()
-        # for l in s2.values():
-        #     for e in l:
-        #         s2tags.add(e.tag)
-
-        # print("s1tags {}".format(s1tags))
-        # print("s2tags {}".format(s2tags))
 
         return (MalDictionary(s1,train_tags), MalDictionary(s2,test_tags))

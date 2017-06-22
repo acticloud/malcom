@@ -39,17 +39,17 @@ if __name__ == '__main__':
     # print("tags2: {}".format(split2.query_tags))
 
     for ins in split2.getInsList():
-        # print(ins.stype)
+        # print(ins.fname)
         try:
             mpred = split1.predictMem(ins)
             mem   = ins.mem_fprint
             if mpred != 0:
-                print("method: {:20} nargs: {:2d} actual: {:10d} pred: {:10d} perc: {:10.0f}".format(ins.stype,ins.nargs, mem,mpred,abs(100*mpred/mem)))
+                print("method: {:20} nargs: {:2d} actual: {:10d} pred: {:10d} perc: {:10.0f}".format(ins.fname,ins.nargs, mem,mpred,abs(100*mpred/mem)))
             else:
-                print("method: {:20} nargs: {:2d} actual: {:10d} pred: {:10d}".format(ins.stype, ins.nargs, mem,mpred))
+                print("method: {:20} nargs: {:2d} actual: {:10d} pred: {:10d}".format(ins.fname, ins.nargs, mem,mpred))
                 
         except Exception:
-            print("method: {:20} nargs: {:2d}  NOT FOUND".format(ins.stype,ins.nargs))
+            print("method: {:20} nargs: {:2d}  NOT FOUND".format(ins.fname,ins.nargs))
             pass
     # theta3 = split2.findMethod("thetaselect")
 
@@ -58,7 +58,7 @@ if __name__ == '__main__':
     #     ilist = [e.size for e in i.arg_list]# if e.size >0]
 
     #     print("s: {:<80} t: {:5d} arg_size: {:10d}, mem_fprint {:10d} args {}"
-    #           .format(i.stype,i.tag,int(i.arg_size/1024), int(i.mem_fprint / 1024),ilist))
+    #           .format(i.fname,i.tag,int(i.arg_size/1024), int(i.mem_fprint / 1024),ilist))
     #     print("------------------------kNN-----------------------------------=")
     #     for nn in nn5:
     #         slist = [e.size for e in nn.arg_list]# if e.size >0]
@@ -71,4 +71,4 @@ if __name__ == '__main__':
 
     # print("-----------------------------TOP 15-------------------------------------------")
     # for e in smlist:
-    #     print("time:{} instr: {}".format(e.time,e.stype))
+    #     print("time:{} instr: {}".format(e.time,e.fname))

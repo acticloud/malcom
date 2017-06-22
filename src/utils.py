@@ -1,4 +1,5 @@
 from functools import reduce
+import json
 
 class Utils:
     @staticmethod
@@ -13,7 +14,8 @@ class Utils:
             lines += line
             if line == '}\n':
                 rbrace = True
-        return ''.join(lines)
+
+        return json.loads(''.join(lines))
 
     @staticmethod
     def flatten(mdict):
@@ -27,7 +29,8 @@ class Utils:
         if(len(l1) != len(l2)):
             return False
         else:
-            return reduce(lambda x,y: x and y, [e1==e2 for (e1,e2) in zip(l1,l2)], True)
+            land = lambda x,y: x and y
+            return reduce(land, [e1==e2 for (e1,e2) in zip(l1,l2)], True)
 
     @staticmethod
     def is_blacklisted(blacklist,instr):
@@ -49,3 +52,18 @@ class Utils:
     def sumJsonList(jlist, sfield):
         sumf = lambda x,y: x+y
         return reduce(sumf, map(lambda var: var.get(sfield,0),jlist), 0)
+
+    """ @arg stmt: str // short mal statement"""
+    @staticmethod
+    def extract_fname(stmt):
+        args = []
+        if ":=" in stmt:
+            fname = stmt.split(':=')[1].split("(")[0]
+            args  = stmt.split(':=')[1].split("(")[1].split(")")[0].strip().split(" ") #TODO remove
+        elif "(" in stmt:
+            fname = stmt.split("(")[0]
+            args  = stmt.split("(")[1].split(")")[0].strip().split(" ")
+        else:
+            fname = stmt
+
+        return fname.strip()
