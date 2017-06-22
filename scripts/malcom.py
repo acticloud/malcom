@@ -23,11 +23,18 @@ if __name__ == '__main__':
     train_class = MalDictionary.fromJsonFile(trainset,blacklist)
     test_class  = MalDictionary.fromJsonFile(testset,blacklist)
 
+
     qtags = train_class.query_tags
  
     split_i = int(len(qtags)/8)
-   
-    (split2,split1) = train_class.split(qtags[0:split_i],qtags[split_i+1:])
+
+    test_tags = qtags[0:split_i]
+    train_tags  = qtags[split_i+1:]
+    (split1,split2) = train_class.split(train_tags,test_tags)
+
+    print("train_tags {}".format(train_tags))
+    print("test_tags {}".format(test_tags))
+
     # print("tags1: {}".format(split1.query_tags))
     # print("tags2: {}".format(split2.query_tags))
 

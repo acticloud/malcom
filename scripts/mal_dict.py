@@ -143,8 +143,6 @@ class MalDictionary:
     def split(self, train_tags, test_tags):
         s1 = {}
         s2 = {}
-        print("{}".format(train_tags))
-        print("{}".format(test_tags))
 
         for (k,l) in self.mal_dict.items():
             for mali in l:
