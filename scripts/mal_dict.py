@@ -22,6 +22,12 @@ class MalDictionary:
         dic = self.mal_dict
         return [x for x in dic[mals.stype] if x == mals]
 
+    def getInsList(self):
+        ilist = []
+        for l in self.mal_dict.values():
+            ilist.extend(l)
+        return ilist
+    
     """
     @arg mals: string //method name
     @arg nags: int    //nof arguments
@@ -31,17 +37,34 @@ class MalDictionary:
         dic = self.mal_dict
         if nargs == None:
             return dic[fname]
-        
+
         return [x for x in dic[fname] if len(x.arg_list) == nargs]
 
-    
+
     def findClosestSize(self, target):
         mlist     = self.mal_dict[target.stype]
         dist_list = [abs(i.arg_size-tsize) for x in mlist]
         nn_index  = dist_list.index(min(dist_list))
         return mlist[nn_index]
 
-    
+    #@arg
+    def kNN(self, ins, k):
+        mlist     = self.mal_dict[ins.stype]
+        l         = len(ins.arg_list)
+        dist_list = list(filter(lambda ins: len(ins.arg_list) == l, mlist))
+        dist_list.sort( key = lambda i: ins.argDist(i) )
+        return dist_list[0:k]
+
+        #@arg
+    def predictMem(self, ins):
+        # try:
+        nn1 = self.kNN(ins,1)[0].mem_fprint
+        # except Exception:
+            # print("method not found {}".format(ins.stype))
+            # nn1 = 0
+        return nn1
+
+
     #TODO too custom, needs rewritting
     def printAll(self, method, nargs):
         dic = self.mal_dict
@@ -61,9 +84,9 @@ class MalDictionary:
                     m   = self.findInstr(m1)[0]
                     ins = m.stype
                     td  = abs(m1.time-m.time)
-                    sd  = abs(m1.tot_size-m.tot_size)
+                    sd  = abs(m1.mem_fprint-m.mem_fprint)
                     fs  = "q: {:<25s} tdiff: {:8.0f}/{:<8.0f} sdiff {:5d}/{:<5d}"
-                    print(fs.format(ins,td,m.time,sd,m.tot_size))
+                    print(fs.format(ins,td,m.time,sd,m.mem_fprint))
                 except IndexError:
                     print("Index Error: {}".format(m1.short))
 
@@ -120,11 +143,28 @@ class MalDictionary:
     def split(self, train_tags, test_tags):
         s1 = {}
         s2 = {}
+        print("{}".format(train_tags))
+        print("{}".format(test_tags))
+
         for (k,l) in self.mal_dict.items():
             for mali in l:
                 if mali.tag in train_tags:
-                    s1[mali.stype] = s1.get(mali.stype,[]) + [mali]
+                    s1[k] = s1.get(k,[]) + [mali]
                 if mali.tag in test_tags:
-                    s2[mali.stype] = s1.get(mali.stype,[]) + [mali]
+                    # assert not mali.tag in train_tags
+                    s2[k] = s2.get(k,[]) + [mali]
+
+        # s1tags = set()
+        # for l in s1.values():
+        #     for e in l:
+        #         s1tags.add(e.tag)
+
+        # s2tags = set()
+        # for l in s2.values():
+        #     for e in l:
+        #         s2tags.add(e.tag)
+
+        # print("s1tags {}".format(s1tags))
+        # print("s2tags {}".format(s2tags))
 
         return (MalDictionary(s1,train_tags), MalDictionary(s2,test_tags))

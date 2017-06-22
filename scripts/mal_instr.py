@@ -29,22 +29,27 @@ def extract_name(stmt):
     """
 class MalInstruction:
     def __init__(self, short, stype, size, ret_size, usec, tag, arg_size, alist):
-        self.stype    = stype
-        self.time     = 0
-        self.size     = size
-        self.ret_size = ret_size
-        self.usec     = usec
-        self.arg_list = alist
-        self.short    = short
-        self.tag      = tag
-        self.tot_size = self.size + self.ret_size
-        self.arg_size = arg_size
-        self.nargs    = len(alist)
-        self.metric   = Metric.fromMalInstruction(self.stype,self.arg_list)#TODO rethink
+        self.stype      = stype
+        self.time       = 0
+        self.size       = size
+        self.ret_size   = ret_size
+        self.usec       = usec
+        self.arg_list   = alist
+        self.short      = short
+        self.tag        = tag
+        self.mem_fprint = self.size + self.ret_size
+        self.arg_size   = arg_size
+        self.nargs      = len(alist)
+        self.metric     = Metric.fromMalInstruction(self.stype,self.arg_list)#TODO rethink
 
     def distance(self,other):
         return self.metric.distance(other.metric) #TODO fix this
 
+    def argDist(self, other):
+        assert len(self.arg_list) == len(other.arg_list)
+        diff = [abs(a.size-b.size) for (a,b) in zip(self.arg_list,other.arg_list)]
+        return reduce(lambda x,y: x+y, diff, 0)
+        
     @staticmethod
     def fromJsonObj(jobj):
         # time          = float(jobj["usec"])
@@ -58,12 +63,14 @@ class MalInstruction:
         ret_size = Utils.sumJsonList(jobj["ret"],"size")
         arg_size = Utils.sumJsonList(jobj["arg"],"size")
         
-        if "arg" in jobj:
-            alist = [Arg.fromJsonObj(e) for e in jobj["arg"]]
+        # if "arg" in jobj:
+        arg_list = [Arg.fromJsonObj(e) for e in jobj["arg"]]
+            # if stype == "thetaselect":
+                # print(len(alist))
             # alist = parse_stmt_args(jobj["arg"])
-        else:
-            alist = []
-        return MalInstruction(short, stype, size, ret_size, usec, tag, arg_size, alist)
+        # else:
+            # alist = []
+        return MalInstruction(short, stype, size, ret_size, usec, tag, arg_size, arg_list)
 
     def print_stmt(self):
         print("Instr: {} args: {} time: {} size: {}".format(self.stype,len(self.arg_list),self.time, self.size))
@@ -94,7 +101,7 @@ class Arg:
         name  = jobj['name']
         atype = jobj['type']
         aval  = jobj.get('value',None)
-        size  = jobj.get('size',0)
+        size  = int(jobj.get('size',0))
         return Arg(name,atype,aval,size)
 
     def __eq__(self, other):
