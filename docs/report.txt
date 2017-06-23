@@ -1,0 +1,153 @@
+# Malcom first Results
+
+instruction memory footprint = ins.ret_size + ins.size (debatable)
+
+Training algorithm: KNN (k=1 for the moment)
+For all similar instructions find the one with the min distance
+
+fname: method name (thetaselect, join, ...)
+Similarity(i1,i2): i1.fname == i2.fname and i1.nargs == i2.nargs ELSE return NOT FOUND
+
+Distance metric(i1,i2): sum( abs(i1.arg[i]-i2.arg[i] ) for i in 0..nargs )
+
+Benchmark: tpch queries 1-22
+
+Setup1: random 90/10 split in train-test sets:
+
+############################ RESULTS ###########################################
+
+actual: the bytes the instruction used
+pred: the bytes the kNN predicts based on the most similar instruction
+
+perc: 100 * pred / actual (100 is best case)
+
+ntrain: 1127 ntest: 128
+
+method: join                 nargs:  6 actual:    1872235 pred:   11682067 perc:        624
+method: join                 nargs:  6 actual:   26092928 pred:   26092928 perc:        100
+method: join                 nargs:  6 actual:    1600000 pred:     938480 perc:         59
+method: join                 nargs:  6 actual:         17 pred:      64784 perc:     381082
+method: join                 nargs:  6 actual:      71680 pred:    1379264 perc:       1924
+method: join                 nargs:  6 actual:      34944 pred:         80 perc:          0
+method: ==                   nargs:  2 actual:      24254 pred:       6351 perc:         26
+method: ==                   nargs:  2 actual:      98107 pred:      98107 perc:        100
+method: subgroupdone         nargs:  2 actual:     466984 pred:      44928 perc:         10
+method: subgroupdone         nargs:  2 actual:    9936163 pred:   28474249 perc:        287
+method: mergecand            nargs:  2 actual:     892608 pred:     872216 perc:         98
+method: mergecand            nargs:  2 actual:    1780249 pred:    1918425 perc:        108
+method: mergecand            nargs:  2 actual:      86400 pred:      72288 perc:         84
+method: mergecand            nargs:  2 actual:     100624 pred:     115192 perc:        114
+method: mergecand            nargs:  2 actual:     143264 pred:     129176 perc:         90
+method: mergecand            nargs:  2 actual:   17135248 pred:   17135248 perc:        100
+method: mergecand            nargs:  2 actual:       1368 pred:          0 perc:          0
+method: mergecand            nargs:  2 actual:      15408 pred:      15552 perc:        101
+method: mergecand            nargs:  2 actual:       7704 pred:       9808 perc:        127
+method: addmonths            nargs:  2 actual:          0 pred:          0
+method: addmonths            nargs:  2 actual:          0 pred:          0
+method: -                    nargs:  2 actual:       9072 pred:     194032 perc:       2139
+method: firstn               nargs:  6 actual:        160 pred:         80 perc:         50
+method: firstn               nargs:  4 actual:       1600 pred:       2656 perc:        166
+method: ifthenelse           nargs:  3 actual:     388064 pred:      24254 perc:          6
+method: thetaselect          nargs:  4 actual:  473141100 pred:  258674228 perc:         55
+method: thetaselect          nargs:  4 actual:      14296 pred:      14792 perc:        103
+method: thetaselect          nargs:  4 actual:      14552 pred:      14792 perc:        102
+method: thetaselect          nargs:  4 actual:       5328 pred:       5128 perc:         96
+method: thetaselect          nargs:  4 actual:       5024 pred:       4784 perc:         95
+method: thetaselect          nargs:  4 actual:     435437 pred:     436261 perc:        100
+method: /                    nargs:  2 actual:         32 pred:          0 perc:          0
+method: /                    nargs:  2 actual:          0 pred:          0
+method: select               nargs:  7 actual:   36460161 pred:   18207409 perc:         50
+method: select               nargs:  7 actual:       4648 pred:       3056 perc:         66
+method: select               nargs:  6 actual:  303434841 pred:  303434841 perc:        100
+method: select               nargs:  6 actual:   23443067 pred:   14803898 perc:         63
+method: subavg               nargs:  5 actual:     491109 pred:        934 perc:          0
+method: *                    nargs:  2 actual:      18144 pred:          0 perc:          0
+method: year                 nargs:  1 actual:   13046464 pred:     233460 perc:          2
+method: subcount             nargs:  4 actual:        934 pred:   12000186 perc:    1284816
+method: subcount             nargs:  4 actual:     222733 pred:         48 perc:          0
+method: projection           nargs:  2 actual:  473141780 pred:  473141780 perc:        100
+method: projection           nargs:  2 actual:     400000 pred:     400000 perc:        100
+method: projection           nargs:  2 actual:    1457557 pred:    1457557 perc:        100
+method: projection           nargs:  2 actual:    1457522 pred:    1457522 perc:        100
+method: projection           nargs:  2 actual:       8227 pred:      11587 perc:        141
+method: projection           nargs:  2 actual:       8228 pred:      11587 perc:        141
+method: projection           nargs:  2 actual:       8228 pred:       8227 perc:        100
+method: projection           nargs:  2 actual:    9176685 pred:    4745369 perc:         52
+method: projection           nargs:  2 actual:    9176680 pred:    3359795 perc:         37
+method: projection           nargs:  2 actual:  120000114 pred:   75518341 perc:         63
+method: projection           nargs:  2 actual:  118700891 pred:  118700777 perc:        100
+method: projection           nargs:  2 actual:  239944436 pred:  239944436 perc:        100
+method: projection           nargs:  2 actual:    8000007 pred:    8000007 perc:        100
+method: projection           nargs:  2 actual:      68592 pred:      64443 perc:         94
+method: projection           nargs:  2 actual:       2496 pred:   60000057 perc:    2403848
+method: projection           nargs:  2 actual:  239944436 pred:  239944436 perc:        100
+method: projection           nargs:  2 actual:  151717681 pred:   73285884 perc:         48
+method: projection           nargs:  2 actual:  151717681 pred:   73285884 perc:         48
+method: projection           nargs:  2 actual:   23443114 pred:   14803929 perc:         63
+method: projection           nargs:  2 actual:    2830380 pred:    2830380 perc:        100
+method: projection           nargs:  2 actual:      11587 pred:      11587 perc:        100
+method: projection           nargs:  2 actual:    3054210 pred:    3359795 perc:        110
+method: projectionpath       nargs:  3 actual:        160 pred:         40 perc:         25
+method: projectionpath       nargs:  5 actual:     242686 pred:        400 perc:          0
+method: projectionpath       nargs:  3 actual:      57154 pred:       8527 perc:         15
+method: projectionpath       nargs:  6 actual:     194517 pred:     194517 perc:        100
+method: projectionpath       nargs:  3 actual:   26092953 pred:   18126186 perc:         69
+method: projectionpath       nargs:  5 actual:       8503 pred:         42 perc:          0
+method: projectionpath       nargs:  3 actual:        320 pred:         40 perc:         12
+method: projectionpath       nargs:  3 actual:    5994253 pred:    5994253 perc:        100
+method: projectionpath       nargs:  5 actual:    2621906 pred:    2629117 perc:        100
+method: projectionpath       nargs:  5 actual:        400 pred:        400 perc:        100
+method: projectionpath       nargs:  4 actual:       1600 pred:     234621 perc:      14664
+method: projectionpath       nargs:  3 actual:    8567861 pred:    9063102 perc:        106
+method: projectionpath       nargs:  3 actual:     689693 pred:     319163 perc:         46
+method: projectionpath       nargs:  3 actual:          4 pred:         40 perc:       1000
+method: group                nargs:  1 actual:    4240961 pred:    9177072 perc:        216
+method: group                nargs:  1 actual:     466936 pred:      44912 perc:         10
+method: dbl                  nargs:  2 actual:  473141323 pred:  473141323 perc:        100
+method: sort                 nargs:  5 actual:     509881 pred:     514030 perc:        101
+method: sort                 nargs:  5 actual:       2000 pred:       1104 perc:         55
+method: sort                 nargs:  3 actual:       8418 pred:       8374 perc:         99
+method: max                  nargs:  1  NOT FOUND
+method: mirror               nargs:  1 actual:          0 pred:          0
+method: likeselect           nargs:  5 actual:     870263 pred:     172408 perc:         20
+method: likeselect           nargs:  5 actual:  118700664 pred:     172408 perc:          0
+method: likeselect           nargs:  5 actual:        448 pred:      62836 perc:      14026
+method: resultSet            nargs:  7 actual:          0 pred:          0
+method: resultSet            nargs: 11  NOT FOUND
+method: append               nargs:  2 actual:          4 pred:          4 perc:        100
+method: append               nargs:  2 actual:       8351 pred:       8354 perc:        100
+method: append               nargs:  2 actual:         36 pred:         36 perc:        100
+method: append               nargs:  2 actual:       8240 pred:       8240 perc:        100
+method: append               nargs:  2 actual:       8263 pred:       8263 perc:        100
+method: append               nargs:  2 actual:         28 pred:         28 perc:        100
+method: append               nargs:  2 actual:         28 pred:         28 perc:        100
+method: append               nargs:  2 actual:         32 pred:         32 perc:        100
+method: append               nargs:  2 actual:          4 pred:          4 perc:        100
+method: append               nargs:  2 actual:       8236 pred:       8236 perc:        100
+method: append               nargs:  2 actual:         16 pred:         16 perc:        100
+method: append               nargs:  2 actual:       8205 pred:       8205 perc:        100
+method: append               nargs:  2 actual:       8228 pred:       8228 perc:        100
+method: append               nargs:  2 actual:       8243 pred:       8243 perc:        100
+method: append               nargs:  2 actual:         32 pred:         32 perc:        100
+method: append               nargs:  2 actual:          4 pred:          4 perc:        100
+method: append               nargs:  2 actual:         12 pred:         12 perc:        100
+method: append               nargs:  3 actual:   59350445 pred:   59350445 perc:        100
+method: append               nargs:  2 actual:          4 pred:          4 perc:        100
+method: append               nargs:  2 actual:       8231 pred:       8230 perc:        100
+method: append               nargs:  2 actual:       8227 pred:       8227 perc:        100
+method: append               nargs:  2 actual:          8 pred:          8 perc:        100
+method: append               nargs:  2 actual:       8253 pred:       8252 perc:        100
+method: append               nargs:  2 actual:         12 pred:         12 perc:        100
+method: append               nargs:  2 actual:       8244 pred:       8244 perc:        100
+method: append               nargs:  2 actual:          8 pred:          8 perc:        100
+method: append               nargs:  2 actual:          8 pred:          8 perc:        100
+method: append               nargs:  2 actual:          4 pred:          4 perc:        100
+method: append               nargs:  2 actual:       8241 pred:       8241 perc:        100
+method: append               nargs:  2 actual:          4 pred:          4 perc:        100
+method: append               nargs:  2 actual:          8 pred:          8 perc:        100
+method: append               nargs:  2 actual:          8 pred:          8 perc:        100
+method: append               nargs:  2 actual:       8254 pred:       8254 perc:        100
+method: append               nargs:  2 actual:         12 pred:         12 perc:        100
+method: subsum               nargs:  5 actual:         34 pred:         34 perc:        100
+method: thetajoin            nargs:  7 actual:     138964 pred:    3051059 perc:       2196
+method: >                    nargs:  2 actual:   59986052 pred:   59986509 perc:        100

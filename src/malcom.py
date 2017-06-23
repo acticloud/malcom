@@ -25,32 +25,40 @@ if __name__ == '__main__':
 
 
     qtags = train_class.query_tags
- 
+    qtags.sort()
+    query_map = dict([(i+1,tag) for (i,tag) in enumerate(qtags)])
+
+    print("queries: {}".format(query_map))
     split_i = int(len(qtags)/8)
 
     test_tags = qtags[0:split_i]
     train_tags  = qtags[split_i+1:]
-    (split1,split2) = train_class.split(train_tags,test_tags)
+    (split1,split2) = train_class.splitTag(train_tags,test_tags)
+    # (split1,split2) = train_class.splitRandom(0.9,0.1)
 
+    print("ntrain: {} ntest: {}".format(len(split1.getInsList()),len(split2.getInsList())))
     print("train_tags {}".format(train_tags))
     print("test_tags {}".format(test_tags))
 
+    # split1.printPredictions(split2)
+    print("deviance: {:5.2f}%".format(split1.avgDeviance(split2)))
     # print("tags1: {}".format(split1.query_tags))
     # print("tags2: {}".format(split2.query_tags))
 
-    for ins in split2.getInsList():
-        # print(ins.fname)
-        try:
-            mpred = split1.predictMem(ins)
-            mem   = ins.mem_fprint
-            if mpred != 0:
-                print("method: {:20} nargs: {:2d} actual: {:10d} pred: {:10d} perc: {:10.0f}".format(ins.fname,ins.nargs, mem,mpred,abs(100*mpred/mem)))
-            else:
-                print("method: {:20} nargs: {:2d} actual: {:10d} pred: {:10d}".format(ins.fname, ins.nargs, mem,mpred))
-                
-        except Exception:
-            print("method: {:20} nargs: {:2d}  NOT FOUND".format(ins.fname,ins.nargs))
-            pass
+    # for ins in split2.getInsList():
+    #     # print(ins.fname)
+    #     try:
+    #         mpred = split1.predictMem(ins)
+    #         mem   = ins.mem_fprint
+    #         if mem != 0:
+    #             print("method: {:20} nargs: {:2d} actual: {:10d} pred: {:10d} perc: {:10.0f}".format(ins.fname,ins.nargs, mem,mpred,abs(100*mpred/mem)))
+    #         else:
+    #             print("method: {:20} nargs: {:2d} actual: {:10d} pred: {:10d}".format(ins.fname, ins.nargs, mem,mpred))
+    #
+    #     except Exception as err:
+    #         # print("Exception: {}".format(err))
+    #         print("method: {:20} nargs: {:2d}  NOT FOUND".format(ins.fname,ins.nargs))
+    #         pass
     # theta3 = split2.findMethod("thetaselect")
 
     # for i in theta3:

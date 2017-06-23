@@ -1,6 +1,8 @@
 from utils import Utils
+from functools import reduce
 import json
 from mal_instr import MalInstruction
+import random
 #TODO add method find closest instruction
 
 class MalDictionary:
@@ -54,14 +56,17 @@ class MalDictionary:
         return dist_list[0:k]
 
         #@arg
-    def predictMem(self, ins):
-        # try:
-        nn1 = self.kNN(ins,1)[0].mem_fprint
-        # except Exception:
-            # print("method not found {}".format(ins.fname))
-            # nn1 = 0
+    def predictMem(self, ins, default=None):
+        try:
+            nn1 = self.kNN(ins,1)[0].mem_fprint
+        except Exception as e:
+            if default != None:
+                nn1 =  default
+            else:
+                raise e
         return nn1
 
+    # def preditMem(self,ins)
 
     #TODO too custom, needs rewritting
     def printAll(self, method, nargs):
@@ -137,9 +142,8 @@ class MalDictionary:
     @desc splits the dictionary in two based on the query tags
     @arg: list<int>
     """
-    def split(self, train_tags, test_tags):
-        s1 = {}
-        s2 = {}
+    def splitTag(self, train_tags, test_tags):
+        s1,s2 = {},{}
 
         for (k,l) in self.mal_dict.items():
             for mali in l:
@@ -150,3 +154,45 @@ class MalDictionary:
                     s2[k] = s2.get(k,[]) + [mali]
 
         return (MalDictionary(s1,train_tags), MalDictionary(s2,test_tags))
+
+    """
+    @desc splits the dictionary in two based on the query tags
+    @arg: list<int>
+    """
+    def splitRandom(self, trainp, testp):
+        assert trainp + testp == 1.0
+        s1,s2 = {}, {}
+        s1_tags, s2_tags = set(), set()
+
+        for (k,l) in self.mal_dict.items():
+            for mali in l:
+                r = random.random()
+                if r < trainp:
+                    s1[k] = s1.get(k,[]) + [mali]
+                    s1_tags.add(mali.tag)
+                else:
+                    assert r + testp >= 1
+                    s2[k] = s2.get(k,[]) + [mali]
+                    s2_tags.add(mali.tag)
+        return (MalDictionary(s1,list(s1_tags)), MalDictionary(s2,list(s2_tags)))
+
+    def printPredictions(self, test_dict):
+        for ins in test_dict.getInsList():
+            try:
+                mpred = self.predictMem(ins)
+                mem   = ins.mem_fprint
+                if mem != 0:
+                    print("method: {:20} nargs: {:2d} actual: {:10d} pred: {:10d} perc: {:10.0f}".format(ins.fname,ins.nargs, mem,mpred,abs(100*mpred/mem)))
+                else:
+                    print("method: {:20} nargs: {:2d} actual: {:10d} pred: {:10d}".format(ins.fname, ins.nargs, mem,mpred))
+            except Exception as err:
+                # print("Exception: {}".format(err))
+                print("method: {:20} nargs: {:2d}  NOT FOUND".format(ins.fname,ins.nargs))
+                pass
+
+    def avgDeviance(self, test_dict):
+        suml  = lambda x,y: x+y
+        diff  = sum( map(lambda ins: abs(ins.mem_fprint-self.predictMem(ins,0)),test_dict.getInsList()) )
+        total = sum( map(lambda ins: ins.mem_fprint,test_dict.getInsList()) )
+        # print("dev")
+        return 100 * diff / total
