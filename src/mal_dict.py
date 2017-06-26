@@ -66,6 +66,15 @@ class MalDictionary:
                 raise e
         return nn1
 
+    def predict(self, ins, default=None):
+        try:
+            nn1 = self.kNN(ins,1)[0]
+        except Exception as e:
+            if default != None:
+                nn1 =  default
+            else:
+                raise e
+        return nn1
     # def preditMem(self,ins)
 
     #TODO too custom, needs rewritting
@@ -156,6 +165,26 @@ class MalDictionary:
         return (MalDictionary(s1,train_tags), MalDictionary(s2,test_tags))
 
     """
+    @desc splits the dictionary in two based on the query id
+    @arg: list<int>
+    @arg tag2query: dict<int,int>
+    """
+    def splitQuery(self, train_q, test_q, tag2query):
+        s1,s2 = {},{}
+        s1_tags, s2_tags = set(), set()
+
+        for (k,l) in self.mal_dict.items():
+            for mali in l:
+                if tag2query[mali.tag] in train_q:
+                    s1[k] = s1.get(k,[]) + [mali]
+                    s1_tags.add(mali.tag)
+                if tag2query[mali.tag] in test_q:
+                    s2[k] = s2.get(k,[]) + [mali]
+                    s2_tags.add(mali.tag)
+
+        return (MalDictionary(s1,list(s1_tags)), MalDictionary(s2,list(s2_tags)))
+
+    """
     @desc splits the dictionary in two based on the query tags
     @arg: list<int>
     """
@@ -188,6 +217,24 @@ class MalDictionary:
             except Exception as err:
                 # print("Exception: {}".format(err))
                 print("method: {:20} nargs: {:2d}  NOT FOUND".format(ins.fname,ins.nargs))
+                pass
+
+    def printPredictionsVerbose(self, test_dict):
+        for ins in test_dict.getInsList():
+            try:
+                ipred = self.predict(ins)
+                mpred = ipred.mem_fprint
+                mem   = ins.mem_fprint
+                if mem != 0 and mpred / mem > 2:
+                    # print("method: {:15} actual: {:10d} pred: {:10d} perc: {:10.0f} ".format(ins.fname, mem,mpred,abs(100*mpred/mem)))
+                    print("INPUT SHORT {:80}".format(ins.short))
+                    print("OUTPUT SHORT {:80}".format(ipred.short))
+                    print("off: {:10.0f} INPUT: {} OUTPUT: {}".format(abs(100*mpred/mem), ins.argListStr(), ipred.argListStr()))
+                # else:
+                    # print("method: {:20} nargs: {:2d} actual: {:10d} pred: {:10d}".format(ins.fname, ins.nargs, mem,mpred))
+            except Exception as err:
+                # print("Exception: {}".format(err))
+                # print("method: {:20} nargs: {:2d}  NOT FOUND".format(ins.fname,ins.nargs))
                 pass
 
     def avgDeviance(self, test_dict):

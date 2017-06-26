@@ -25,6 +25,10 @@ class Utils:
         return l
 
     @staticmethod
+    def list_diff(list1,list2):
+        return list(set(list1)-set(list2))
+
+    @staticmethod
     def cmp_arg_list(l1, l2):
         if(len(l1) != len(l2)):
             return False

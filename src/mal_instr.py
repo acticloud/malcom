@@ -35,6 +35,11 @@ class MalInstruction:
         diff = [abs(a.size-b.size) for (a,b) in zip(self.arg_list,other.arg_list)]
         return reduce(lambda x,y: x+y, diff, 0)
 
+    def argListStr(self):
+        # slist = ["arg: {} {} ".format(a.name, int(a.size / 1000)) for a in self.arg_list if a.size>0]
+        slist = ["arg: {:10} ".format(int(a.size / 1000)) for a in self.arg_list if a.size>0]
+        return ' '.join(slist)
+
     @staticmethod
     def fromJsonObj(jobj):
         size     = int(jobj["size"])

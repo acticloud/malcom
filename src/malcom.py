@@ -25,23 +25,24 @@ if __name__ == '__main__':
 
 
     qtags = train_class.query_tags
+    queries = list(range(1,23))
     qtags.sort()
-    query_map = dict([(i+1,tag) for (i,tag) in enumerate(qtags)])
+    tag2query = dict([(tag,i+1) for (i,tag) in enumerate(qtags)])
 
-    print("queries: {}".format(query_map))
+    print("queries: {}".format(tag2query))
     split_i = int(len(qtags)/8)
 
-    test_tags = qtags[0:split_i]
-    train_tags  = qtags[split_i+1:]
-    (split1,split2) = train_class.splitTag(train_tags,test_tags)
+    test_q  = queries[0:split_i]
+    train_q = queries[split_i+1:]
+    (split1,split2) = train_class.splitQuery(train_q,test_q,tag2query)
     # (split1,split2) = train_class.splitRandom(0.9,0.1)
 
     print("ntrain: {} ntest: {}".format(len(split1.getInsList()),len(split2.getInsList())))
-    print("train_tags {}".format(train_tags))
-    print("test_tags {}".format(test_tags))
+    print("train_q: {}".format(train_q))
+    print("test_q : {}".format(test_q))
 
-    # split1.printPredictions(split2)
-    print("deviance: {:5.2f}%".format(split1.avgDeviance(split2)))
+    split1.printPredictionsVerbose(split2)
+    # print("deviance: {:5.2f}%".format(split1.avgDeviance(split2)))
     # print("tags1: {}".format(split1.query_tags))
     # print("tags2: {}".format(split2.query_tags))
 
