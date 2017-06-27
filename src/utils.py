@@ -59,15 +59,38 @@ class Utils:
 
     """ @arg stmt: str // short mal statement"""
     @staticmethod
-    def extract_fname(stmt):
+    def extract_fname(stmt): #TODO change name
         args = []
+        ret  = None
         if ":=" in stmt:
             fname = stmt.split(':=')[1].split("(")[0]
-            args  = stmt.split(':=')[1].split("(")[1].split(")")[0].strip().split(" ") #TODO remove
+            args  = stmt.split(':=')[1].split("(")[1].split(")")[0].strip().split(",") #TODO remove
+            ret   = stmt.split(':=')[0].split("[")[0]
         elif "(" in stmt:
             fname = stmt.split("(")[0]
             args  = stmt.split("(")[1].split(")")[0].strip().split(" ")
         else:
             fname = stmt
 
-        return fname.strip()
+        return (fname.strip(),args,ret)
+
+    # @staticmethod
+    # def var2columns(mfile):
+    #     with open(mfile) as f:
+    #
+    #
+    #         while 1: #while not EOF
+    #             jobj = Utils.read_json_object(f)
+    #             if jobj is None:
+    #                 break
+    #
+    #             if jobj["state"] == "done":
+    #                 fname,args,ret = Utils.extract_fname(jobj["short"])
+    #                 if fname == "bind": #or fname == "bind_idxbat":
+    #                     # print("{} {} {} {}".format(fname,ret,args[2],args[3]))
+    #                     xvar_d[ret] = (args[2].strip(), args[3].strip())
+    #                 elif fname == "tid": #or fname == "bind_idxbat":
+    #                     # print("{} {} {}".format(fname,ret,args[2]))
+    #                     cvar_d[ret] = args[2].strip()
+    #
+    #     return (xvar_d,cvar_d)

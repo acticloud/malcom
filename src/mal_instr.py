@@ -40,17 +40,21 @@ class MalInstruction:
         slist = ["arg: {:10} ".format(int(a.size / 1000)) for a in self.arg_list if a.size>0]
         return ' '.join(slist)
 
+    """ returns only the arguments that are tmp variables """
+    def getArgVars(self):
+        return [arg for arg in self.arg_list if arg.isVar()]
+
     @staticmethod
     def fromJsonObj(jobj):
-        size     = int(jobj["size"])
-        short    = jobj["short"]
-        fname    = Utils.extract_fname(jobj["short"])
-        tag      = int(jobj["tag"])
-        rv       = [rv.get("size",0) for rv in jobj["ret"]]
-        sumf     = lambda x,y: x+y
-        ret_size = Utils.sumJsonList(jobj["ret"],"size")
-        arg_size = Utils.sumJsonList(jobj["arg"],"size")
-        arg_list = [Arg.fromJsonObj(e) for e in jobj["arg"]]
+        size      = int(jobj["size"])
+        short     = jobj["short"]
+        fname,_,_ = Utils.extract_fname(jobj["short"])
+        tag       = int(jobj["tag"])
+        rv        = [rv.get("size",0) for rv in jobj["ret"]]
+        sumf      = lambda x,y: x+y
+        ret_size  = Utils.sumJsonList(jobj["ret"],"size")
+        arg_size  = Utils.sumJsonList(jobj["arg"],"size")
+        arg_list  = [Arg.fromJsonObj(e) for e in jobj["arg"]]
 
         return MalInstruction(short, fname, size, ret_size, tag, arg_size, arg_list)
 

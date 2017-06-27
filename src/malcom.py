@@ -32,8 +32,9 @@ if __name__ == '__main__':
     print("queries: {}".format(tag2query))
     split_i = int(len(qtags)/8)
 
-    test_q  = queries[0:split_i]
-    train_q = queries[split_i+1:]
+    test_q  = [17] #queries[0:1]
+    train_q = Utils.list_diff(queries,test_q)
+
     (split1,split2) = train_class.splitQuery(train_q,test_q,tag2query)
     # (split1,split2) = train_class.splitRandom(0.9,0.1)
 
@@ -42,6 +43,14 @@ if __name__ == '__main__':
     print("test_q : {}".format(test_q))
 
     split1.printPredictionsVerbose(split2)
+    # var2c = Utils.var2column(trainset)
+    # print("Leave one out performance")
+    # for t in range(1,23):
+    #     test_q = [t]
+    #     train_q = Utils.list_diff(queries,test_q)
+    #     (split1,split2) = train_class.splitQuery(train_q,test_q,tag2query)
+    #     print("Query {:3d} deviance: {:5.2f}%".format(t,split1.avgDeviance(split2)))
+
     # print("deviance: {:5.2f}%".format(split1.avgDeviance(split2)))
     # print("tags1: {}".format(split1.query_tags))
     # print("tags2: {}".format(split2.query_tags))

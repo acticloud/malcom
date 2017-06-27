@@ -1,18 +1,57 @@
+import random
+import json
 from utils import Utils
 from functools import reduce
-import json
 from mal_instr import MalInstruction
-import random
+from mal_dataflow import Dataflow
 #TODO add method find closest instruction
 
 class MalDictionary:
     """
     @arg mal_dict: dict<List<MalInstruction>>
     @arg q_tags  : list<int> //list of the unique query tags
+    @arg varflow: dic<tag,dic<var,table>>
     """
-    def __init__(self, mal_dict, q_tags):
+    def __init__(self, mal_dict, q_tags, varflow):
         self.mal_dict   = mal_dict
         self.query_tags = q_tags
+        self.varflow    = varflow
+
+    """
+    @arg mfile    : json file containing mal execution info (link??)
+    @arg blacklist: list of black listed mal instructions
+    """
+    @staticmethod
+    def fromJsonFile(mfile, blacklist):
+        with open(mfile) as f:
+            maldict    = {}
+            startd     = {}
+            query_tags = set()
+            varflow    = Dataflow()
+
+            while 1: #while not EOF
+                jobj = Utils.read_json_object(f)
+                if jobj is None:
+                    break
+                fname,args ,ret  = Utils.extract_fname(jobj["short"])
+
+                if not Utils.is_blacklisted(blacklist,fname):
+                    new_mals = MalInstruction.fromJsonObj(jobj)
+
+                    if jobj["state"] == "start":
+                        startd[jobj["pc"]] = jobj["clk"]
+                    elif jobj["state"] == "done":
+                        assert jobj["pc"] in startd
+                        new_mals.time  = float(jobj["clk"]) - float(startd[jobj["pc"]])
+                        maldict[fname] = maldict.get(fname,[]) + [new_mals]
+                        query_tags.add(int(jobj["tag"]))
+
+                        if fname == "bind": #or fname == "bind_idxbat":
+                            varflow.add(new_mals.tag, ret, (args[2].strip(), args[3].strip()))
+                        elif fname == "tid":
+                            varflow.add(new_mals.tag, ret, args[2].strip())
+
+        return MalDictionary(maldict,list(query_tags),varflow)
 
     """
     @arg mals: MalInstruction
@@ -117,35 +156,7 @@ class MalDictionary:
         return mal_list[0:n]
 
 
-    """
-    @arg mfile    : json file containing mal execution info (link??)
-    @arg blacklist: list of black listed mal instructions
-    """
-    @staticmethod
-    def fromJsonFile(mfile, blacklist):
-        with open(mfile) as f:
-            maldict    = {}
-            startd     = {}
-            query_tags = set()
 
-            while 1: #while not EOF
-                jobj = Utils.read_json_object(f)
-                if jobj is None:
-                    break
-                fname    = Utils.extract_fname(jobj["short"])
-
-                if not Utils.is_blacklisted(blacklist,fname):
-                    new_mals = MalInstruction.fromJsonObj(jobj)
-
-                    if jobj["state"] == "start":
-                        startd[jobj["pc"]] = jobj["clk"]
-                    elif jobj["state"] == "done":
-                        assert jobj["pc"] in startd
-                        new_mals.time  = float(jobj["clk"]) - float(startd[jobj["pc"]])
-                        maldict[fname] = maldict.get(fname,[]) + [new_mals]
-                        query_tags.add(int(jobj["tag"]))
-
-        return MalDictionary(maldict,list(query_tags))
 
     """
     @desc splits the dictionary in two based on the query tags
@@ -162,7 +173,7 @@ class MalDictionary:
                     # assert not mali.tag in train_tags
                     s2[k] = s2.get(k,[]) + [mali]
 
-        return (MalDictionary(s1,train_tags), MalDictionary(s2,test_tags))
+        return (MalDictionary(s1,train_tags,self.varflow), MalDictionary(s2,test_tags,self.varflow))
 
     """
     @desc splits the dictionary in two based on the query id
@@ -182,7 +193,7 @@ class MalDictionary:
                     s2[k] = s2.get(k,[]) + [mali]
                     s2_tags.add(mali.tag)
 
-        return (MalDictionary(s1,list(s1_tags)), MalDictionary(s2,list(s2_tags)))
+        return (MalDictionary(s1,list(s1_tags),self.varflow), MalDictionary(s2,list(s2_tags),self.varflow))
 
     """
     @desc splits the dictionary in two based on the query tags
@@ -203,7 +214,7 @@ class MalDictionary:
                     assert r + testp >= 1
                     s2[k] = s2.get(k,[]) + [mali]
                     s2_tags.add(mali.tag)
-        return (MalDictionary(s1,list(s1_tags)), MalDictionary(s2,list(s2_tags)))
+        return (MalDictionary(s1,list(s1_tags),self.varflow), MalDictionary(s2,list(s2_tags),self.varflow))
 
     def printPredictions(self, test_dict):
         for ins in test_dict.getInsList():
@@ -221,21 +232,28 @@ class MalDictionary:
 
     def printPredictionsVerbose(self, test_dict):
         for ins in test_dict.getInsList():
-            try:
+            # try:
                 ipred = self.predict(ins)
                 mpred = ipred.mem_fprint
                 mem   = ins.mem_fprint
-                if mem != 0 and mpred / mem > 2:
+                if mem != 0: # and mpred / mem > 2:
                     # print("method: {:15} actual: {:10d} pred: {:10d} perc: {:10.0f} ".format(ins.fname, mem,mpred,abs(100*mpred/mem)))
-                    print("INPUT SHORT {:80}".format(ins.short))
-                    print("OUTPUT SHORT {:80}".format(ipred.short))
-                    print("off: {:10.0f} INPUT: {} OUTPUT: {}".format(abs(100*mpred/mem), ins.argListStr(), ipred.argListStr()))
+                    print("INS SHORT {:80}".format(ins.short))
+                    print("KNN SHORT {:80}".format(ipred.short))
+
+                    # for a in ins.getArgVars():
+                    #     if a.name.startswith("X"):
+                    #         print("{} {}".format(a.name, self.xvar_d[a.name]))
+                    #     else:
+                    #         print("{} {}".format(a.name, self.xvar_d[a.name]))
+
+                    print("real: {:10d} pred: {:10d}\nINS: {} \nKNN: {}\n".format(mem,mpred, ins.argListStr(), ipred.argListStr()))
                 # else:
                     # print("method: {:20} nargs: {:2d} actual: {:10d} pred: {:10d}".format(ins.fname, ins.nargs, mem,mpred))
-            except Exception as err:
-                # print("Exception: {}".format(err))
-                # print("method: {:20} nargs: {:2d}  NOT FOUND".format(ins.fname,ins.nargs))
-                pass
+            # except Exception as err:
+            #     print("Exception: {}".format(err))
+            #     # print("method: {:20} nargs: {:2d}  NOT FOUND".format(ins.fname,ins.nargs))
+            #     pass
 
     def avgDeviance(self, test_dict):
         suml  = lambda x,y: x+y
