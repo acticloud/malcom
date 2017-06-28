@@ -44,6 +44,13 @@ class MalInstruction:
     def getArgVars(self):
         return [arg for arg in self.arg_list if arg.isVar()]
 
+    def printVarFlow(self,varflow):
+        l = [(a.name,varflow.lookup(a.name,self.tag)) for a in self.arg_list]
+        v = lambda name: "table " if name.startswith("C_") else "column"
+        j = ["var: {} {}: {} ".format(n,v(n),t) for (n,t) in l if t]
+        if len(j) > 0:
+            print('|| '.join(j))
+
     @staticmethod
     def fromJsonObj(jobj):
         size      = int(jobj["size"])

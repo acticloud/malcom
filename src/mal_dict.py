@@ -45,11 +45,13 @@ class MalDictionary:
                         new_mals.time  = float(jobj["clk"]) - float(startd[jobj["pc"]])
                         maldict[fname] = maldict.get(fname,[]) + [new_mals]
                         query_tags.add(int(jobj["tag"]))
-
+                else: #blacklisted intructions
+                    if jobj["state"] == "done":
+                        tag = int(jobj["tag"])
                         if fname == "bind": #or fname == "bind_idxbat":
-                            varflow.add(new_mals.tag, ret, (args[2].strip(), args[3].strip()))
+                            varflow.add(tag, ret, (args[2].strip(), args[3].strip()))
                         elif fname == "tid":
-                            varflow.add(new_mals.tag, ret, args[2].strip())
+                            varflow.add(tag, ret, args[2].strip())
 
         return MalDictionary(maldict,list(query_tags),varflow)
 
@@ -241,6 +243,7 @@ class MalDictionary:
                     print("INS SHORT {:80}".format(ins.short))
                     print("KNN SHORT {:80}".format(ipred.short))
 
+                    ins.printVarFlow(self.varflow)
                     # for a in ins.getArgVars():
                     #     if a.name.startswith("X"):
                     #         print("{} {}".format(a.name, self.xvar_d[a.name]))
