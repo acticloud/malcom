@@ -32,17 +32,28 @@ if __name__ == '__main__':
     print("queries: {}".format(tag2query))
     split_i = int(len(qtags)/8)
 
-    test_q  = [17] #queries[0:1]
+    test_q  = [2] #queries[0:1]
     train_q = Utils.list_diff(queries,test_q)
 
-    (split1,split2) = train_class.splitQuery(train_q,test_q,tag2query)
-    # (split1,split2) = train_class.splitRandom(0.9,0.1)
+    # (split1,split2) = train_class.splitQuery(train_q,test_q,tag2query)
+    (split1,split2) = train_class.splitRandom(0.95,0.05)
 
-    print("ntrain: {} ntest: {}".format(len(split1.getInsList()),len(split2.getInsList())))
+    # print("ntrain: {} ntest: {}".format(len(split1.getInsList()),len(split2.getInsList())))
     print("train_q: {}".format(train_q))
     print("test_q : {}".format(test_q))
 
-    split1.printPredictionsVerbose(split2)
+    pl = [1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1]
+    y = []
+    for p in pl:
+        bestp = train_class.select(lambda x: -x.mem_fprint,p)
+        y.append(bestp.avgError(train_class))
+        # print(len(train_class.getInsList()))
+        # print(len(bestp.getInsList()))
+        print("P: {:.1f} AvgError: {:.2f}".format(p,bestp.avgError(train_class)))
+
+    Utils.plotBar(pl,y,"bar.pdf")
+    # split1.printPredictionsVerbose(split1,tag2query)
+    # split1.printPredictionsVerbose(split2,tag2query)
     # var2c = Utils.var2column(trainset)
     # print("Leave one out performance")
     # for t in range(1,23):

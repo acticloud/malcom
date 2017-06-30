@@ -61,6 +61,8 @@ class MalDictionary:
     """
     def findInstr(self, mals):
         dic = self.mal_dict
+        if not mals.fname in dic:
+             return []
         return [x for x in dic[mals.fname] if x == mals]
 
     def getInsList(self):
@@ -99,23 +101,35 @@ class MalDictionary:
         #@arg
     def predictMem(self, ins, default=None):
         try:
-            nn1 = self.kNN(ins,1)[0].mem_fprint
-        except Exception as e:
-            if default != None:
-                nn1 =  default
-            else:
-                raise e
-        return nn1
+            return self.predict(ins).mem_fprint
+        except:
+            return default
 
     def predict(self, ins, default=None):
-        try:
-            nn1 = self.kNN(ins,1)[0]
-        except Exception as e:
-            if default != None:
-                nn1 =  default
-            else:
-                raise e
-        return nn1
+        exact = self.findInstr(ins)
+        if len(exact) == 1:
+            return exact[0]
+        else:
+            try:
+                nn1 = self.kNN(ins,1)[0]
+            except Exception as e:
+                if default != None:
+                    nn1 =  default
+                else:
+                    raise e
+            return nn1
+
+    # def predictDEBUG(self, ins, default=None):
+    #     try:
+    #         nn1 = self.kNN(ins,1)[0]
+    #         knn = self.kNN(ins,5)
+    #     except Exception as e:
+    #         if default != None:
+    #             nn1 =  default
+    #         else:
+    #             raise e
+    #     return (nn1,knn)
+
     # def preditMem(self,ins)
 
     #TODO too custom, needs rewritting
@@ -218,10 +232,23 @@ class MalDictionary:
                     s2_tags.add(mali.tag)
         return (MalDictionary(s1,list(s1_tags),self.varflow), MalDictionary(s2,list(s2_tags),self.varflow))
 
+        """ selects sth"""
+    def select(self, fun, perc):
+        ilist = self.getInsList()
+        ilist.sort(key = fun)#bda ins: -ins.mem_fprint)
+        bestp = ilist[0:int(perc*len(ilist))]
+        d = {}
+        tags = set()
+        for i in bestp:
+            d[i.fname] = d.get(i.fname,[]) + [i]
+            tags.add(i.tag)
+        return MalDictionary(d,tags,self.varflow)
+
     def printPredictions(self, test_dict):
         for ins in test_dict.getInsList():
             try:
                 mpred = self.predictMem(ins)
+                # knn5  = self.predictDEBUG(ins)
                 mem   = ins.mem_fprint
                 if mem != 0:
                     print("method: {:20} nargs: {:2d} actual: {:10d} pred: {:10d} perc: {:10.0f}".format(ins.fname,ins.nargs, mem,mpred,abs(100*mpred/mem)))
@@ -232,31 +259,30 @@ class MalDictionary:
                 print("method: {:20} nargs: {:2d}  NOT FOUND".format(ins.fname,ins.nargs))
                 pass
 
-    def printPredictionsVerbose(self, test_dict):
+    def printPredictionsVerbose(self, test_dict, tag2query):
         for ins in test_dict.getInsList():
-            # try:
-                ipred = self.predict(ins)
-                mpred = ipred.mem_fprint
-                mem   = ins.mem_fprint
-                if mem != 0: # and mpred / mem > 2:
-                    # print("method: {:15} actual: {:10d} pred: {:10d} perc: {:10.0f} ".format(ins.fname, mem,mpred,abs(100*mpred/mem)))
-                    print("INS SHORT {:80}".format(ins.short))
-                    print("KNN SHORT {:80}".format(ipred.short))
+            try:
+                ipred      = self.predict(ins)
+                mpred      = ipred.mem_fprint
+                mem        = ins.mem_fprint
+                if mem != 0  and mpred / mem > 2:
+                    # print("DEBUG: {}".format(test_dict.query_tags))
 
-                    ins.printVarFlow(self.varflow)
-                    # for a in ins.getArgVars():
-                    #     if a.name.startswith("X"):
-                    #         print("{} {}".format(a.name, self.xvar_d[a.name]))
-                    #     else:
-                    #         print("{} {}".format(a.name, self.xvar_d[a.name]))
-
+                    print("INS Q: {:2d} SHORT: {:80}".format(tag2query[ins.tag],ins.short))
+                    # ins.printVarFlow(self.varflow)
+                    print("KNN Q: {:2d} SHORT: {:80}".format(tag2query[ipred.tag],ipred.short))
+                    # ipred.printVarFlow(self.varflow)
                     print("real: {:10d} pred: {:10d}\nINS: {} \nKNN: {}\n".format(mem,mpred, ins.argListStr(), ipred.argListStr()))
-                # else:
-                    # print("method: {:20} nargs: {:2d} actual: {:10d} pred: {:10d}".format(ins.fname, ins.nargs, mem,mpred))
-            # except Exception as err:
-            #     print("Exception: {}".format(err))
-            #     # print("method: {:20} nargs: {:2d}  NOT FOUND".format(ins.fname,ins.nargs))
-            #     pass
+
+                    # for alt in knn:
+                    #     print("ALT Q: {:2d} SHORT: {:80}".format(tag2query[alt.tag],alt.short))
+                    #     print("ALTM: {} KNN: {}\n".format(alt.mem_fprint, alt.argListStr()))
+
+
+            except Exception as err:
+                print("Exception: {}".format(err))
+                print("method: {:20} nargs: {:2d}  NOT FOUND".format(ins.fname,ins.nargs))
+                pass
 
     def avgDeviance(self, test_dict):
         suml  = lambda x,y: x+y
@@ -264,3 +290,13 @@ class MalDictionary:
         total = sum( map(lambda ins: ins.mem_fprint,test_dict.getInsList()) )
         # print("dev")
         return 100 * diff / total
+
+    def avgError(self, test_dict):
+        suml   = lambda x,y: x+y
+        test_l = test_dict.getInsList()
+        ldiff = lambda i: abs(i.mem_fprint-self.predictMem(i,0)) / i.mem_fprint if i.mem_fprint != 0 else 0.0
+        diff  = sum( map(ldiff,test_l) )
+        # print(list(map(ldiff,test_l)))
+        # print(max(list(map(ldiff,test_l))))
+        # print("dev")
+        return 100 * diff / len(test_l)

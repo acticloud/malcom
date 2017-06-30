@@ -1,5 +1,9 @@
+import matplotlib.pyplot as plt
 from functools import reduce
+from pylab import savefig
+import numpy
 import json
+
 
 class Utils:
     @staticmethod
@@ -74,23 +78,17 @@ class Utils:
 
         return (fname.strip(),args,ret)
 
-    # @staticmethod
-    # def var2columns(mfile):
-    #     with open(mfile) as f:
-    #
-    #
-    #         while 1: #while not EOF
-    #             jobj = Utils.read_json_object(f)
-    #             if jobj is None:
-    #                 break
-    #
-    #             if jobj["state"] == "done":
-    #                 fname,args,ret = Utils.extract_fname(jobj["short"])
-    #                 if fname == "bind": #or fname == "bind_idxbat":
-    #                     # print("{} {} {} {}".format(fname,ret,args[2],args[3]))
-    #                     xvar_d[ret] = (args[2].strip(), args[3].strip())
-    #                 elif fname == "tid": #or fname == "bind_idxbat":
-    #                     # print("{} {} {}".format(fname,ret,args[2]))
-    #                     cvar_d[ret] = args[2].strip()
-    #
-    #     return (xvar_d,cvar_d)
+    @staticmethod
+    def plotBar(x,y,output):
+        fig, ax = plt.subplots()
+        width = 0.5
+        bar_width = 0.35
+        # rects1 = ax.bar(ind-width, sp, width, color='b')
+        ind = numpy.arange(len(x))+1
+        rects1 = ax.bar(ind, y, width, color='b',log=True)
+        ax.set_ylabel('Error rate')
+        ax.set_title('Most % expensive instructions')
+        ax.set_xticks(ind + width)
+        ax.set_xticklabels(x)
+
+        savefig(output)#.format(sys.argv[1].split('.')[0]))
