@@ -246,18 +246,20 @@ class MalDictionary:
 
     def printPredictions(self, test_dict):
         for ins in test_dict.getInsList():
-            try:
+            # try:
+                knni  = self.predict(ins)
                 mpred = self.predictMem(ins)
                 # knn5  = self.predictDEBUG(ins)
                 mem   = ins.mem_fprint
                 if mem != 0:
-                    print("method: {:20} nargs: {:2d} actual: {:10d} pred: {:10d} perc: {:10.0f}".format(ins.fname,ins.nargs, mem,mpred,abs(100*mpred/mem)))
+                    sim = knni.similarity(ins)
+                    print("method: {:20} nargs: {:2d} actual: {:10d} pred: {:10d} sim: {:10.1f} perc: {:10.0f}".format(ins.fname,ins.nargs, mem,mpred,sim,abs(100*mpred/mem)))
                 else:
                     print("method: {:20} nargs: {:2d} actual: {:10d} pred: {:10d}".format(ins.fname, ins.nargs, mem,mpred))
-            except Exception as err:
+            # except Exception as err:
                 # print("Exception: {}".format(err))
-                print("method: {:20} nargs: {:2d}  NOT FOUND".format(ins.fname,ins.nargs))
-                pass
+                # print("method: {:20} nargs: {:2d}  NOT FOUND".format(ins.fname,ins.nargs))
+                # pass
 
     def printPredictionsVerbose(self, test_dict, tag2query):
         for ins in test_dict.getInsList():

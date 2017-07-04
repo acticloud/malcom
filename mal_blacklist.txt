@@ -10,3 +10,5 @@ tid
 setVariable
 bind
 delta
+pass
+block
