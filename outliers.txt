@@ -1,0 +1,101 @@
+Using dataset traces/trace4_1-22.json as train set
+ntrain: 1165 ntest: 90
+train_q: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
+test_q : [1]
+
+Query 
+
+select
+	l_returnflag,
+	l_linestatus,
+	sum(l_quantity) as sum_qty,
+	sum(l_extendedprice) as sum_base_price,
+	sum(l_extendedprice * (1 - l_discount)) as sum_disc_price,
+	sum(l_extendedprice * (1 - l_discount) * (1 + l_tax)) as sum_charge,
+	avg(l_quantity) as avg_qty,
+	avg(l_extendedprice) as avg_price,
+	avg(l_discount) as avg_disc,
+	count(*) as count_order
+from
+	lineitem
+where
+	l_shipdate <= date '1998-12-01' - interval '90' day (3)
+group by
+	l_returnflag,
+	l_linestatus
+order by
+	l_returnflag,
+	l_linestatus;
+
+INS  SHORT X_122[4]    := subcount( X_108[59142609], X_108[59142609], C_109[4], false )        
+KNN SHORT X_98[1500000]:= subcount( X_79[15337604], X_94[15337604], C_95[1500000], true ) 
+real:        934 pred:   12000186
+INS: arg:     473140  arg:     473140  arg:          0  
+KNN: arg:      61350  arg:     122700  arg:      12000 
+
+INS  SHORT X_119[4]   := subavg( X_101[59142609], X_108[59142609], C_109[4], true, true )     
+KNN SHORT X_150[61385]:= subavg( X_147[1904213], X_141[1904213], C_142[61385], true, true )
+real:        934 pred:     491109
+INS: arg:     473140  arg:     473140  arg:          0  
+KNN: arg:      15233  arg:      15233  arg:        491 
+
+INS  SHORT X_120[4]   := subavg( X_103[59142609], X_108[59142609], C_109[4], true, true )     
+KNN SHORT X_150[61385]:= subavg( X_147[1904213], X_141[1904213], C_142[61385], true, true )
+real:        934 pred:     491109
+INS: arg:     473140  arg:     473140  arg:          0  
+KNN: arg:      15233  arg:      15233  arg:        491 
+
+INS  SHORT X_121[4]   := subavg( X_104[59142609], X_108[59142609], C_109[4], true, true )     
+KNN SHORT X_150[61385]:= subavg( X_147[1904213], X_141[1904213], C_142[61385], true, true )
+real:        934 pred:     491109
+INS: arg:     473140  arg:     473140  arg:          0  
+KNN: arg:      15233  arg:      15233  arg:        491 
+
+INS  SHORT X_113[4]     := subsum( X_73[59142609], X_108[59142609], C_109[4], true, true )      
+KNN SHORT X_62[15000000]:= subsum( X_57[59986052], X_58[59986052], C_59[15000000], true, true )
+real:        966 pred:  240000572
+INS: arg:     473140  arg:     473140  arg:          0  
+KNN: arg:     479888  arg:     479888  arg:     120000 
+
+INS  SHORT X_116[4]     := subsum( X_74[59142609], X_108[59142609], C_109[4], true, true )      
+KNN SHORT X_62[15000000]:= subsum( X_57[59986052], X_58[59986052], C_59[15000000], true, true )
+real:        966 pred:  240000572
+INS: arg:     473140  arg:     473140  arg:          0  
+KNN: arg:     479888  arg:     479888  arg:     120000 
+
+INS  SHORT X_117[4]     := subsum( X_90[59142609], X_108[59142609], C_109[4], true, true )      
+KNN SHORT X_62[15000000]:= subsum( X_57[59986052], X_58[59986052], C_59[15000000], true, true )
+real:       1417 pred:  240000572
+INS: arg:     946281  arg:     473140  arg:          0  
+KNN: arg:     479888  arg:     479888  arg:     120000 
+
+INS  SHORT X_118[4]     := subsum( X_100[59142609], X_108[59142609], C_109[4], true, true )     
+KNN SHORT X_62[15000000]:= subsum( X_57[59986052], X_58[59986052], C_59[15000000], true, true )
+real:       1417 pred:  240000572
+INS: arg:     946281  arg:     473140  arg:          0  
+KNN: arg:     479888  arg:     479888  arg:     120000 
+
+INS  SHORT X_78[59142609]:= projection( C_71[59142609], X_54[59986052] )                   
+KNN SHORT X_68[14837583] := projection( X_58[14837583], C_6[1500000] )                     
+real:   59151335 pred:  118700777
+INS: arg:     473140  arg:      59994  
+KNN: arg:     245160 
+
+INS  SHORT X_77[59142609]:= projection( C_71[59142609], X_47[59986052] )                   
+KNN SHORT X_68[14837583] := projection( X_58[14837583], C_6[1500000] )                     
+real:   59151351 pred:  118700777
+INS: arg:     473140  arg:      59994  
+KNN: arg:     245160 
+
+INS  SHORT X_111[4]      := projection( C_109[4], X_77[59142609] )                               
+KNN SHORT X_178[59986052]:= projection( C_142[59986052], X_172[59986052] )                
+real:       8238 pred:   59994401
+INS: arg:          0  arg:      59150  
+KNN: arg:      59994 
+
+INS  SHORT X_112[4]      := projection( C_109[4], X_78[59142609] )                               
+KNN SHORT X_178[59986052]:= projection( C_142[59986052], X_172[59986052] )                
+real:       8222 pred:   59994401
+INS: arg:          0  arg:      59150  
+KNN: arg:      59994 
+

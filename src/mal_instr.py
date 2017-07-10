@@ -1,6 +1,8 @@
 from utils import Utils
 from mal_arg import Arg
 from functools import reduce
+import re
+
 
 """ MalInstruction Class:
 @arg type: string    // type of statement(assign, thetaselect etc)
@@ -13,7 +15,8 @@ from functools import reduce
 @var metric: Metric  // var that can define a distance between two queries
 """
 class MalInstruction:
-    def __init__(self, short, fname, size, ret_size, tag, arg_size, alist):
+    def __init__(self, pc, short, fname, size, ret_size, tag, arg_size, alist, free_size):
+        self.pc         = pc
         self.fname      = fname
         self.time       = 0
         self.size       = size
@@ -24,7 +27,24 @@ class MalInstruction:
         self.mem_fprint = self.size + self.ret_size
         self.arg_size   = arg_size
         self.nargs      = len(alist)
-        self.metric     = Metric.fromMalInstruction(self.fname,self.arg_list)#TODO rethink
+        self.free_size  = free_size
+        self.metric     = Metric.fromMalInstruction(self.fname,self.arg_list)#TODO remove
+
+    @staticmethod
+    def fromJsonObj(jobj):
+        size      = int(jobj["size"])
+        pc        = int(jobj["pc"])
+        short     = jobj["short"]
+        fname,_,_ = Utils.extract_fname(jobj["short"])
+        tag       = int(jobj["tag"])
+        rv        = [rv.get("size",0) for rv in jobj["ret"]]
+        sumf      = lambda x,y: x+y
+        ret_size  = sum([o.get("size",0) for o in jobj.get("ret",[])])
+        arg_size  = sum([o.get("size",0) for o in jobj.get("arg",[])])
+        arg_list  = [Arg.fromJsonObj(e) for e in jobj.get("arg",[])]
+        free_size = sum([arg.size for arg in arg_list if arg.eol == 1])
+
+        return MalInstruction(pc, short, fname, size, ret_size, tag, arg_size, arg_list, free_size)
 
     #deprecated
     def distance(self,other):
@@ -35,19 +55,29 @@ class MalInstruction:
         diff = [abs(a.size-b.size) for (a,b) in zip(self.arg_list,other.arg_list)]
         return reduce(lambda x,y: x+y, diff, 0)
 
-    @staticmethod
-    def fromJsonObj(jobj):
-        size     = int(jobj["size"])
-        short    = jobj["short"]
-        fname    = Utils.extract_fname(jobj["short"])
-        tag      = int(jobj["tag"])
-        rv       = [rv.get("size",0) for rv in jobj["ret"]]
-        sumf     = lambda x,y: x+y
-        ret_size = Utils.sumJsonList(jobj["ret"],"size")
-        arg_size = Utils.sumJsonList(jobj["arg"],"size")
-        arg_list = [Arg.fromJsonObj(e) for e in jobj["arg"]]
+    def similarity(self, other):
+        assert len(self.arg_list) == len(other.arg_list)
+        total_self  = max(sum([a.size for a in self.arg_list]),0.001)
+        total_other = max(sum([a.size for a in other.arg_list]),0.001)
+        return total_self / total_other
 
-        return MalInstruction(short, fname, size, ret_size, tag, arg_size, arg_list)
+
+    def argListStr(self):
+        # slist = ["arg: {} {} ".format(a.name, int(a.size / 1000)) for a in self.arg_list if a.size>0]
+        slist = ["arg: {:10} ".format(int(a.size / 1000)) for a in self.arg_list if a.size>0]
+        return ' '.join(slist)
+
+    """ returns only the arguments that are tmp variables """
+    def getArgVars(self):
+        return [arg for arg in self.arg_list if arg.isVar()]
+
+    def printVarFlow(self,varflow):
+        l = [(a.name,varflow.lookup(a.name,self.tag)) for a in self.arg_list]
+        v = lambda name: "table " if name.startswith("C_") else "column"
+        j = ["var: {} {}: {} ".format(n,v(n),t) for (n,t) in l if t]
+        if len(j) > 0:
+            print('|| '.join(j))
+
 
     def print_short(self):
         fmt = "Instr: {} nargs: {} time: {} mem_fprint: {}"
@@ -56,6 +86,17 @@ class MalInstruction:
     def print_verbose(self):
         fmt = "Instr: {} nargs: {} time: {} mem_fprint: {}"
         print(fmt.format(self.short,self.nargs, self.time, self.mem_fprint))
+
+
+    def isExact(self,other,ignoreScale=False):
+        if ignoreScale == False:
+            return self.short == other.short
+        else:
+            #ignore cardinality in arguments
+            self_sub  = re.sub(r'\[\d+\]','',self.short)
+            # print(self_sub)
+            other_sub = re.sub(r'\[\d+\]','',other.short)
+            return self_sub == other_sub
 
     """" two instructions are equal whey they have the same method name and
         exactly the same arguments"""

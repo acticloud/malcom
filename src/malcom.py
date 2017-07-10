@@ -16,41 +16,116 @@ if __name__ == '__main__':
     testset  = sys.argv[2]
 
     print("Using dataset {} as train set".format(trainset))
-    print("Using dataset {} as test set".format(testset))
+    # print("Using dataset {} as test set".format(testset))
 
     blacklist = Utils.init_blacklist("mal_blacklist.txt")
 
     train_class = MalDictionary.fromJsonFile(trainset,blacklist)
     test_class  = MalDictionary.fromJsonFile(testset,blacklist)
 
+    # print("ntrain: {} ntest: {}".format(len(train_class.getInsList()),len(test_class.getInsList())))
 
+    # train_class.printPredictions(test_class,ignoreScale=True)
+    # for ins in test_class.getInsList():
+    #     l = train_class.findInstr(ins,True)
+    #     if len(l) >= 1 and ins.mem_fprint > 1000000:
+    #         print("{:10d} {:10d} {:10.1f}".format(l[0].mem_fprint,int(ins.mem_fprint/10),l[0].mem_fprint/ins.mem_fprint))
+
+    # llist = [ins for ins in test_class.getInsList() if ins.mem_fprint > 10000000]
+    #
+    # nhits = [ins for ins in llist if train_class.findInstr(ins,True)[0].mem_fprint*10-ins.mem_fprint < 1000000]
+    #
+    # print("{:10d} {:10d}".format(len(nhits),len(llist)))
+
+        # else:
+            # print("WTF {} {}".format(len(l),ins.mem_fprint))
+    # exact = sum([len(train_class.findInstr(ins,True)) for ins in test_class.getInsList()])
+    #
+    # nexact = [ins.short for ins in test_class.getInsList() if len(train_class.findInstr(ins,True)) == 0]
+    #
+    # for i in nexact:
+    #     print(i)
+    #
+    # print("Exact found: {}".format(exact))
     qtags = train_class.query_tags
- 
-    split_i = int(len(qtags)/8)
+    queries = list(range(1,45))
+    qtags.sort()
+    tag2query = dict([(tag,i) for (i,tag) in enumerate(qtags)])
 
-    test_tags = qtags[0:split_i]
-    train_tags  = qtags[split_i+1:]
-    (split1,split2) = train_class.split(train_tags,test_tags)
+    qtagst = test_class.query_tags
+    qtagst.sort()
+    tag2queryt = dict([(tag,i) for (i,tag) in enumerate(qtagst)])
+    # print(qtags)
+    # print(len(qtags))
+    # print(len(qtagst))
+    for q in queries:
+        test_q  = [q]
+        train_q = Utils.list_diff(queries,test_q)
+        # print(q)
+        (split1_train,split2_train) = train_class.splitQuery(train_q,test_q,tag2query)
+        (split1_test,split2_test) = test_class.splitQuery(train_q,test_q,tag2queryt)
+        try:
+            print("{}".format(split2_train.getMaxMem() / split2_test.getMaxMem()))
+        except:
+            # print("{} {}".format(split2_train.getMaxMem(),split2_test.getMaxMem()))
+            pass
+    #
+    # print("queries: {}".format(tag2query))
+    # split_i = int(len(qtags)/8)
+    #
+    # test_q  = [17] #queries[0:1]
+    #
 
-    print("train_tags {}".format(train_tags))
-    print("test_tags {}".format(test_tags))
+    # print("train memf {}".format(train_class.getMaxMem()))
+    # # (split1,split2) = train_class.splitRandom(0.9,0.1)
+    #
+    # print("train_q: {}".format(train_q))
+    # print("test_q : {}".format(test_q))
+    #
+    # l = len([i.mem_fprint for i in split2.getInsList() if i.mem_fprint == 0])
+    #
+    # print("{}".format(l / len(split2.getInsList())))
+    # # split1.printPredictions(split2)
+    # # print("AvgError: {}".format(split1.avgError(split2)))
+    #
+    # pl = [1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1]
+    # for t in range(1,23):
+    #     print("Testing Query {}".format(t))
+    #     test_q = [t]
+    #     train_q = Utils.list_diff(queries,test_q)
+    #     (split1,split2) = train_class.splitQuery(train_q,test_q,tag2query)
+    #     y = []
+    #     for p in pl:
+    #         bestp = split2.select(lambda x: -x.time,p)
+    #         y.append(bestp.avgAccTimeExact2(split2))
+    #         # print(len(train_class.getInsList()))
+    #         # print(len(bestp.getInsList()))
+    #         print("P: {:.1f} AvgAcc: {:.2f}".format(p,bestp.avgAccTimeExact2(split2)))
+    #
+    #     Utils.plotBar(pl,y,t,"time{}.pdf".format(t))
+    # split1.printPredictionsVerbose(split1,tag2query)
+    # split1.printPredictionsVerbose(split2,tag2query)
+    # var2c = Utils.var2column(trainset)
+    # print("Leave one out performance")
 
+    # print("deviance: {:5.2f}%".format(split1.avgDeviance(split2)))
     # print("tags1: {}".format(split1.query_tags))
     # print("tags2: {}".format(split2.query_tags))
 
-    for ins in split2.getInsList():
-        # print(ins.fname)
-        try:
-            mpred = split1.predictMem(ins)
-            mem   = ins.mem_fprint
-            if mpred != 0:
-                print("method: {:20} nargs: {:2d} actual: {:10d} pred: {:10d} perc: {:10.0f}".format(ins.fname,ins.nargs, mem,mpred,abs(100*mpred/mem)))
-            else:
-                print("method: {:20} nargs: {:2d} actual: {:10d} pred: {:10d}".format(ins.fname, ins.nargs, mem,mpred))
-                
-        except Exception:
-            print("method: {:20} nargs: {:2d}  NOT FOUND".format(ins.fname,ins.nargs))
-            pass
+    # for ins in split2.getInsList():
+    #     # print(ins.fname)
+    #     try:
+    #         mpred = split1.predictMem(ins)
+    #         mem   = ins.mem_fprint
+    #         if mem != 0:
+    #             print("method: {:20} nargs: {:2d} actual: {:10d} pred: {:10d} perc: {:10.0f}".format(ins.fname,ins.nargs, mem,mpred,abs(100*mpred/mem)))
+    #         else:
+    #             print("method: {:20} nargs: {:2d} actual: {:10d} pred: {:10d}".format(ins.fname, ins.nargs, mem,mpred))
+    #
+    #     except Exception as err:
+    #         # print("Exception: {}".format(err))
+    #         print("method: {:20} nargs: {:2d}  NOT FOUND".format(ins.fname,ins.nargs))
+    #         pass
     # theta3 = split2.findMethod("thetaselect")
 
     # for i in theta3:

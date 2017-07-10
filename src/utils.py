@@ -1,5 +1,9 @@
+import matplotlib.pyplot as plt
 from functools import reduce
+from pylab import savefig
+import numpy
 import json
+
 
 class Utils:
     @staticmethod
@@ -23,6 +27,10 @@ class Utils:
         for v in mdict.values():
             l.extend(v)
         return l
+
+    @staticmethod
+    def list_diff(list1,list2):
+        return list(set(list1)-set(list2))
 
     @staticmethod
     def cmp_arg_list(l1, l2):
@@ -55,15 +63,32 @@ class Utils:
 
     """ @arg stmt: str // short mal statement"""
     @staticmethod
-    def extract_fname(stmt):
+    def extract_fname(stmt): #TODO change name
         args = []
+        ret  = None
         if ":=" in stmt:
             fname = stmt.split(':=')[1].split("(")[0]
-            args  = stmt.split(':=')[1].split("(")[1].split(")")[0].strip().split(" ") #TODO remove
+            args  = stmt.split(':=')[1].split("(")[1].split(")")[0].strip().split(",") #TODO remove
+            ret   = stmt.split(':=')[0].split("[")[0].replace("(","")
         elif "(" in stmt:
             fname = stmt.split("(")[0]
             args  = stmt.split("(")[1].split(")")[0].strip().split(" ")
         else:
             fname = stmt
 
-        return fname.strip()
+        return (fname.strip(),args,ret)
+
+    @staticmethod
+    def plotBar(x,y,q,output,lscale=False):
+        fig, ax = plt.subplots()
+        width = 0.5
+        bar_width = 0.35
+        # rects1 = ax.bar(ind-width, sp, width, color='b')
+        ind = numpy.arange(len(x))+1
+        rects1 = ax.bar(ind, y, width, color='b',log=lscale)
+        ax.set_ylabel('Acc rate')
+        ax.set_title("Query {} Most % expensive instructions".format(q))
+        ax.set_xticks(ind + width)
+        ax.set_xticklabels(x)
+
+        savefig(output)#.format(sys.argv[1].split('.')[0]))
