@@ -21,6 +21,9 @@ class Arg:
     def isVar(self):
         return self.name.startswith("X_") or self.name.startswith("C_")
 
+    def isVar(self):
+        return self.name.startswith("X_") or self.name.startswith("C_")
+
     def __eq__(self, other):
         if (self.name  == other.name  and
             self.atype == other.atype and

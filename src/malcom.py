@@ -107,7 +107,6 @@ if __name__ == '__main__':
     # split1.printPredictionsVerbose(split2,tag2query)
     # var2c = Utils.var2column(trainset)
     # print("Leave one out performance")
-
     # print("deviance: {:5.2f}%".format(split1.avgDeviance(split2)))
     # print("tags1: {}".format(split1.query_tags))
     # print("tags2: {}".format(split2.query_tags))

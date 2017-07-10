@@ -16,7 +16,6 @@ class MalDictionary:
         self.mal_dict   = mal_dict
         self.query_tags = q_tags
         self.varflow    = varflow
-        # self.max_memf   = memf
 
     """
     @arg mfile    : json file containing mal execution info (link??)
@@ -29,6 +28,7 @@ class MalDictionary:
             startd     = {}
             query_tags = set()
             varflow    = Dataflow()
+
             while 1: #while not EOF
                 jobj = Utils.read_json_object(f)
                 if jobj is None:
@@ -51,8 +51,6 @@ class MalDictionary:
                             varflow.add(tag, ret, (args[2].strip(), args[3].strip()))
                         elif fname == "tid":
                             varflow.add(tag, ret, args[2].strip())
-                # else: #blacklisted intructions
-                    # if jobj["state"] == "done":
 
         return MalDictionary(maldict,list(query_tags),varflow)
 
@@ -71,7 +69,6 @@ class MalDictionary:
         # if len(ret) == 0:
             # print(mals.short)
         return ret
-
 
     def getInsList(self):
         ilist = []
@@ -137,6 +134,7 @@ class MalDictionary:
                 else:
                     raise e
             return nn1
+
 
     def predictMemExactOr(self, ins, default):
         exact = self.findInstr(ins)
