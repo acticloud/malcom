@@ -1,6 +1,11 @@
-""" Arg class """
-#@attr atype: String
-#@attr aval : Object
+"""
+Arg class
+@attr name : str //the name of the arg
+@attr atype: str //the type of the argument
+@attr aval : obj //arg value
+@attr size : int //argument memory size
+@attr eol  : int //end of life (if == 1 the arg is freed by the server)
+"""
 class Arg:
     def __init__(self, name, atype, val, size, eol):
         self.name   = name
@@ -11,7 +16,6 @@ class Arg:
 
     @staticmethod
     def fromJsonObj(jobj):
-        # pprint(jobj)
         name  = jobj['name']
         atype = jobj['type']
         aval  = jobj.get('value',None)

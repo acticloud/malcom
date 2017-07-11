@@ -5,14 +5,20 @@ import re
 
 
 """ MalInstruction Class:
-@arg type: string    // type of statement(assign, thetaselect etc)
-@arg time: float     // instruction duratin(microseconds)
-@arg size: int       // size field
-@arg list: List<Arg>)// instruction arguments (list for now TODO change)
-@arg short: string   // the short mal statement, str representation
-@arg tag: int        // the query identifier
-@arg arg_size: int   // total argument size(bytes)
-@var metric: Metric  // var that can define a distance between two queries
+@attr pc        : int        //mal programm counter
+@attr fname     : str        //function name
+@attr time      : int        //instruction duration(microseconds)
+@attr ret_size  : int        //total return values size (bytes)
+@attr arg_size  : int        //total argument values size (bytes)
+@attr mem_fprint: int        //instruction memory footprint
+@attr size      : int        // size field (maybe temporary vars size ?)
+@attr arg_list  : list<Arg>  // instruction arguments (list for now TODO change)
+@attr short     : str        // the short mal statement, str representation
+@attr tag       : int        // the query identifier
+@attr nargs     : int        //number of arguments
+@attr free_size : int        //amount of memory freed(arguments for which eol == 1)
+@attr arg_vars  : list<str>  //names of the arguments that are vars
+@attr ret_vars  : list<str>  //names of the return output that are vars
 """
 class MalInstruction:
     def __init__(self, pc, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars):
@@ -63,8 +69,8 @@ class MalInstruction:
         return total_self / total_other
 
 
+    """ @ret: string //arguments as a string"""
     def argListStr(self):
-        # slist = ["arg: {} {} ".format(a.name, int(a.size / 1000)) for a in self.arg_list if a.size>0]
         slist = ["arg: {:10} ".format(int(a.size / 1000)) for a in self.arg_list if a.size>0]
         return ' '.join(slist)
 
@@ -80,11 +86,11 @@ class MalInstruction:
             print('|| '.join(j))
 
 
-    def print_short(self):
+    def printShort(self):
         fmt = "Instr: {} nargs: {} time: {} mem_fprint: {}"
         print(fmt.format(self.fname,self.nargs, self.time, self.mem_fprint))
 
-    def print_verbose(self):
+    def printVerbose(self):
         fmt = "Instr: {} nargs: {} time: {} mem_fprint: {}"
         print(fmt.format(self.short,self.nargs, self.time, self.mem_fprint))
 
@@ -109,42 +115,3 @@ class MalInstruction:
 
     def __ne__(self, other):
         return self.__ne__(other)
-
-
-#TODO rename Metric, wtf name is this ?
-#TODO maybe input output operator: Arg format ???
-"""
-@arg itype: intstuction type: String
-@arg value:
-@arg op: type of operator(e.g thetaselect)
-@arg vtype: type of value(short, int, boolean, date...)
-"""
-class Metric:
-    def __init__(self, itype, op, vtype, value):
-        self.itype = itype #maybe remove??
-        self.op    = op
-        self.vtype = vtype
-        self.value = value
-
-    def distance(self, other):
-        if( self.itype == other.itype and
-            self.op == other.op and
-            self.vtype == other.vtype):
-            if(self.vtype == "int"):
-                return float((other.value-self.value) ** 2)
-        else:
-            return float("inf")
-
-    @staticmethod
-    def fromMalInstruction(sname, arg_list):
-        if(sname == 'thetaselect'):
-            if(len(arg_list) == 4):
-                return None
-            elif len(arg_list) == 3:
-                # print("thetaselect found {} {} {} {}".format(sname, arg_list[2].aval, arg_list[1].atype, arg_list[1].aval))
-                return Metric(sname, arg_list[2].aval, arg_list[1].atype, arg_list[1].aval)
-            else:
-                print("wtf")
-                return None
-        else:
-            return None
