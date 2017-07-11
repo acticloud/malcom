@@ -92,3 +92,7 @@ class Utils:
         ax.set_xticklabels(x)
 
         savefig(output)#.format(sys.argv[1].split('.')[0]))
+
+    @staticmethod
+    def isVar(name):
+        return name.startswith("X_") or name.startswith("C_")

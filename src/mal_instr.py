@@ -15,7 +15,7 @@ import re
 @var metric: Metric  // var that can define a distance between two queries
 """
 class MalInstruction:
-    def __init__(self, pc, short, fname, size, ret_size, tag, arg_size, alist, free_size):
+    def __init__(self, pc, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars):
         self.pc         = pc
         self.fname      = fname
         self.time       = 0
@@ -28,7 +28,8 @@ class MalInstruction:
         self.arg_size   = arg_size
         self.nargs      = len(alist)
         self.free_size  = free_size
-        self.metric     = Metric.fromMalInstruction(self.fname,self.arg_list)#TODO remove
+        self.arg_vars   = arg_vars
+        self.ret_vars   = ret_vars
 
     @staticmethod
     def fromJsonObj(jobj):
@@ -38,13 +39,13 @@ class MalInstruction:
         fname,_,_ = Utils.extract_fname(jobj["short"])
         tag       = int(jobj["tag"])
         rv        = [rv.get("size",0) for rv in jobj["ret"]]
-        sumf      = lambda x,y: x+y
         ret_size  = sum([o.get("size",0) for o in jobj.get("ret",[])])
         arg_size  = sum([o.get("size",0) for o in jobj.get("arg",[])])
         arg_list  = [Arg.fromJsonObj(e) for e in jobj.get("arg",[])]
         free_size = sum([arg.size for arg in arg_list if arg.eol == 1])
-
-        return MalInstruction(pc, short, fname, size, ret_size, tag, arg_size, arg_list, free_size)
+        arg_vars  = [arg.name for arg in arg_list if arg.isVar()]
+        ret_vars  = [ret['name'] for ret in jobj.get("ret",[]) if Utils.isVar(ret['name'])]
+        return MalInstruction(pc, short, fname, size, ret_size, tag, arg_size, arg_list, free_size, arg_vars, ret_vars)
 
     #deprecated
     def distance(self,other):

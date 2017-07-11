@@ -8,6 +8,7 @@ class Arg:
         self.aval   = val
         self.size   = size
         self.eol    = eol
+
     @staticmethod
     def fromJsonObj(jobj):
         # pprint(jobj)
@@ -17,9 +18,6 @@ class Arg:
         size  = int(jobj.get('size',0))
         eol   = int(jobj["eol"])
         return Arg(name,atype,aval,size,eol)
-
-    def isVar(self):
-        return self.name.startswith("X_") or self.name.startswith("C_")
 
     def isVar(self):
         return self.name.startswith("X_") or self.name.startswith("C_")

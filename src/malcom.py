@@ -13,7 +13,7 @@ def print_usage():
 
 if __name__ == '__main__':
     trainset = sys.argv[1]
-    testset  = sys.argv[2]
+    # testset  = sys.argv[2]
 
     print("Using dataset {} as train set".format(trainset))
     # print("Using dataset {} as test set".format(testset))
@@ -21,7 +21,7 @@ if __name__ == '__main__':
     blacklist = Utils.init_blacklist("mal_blacklist.txt")
 
     train_class = MalDictionary.fromJsonFile(trainset,blacklist)
-    test_class  = MalDictionary.fromJsonFile(testset,blacklist)
+    # test_class  = MalDictionary.fromJsonFile(testset,blacklist)
 
     # print("ntrain: {} ntest: {}".format(len(train_class.getInsList()),len(test_class.getInsList())))
 
@@ -47,28 +47,28 @@ if __name__ == '__main__':
     #     print(i)
     #
     # print("Exact found: {}".format(exact))
-    qtags = train_class.query_tags
-    queries = list(range(1,45))
-    qtags.sort()
-    tag2query = dict([(tag,i) for (i,tag) in enumerate(qtags)])
-
-    qtagst = test_class.query_tags
-    qtagst.sort()
-    tag2queryt = dict([(tag,i) for (i,tag) in enumerate(qtagst)])
-    # print(qtags)
-    # print(len(qtags))
-    # print(len(qtagst))
-    for q in queries:
-        test_q  = [q]
-        train_q = Utils.list_diff(queries,test_q)
-        # print(q)
-        (split1_train,split2_train) = train_class.splitQuery(train_q,test_q,tag2query)
-        (split1_test,split2_test) = test_class.splitQuery(train_q,test_q,tag2queryt)
-        try:
-            print("{}".format(split2_train.getMaxMem() / split2_test.getMaxMem()))
-        except:
-            # print("{} {}".format(split2_train.getMaxMem(),split2_test.getMaxMem()))
-            pass
+    # qtags = train_class.query_tags
+    # queries = list(range(1,45))
+    # qtags.sort()
+    # tag2query = dict([(tag,i) for (i,tag) in enumerate(qtags)])
+    #
+    # qtagst = test_class.query_tags
+    # qtagst.sort()
+    # tag2queryt = dict([(tag,i) for (i,tag) in enumerate(qtagst)])
+    # # print(qtags)
+    # # print(len(qtags))
+    # # print(len(qtagst))
+    # for q in queries:
+    #     test_q  = [q]
+    #     train_q = Utils.list_diff(queries,test_q)
+    #     # print(q)
+    #     (split1_train,split2_train) = train_class.splitQuery(train_q,test_q,tag2query)
+    #     (split1_test,split2_test) = test_class.splitQuery(train_q,test_q,tag2queryt)
+    #     try:
+    #         print("{}".format(split2_train.getMaxMem() / split2_test.getMaxMem()))
+    #     except:
+    #         # print("{} {}".format(split2_train.getMaxMem(),split2_test.getMaxMem()))
+    #         pass
     #
     # print("queries: {}".format(tag2query))
     # split_i = int(len(qtags)/8)

@@ -2,3 +2,7 @@ dataflow
 function user
 end user
 mvc
+define
+setVariable
+exportOperation
+new

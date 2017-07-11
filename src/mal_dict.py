@@ -47,11 +47,17 @@ class MalDictionary:
                         maldict[fname] = maldict.get(fname,[]) + [new_mals]
                         query_tags.add(int(jobj["tag"]))
                         tag = int(jobj["tag"])
-                        if fname == "bind": #or fname == "bind_idxbat":
-                            varflow.add(tag, ret, (args[2].strip(), args[3].strip()))
+                        if fname == "bind" or fname == "bind_idxbat":
+                            varflow.add(tag, ret,[args[3].strip()])
+                            # varflow.add(tag, ret, [args[2].strip(), args[3].strip()])
                         elif fname == "tid":
-                            varflow.add(tag, ret, args[2].strip())
-
+                            # print("tid")
+                            varflow.add(tag, ret, [args[2].strip()])
+                        else:
+                            # print("ret_vars {}".format(new_mals.ret_vars))
+                            varflow.addI(tag,new_mals.arg_vars,new_mals.ret_vars)
+                            for r in new_mals.ret_vars:
+                                print("lookup: ",r,varflow.lookup(r,tag))
         return MalDictionary(maldict,list(query_tags),varflow)
 
     """
