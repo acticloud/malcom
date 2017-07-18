@@ -56,8 +56,9 @@ class MalDictionary:
                         else:
                             # print("ret_vars {}".format(new_mals.ret_vars))
                             varflow.addI(tag,new_mals.arg_vars,new_mals.ret_vars)
-                            for r in new_mals.ret_vars:
-                                print("lookup: ",r,varflow.lookup(r,tag))
+                            # for r in new_mals.arg_vars:
+                            #     print("short",new_mals.short)
+                            #     print("lookup: ",r,varflow.lookup(r,tag))
         return MalDictionary(maldict,list(query_tags),varflow)
 
     """
@@ -166,6 +167,17 @@ class MalDictionary:
                 a1val = s.arg_list[1].aval
                 a1_t  = s.arg_list[1].atype
                 print("mal: {}, args: {} {} {} size: {}, time: {}".format(method,a2val,a1_t, a1val,s.size,s.time))
+
+    def printShort(self, method):
+        dic = self.mal_dict
+        for s in dic[method]:
+            print(s.short)
+            # if s.fname == method and nargs == len(s.arg_list):
+            #     a2val = s.arg_list[2].aval
+            #     a1val = s.arg_list[1].aval
+            #     a1_t  = s.arg_list[1].atype
+            #     print("mal: {}, args: {} {} {} size: {}, time: {}".format(method,a2val,a1_t, a1val,s.size,s.time))
+
 
     """ @arg other: MalDictionary"""
     def printDiff(self, other):

@@ -18,9 +18,9 @@ class Dataflow:
     """
     def addI(self, tag, arg_list, ret_list):
         flatl = set()
-        for arg in arg_list:
-            for a in self.lookup(arg,tag,default=[]):
-                flatl.add(a)
+        # for arg in arg_list:
+        #     for a in self.lookup(arg,tag,default=[]):
+        #         flatl.add(a)
 
         for r in ret_list:
             self.add(tag,r,list(flatl))

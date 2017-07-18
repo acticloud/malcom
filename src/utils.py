@@ -79,6 +79,34 @@ class Utils:
         return (fname.strip(),args,ret)
 
     @staticmethod
+    def extract_operator(method, jobj):
+        args  = jobj["args"]
+        nargs = len(args)
+        if method == "thetaselect":
+            if args == 3:
+                return args[2]["value"]
+            elif args == 4:
+                return args[3]["value"]
+            else:
+                raise ValueError("da??")
+        else:
+            raise ValueError("e??")
+
+    @staticmethod
+    def extract_bounds(method, jobj):
+        args  = jobj["args"]
+        nargs = len(args)
+        if method == "select":
+            if args == 3:
+                return args[2]["value"]
+            elif args == 4:
+                return args[3]["value"]
+            else:
+                raise ValueError("da??")
+        else:
+            raise ValueError("e??")
+
+    @staticmethod
     def plotBar(x,y,q,output,lscale=False):
         fig, ax = plt.subplots()
         width = 0.5
@@ -92,6 +120,21 @@ class Utils:
         ax.set_xticklabels(x)
 
         savefig(output)#.format(sys.argv[1].split('.')[0]))
+
+    @staticmethod
+    def sizeof(type_str):
+        if type_str == "int":
+            return 4
+        elif type_str == "bat[:oid]":
+            return 8
+        elif type_str == "float":
+            return 8
+        elif type_str == "boolean":
+            return 1
+        elif type_str == "date":
+            return 8
+        else
+            raise TypeError("Unsupported type")
 
     @staticmethod
     def isVar(name):

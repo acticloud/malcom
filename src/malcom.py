@@ -10,10 +10,24 @@ import random
 def print_usage():
     print("Usage: ./parser.py <trainset> <testset>")
 
+def test_sampling(train_set, test_set):
+    print("ntrain: {} ntest: {}".format(len(train_set.getInsList()),len(test_set.getInsList())))
+
+    for ins in test_set.getInsList():
+        l = train_set.findInstr(ins,True)
+        if len(l) >= 1 and ins.mem_fprint > 1000000:
+            print("{:10d} {:10d} {:10.1f}".format(l[0].mem_fprint,int(ins.mem_fprint/10),l[0].mem_fprint/ins.mem_fprint))
+
+    # llist = [ins for ins in test_set.getInsList() if ins.mem_fprint > 10000000]
+    #
+    # nhits = [ins for ins in llist if train_set.findInstr(ins,True)[0].mem_fprint*10-ins.mem_fprint < 100000]
+    #
+    # print("{:10d} {:10d}".format(len(nhits),len(llist)))
+
 
 if __name__ == '__main__':
     trainset = sys.argv[1]
-    # testset  = sys.argv[2]
+    testset  = sys.argv[2]
 
     print("Using dataset {} as train set".format(trainset))
     # print("Using dataset {} as test set".format(testset))
@@ -21,10 +35,34 @@ if __name__ == '__main__':
     blacklist = Utils.init_blacklist("mal_blacklist.txt")
 
     train_class = MalDictionary.fromJsonFile(trainset,blacklist)
+    train_class.printShort("thetaselect")
     # test_class  = MalDictionary.fromJsonFile(testset,blacklist)
-
+    #
     # print("ntrain: {} ntest: {}".format(len(train_class.getInsList()),len(test_class.getInsList())))
+    #
+    # # test_sampling(train_class,test_class)
+    # qtags = train_class.query_tags
+    # print(train_class.getMaxMem()/1000000000,test_class.getMaxMem()/1000000000)
+    # queries = list(range(1,23))
+    # print(qtags)
+    # qtags.sort()
+    # tag2query = dict([(tag,i) for (i,tag) in enumerate(qtags)])
+    # qtagst = test_class.query_tags
+    # qtagst.sort()
+    # tag2queryt = dict([(tag,i) for (i,tag) in enumerate(qtagst)])
+    # print(test_class.query_tags)
+    # for q in queries:
+    #     # print("testint query ",q)
+    #     test_q  = [q]
+    #     train_q = Utils.list_diff(queries,test_q)
+    #     # print(q)
+    #     (split1_train,split2_train) = train_class.splitQuery(train_q,test_q,tag2query)
+    #     (split1_test,split2_test) = test_class.splitQuery(train_q,test_q,tag2queryt)
+    #     print("ntrain: {} ntest: {}".format(len(split2_train.getInsList()),len(split2_test.getInsList())))
 
+        # test_sampling(split2_train, split2_test)
+    #
+    #     test_sampling(train_class, test_class)
     # train_class.printPredictions(test_class,ignoreScale=True)
     # for ins in test_class.getInsList():
     #     l = train_class.findInstr(ins,True)
