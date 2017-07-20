@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 from functools import reduce
 from pylab import savefig
+from stats import Stats
 import numpy
 import json
 
@@ -57,6 +58,13 @@ class Utils:
         return blacklist
 
     @staticmethod
+    def loadStatistics(sfile):
+        d = []
+        for line in open(sfile).readlines():
+            d.append(Stats.fromStr(line))
+        return dict(d)
+
+    @staticmethod
     def sumJsonList(jlist, sfield):
         sumf = lambda x,y: x+y
         return reduce(sumf, map(lambda var: var.get(sfield,0),jlist), 0)
@@ -80,17 +88,49 @@ class Utils:
 
     @staticmethod
     def extract_operator(method, jobj):
-        args  = jobj["args"]
+        args  = jobj["arg"]
         nargs = len(args)
         if method == "thetaselect":
-            if args == 3:
-                return args[2]["value"]
-            elif args == 4:
-                return args[3]["value"]
+            if nargs == 3:
+                return args[2]["value"].strip('\"')
+            elif nargs == 4:
+                return args[3]["value"].strip('\"')
             else:
+                print(jobj["short"])
                 raise ValueError("da??")
+        elif method == "select":
+            return "between"
         else:
             raise ValueError("e??")
+
+    @staticmethod
+    def hi_lo(method, op, jobj, stats):
+        args = jobj["arg"]
+        if method == "select":
+            if len(args) == 7:
+                return (args[2]["value"].strip('\"'),args[3]["value"].strip('\"'))
+            elif len(args) == 6:
+                val = args[1]["value"]
+                return (val,val)
+            else:
+                print(jobj["short"])
+                print(jobj["arg"][0])
+                raise ValueError("da2??")
+        elif method == "thetaselect":
+            val = args[-2]["value"]
+            # print("VAL,OP: ", val, op)
+            if op == "<=" or op == "<":
+                return (stats.min,val)
+            elif op == ">" or op == ">=":
+                return (val,stats.max)
+            elif op == "==" or op == "!=":
+                return (val,val)
+            else:
+                print(op)
+                raise ValueError("op??")
+        else:
+            print(jobj["short"])
+            raise ValueError("ttt")
 
     @staticmethod
     def extract_bounds(method, jobj):
@@ -133,7 +173,7 @@ class Utils:
             return 1
         elif type_str == "date":
             return 8
-        else
+        else:
             raise TypeError("Unsupported type")
 
     @staticmethod

@@ -1,9 +1,11 @@
 import random
 import json
-from utils import Utils
-from functools import reduce
-from mal_instr import MalInstruction
+from utils        import Utils
+from functools    import reduce
+from mal_instr    import MalInstruction
+from mal_bins     import BetaIns
 from mal_dataflow import Dataflow
+from bdict        import BDict
 #TODO add method find closest instruction
 
 class MalDictionary:
@@ -12,22 +14,24 @@ class MalDictionary:
     @arg q_tags  : list<int> //list of the unique query tags
     @arg varflow: dic<tag,dic<var,table>>
     """
-    def __init__(self, mal_dict, q_tags, varflow, tmplist=[]):
+    def __init__(self, mal_dict, q_tags, varflow, beta_dict = {}):
         self.mal_dict   = mal_dict
         self.query_tags = q_tags
         self.varflow    = varflow
+        self.beta_dict  = BDict(beta_dict)
 
     """
     @arg mfile    : json file containing mal execution info (link??)
     @arg blacklist: list of black listed mal instructions
     """
     @staticmethod
-    def fromJsonFile(mfile, blacklist):
+    def fromJsonFile(mfile, blacklist, stats):
         with open(mfile) as f:
             maldict    = {}
             startd     = {}
             query_tags = set()
             varflow    = Dataflow()
+            bins       = {}
 
             while 1: #while not EOF
                 jobj = Utils.read_json_object(f)
@@ -47,8 +51,13 @@ class MalDictionary:
                         maldict[fname] = maldict.get(fname,[]) + [new_mals]
                         query_tags.add(int(jobj["tag"]))
                         tag = int(jobj["tag"])
+                        if fname == "thetaselect" or fname == "select":
+                            bi = BetaIns.fromJsonObj(jobj, fname, stats)
+                            bins[fname] = bins.get(fname,[])
+                            bins[fname].append(bi)
+                            # print(bi.toStr())
                         if fname == "bind" or fname == "bind_idxbat":
-                            varflow.add(tag, ret,[args[3].strip()])
+                            varflow.add(tag, ret, [args[3].strip()])
                             # varflow.add(tag, ret, [args[2].strip(), args[3].strip()])
                         elif fname == "tid":
                             # print("tid")
@@ -59,7 +68,7 @@ class MalDictionary:
                             # for r in new_mals.arg_vars:
                             #     print("short",new_mals.short)
                             #     print("lookup: ",r,varflow.lookup(r,tag))
-        return MalDictionary(maldict,list(query_tags),varflow)
+        return MalDictionary(maldict,list(query_tags),varflow, bins)
 
     """
     @arg mals: MalInstruction

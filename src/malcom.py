@@ -34,8 +34,25 @@ if __name__ == '__main__':
 
     blacklist = Utils.init_blacklist("mal_blacklist.txt")
 
-    train_class = MalDictionary.fromJsonFile(trainset,blacklist)
-    train_class.printShort("thetaselect")
+    stats = Utils.loadStatistics('tpch10_stats.txt')
+
+    train_class = MalDictionary.fromJsonFile(trainset,blacklist, stats)
+
+    # train_class.beta_dict.printStdout()
+
+    dict2 = train_class.beta_dict
+
+    test_filter = dict2.filter(lambda ins: ins.col != 'TMP')
+
+    # dict2.printStdout()
+    (test_filter1,test_filter2) = test_filter.randomSplit(0.1)
+    test_filter1.printStdout()
+    print("filter2")
+    test_filter2.printStdout()
+    # for k in stats.keys():
+        # print(k, stats[k])
+
+    # train_class.printShort("select")
     # test_class  = MalDictionary.fromJsonFile(testset,blacklist)
     #
     # print("ntrain: {} ntest: {}".format(len(train_class.getInsList()),len(test_class.getInsList())))
