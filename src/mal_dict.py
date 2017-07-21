@@ -55,16 +55,20 @@ class MalDictionary:
                             bi = BetaIns.fromJsonObj(jobj, fname, stats)
                             bins[fname] = bins.get(fname,[])
                             bins[fname].append(bi)
+
+                        for r in jobj["ret"]:
+                            if "alias" in r:
+                                varflow.add(tag,r["name"],r["alias"].split('.')[-1])
                             # print(bi.toStr())
-                        if fname == "bind" or fname == "bind_idxbat":
-                            varflow.add(tag, ret, [args[3].strip()])
-                            # varflow.add(tag, ret, [args[2].strip(), args[3].strip()])
-                        elif fname == "tid":
-                            # print("tid")
-                            varflow.add(tag, ret, [args[2].strip()])
-                        else:
-                            # print("ret_vars {}".format(new_mals.ret_vars))
-                            varflow.addI(tag,new_mals.arg_vars,new_mals.ret_vars)
+                        # if fname == "bind" or fname == "bind_idxbat":
+                        #     varflow.add(tag, ret, [args[3].strip()])
+                        #     # varflow.add(tag, ret, [args[2].strip(), args[3].strip()])
+                        # elif fname == "tid":
+                        #     # print("tid")
+                        #     varflow.add(tag, ret, [args[2].strip()])
+                        # else:
+                        #     # print("ret_vars {}".format(new_mals.ret_vars))
+                        #     varflow.addI(tag,new_mals.arg_vars,new_mals.ret_vars)
                             # for r in new_mals.arg_vars:
                             #     print("short",new_mals.short)
                             #     print("lookup: ",r,varflow.lookup(r,tag))

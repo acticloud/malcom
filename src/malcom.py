@@ -42,13 +42,28 @@ if __name__ == '__main__':
 
     dict2 = train_class.beta_dict
 
-    test_filter = dict2.filter(lambda ins: ins.col != 'TMP')
+    test_filter = dict2.filter(lambda ins: ins.ctype != 'bat[:bit]')
 
-    # dict2.printStdout()
+    # test_filter.printStdout()
     (test_filter1,test_filter2) = test_filter.randomSplit(0.1)
-    test_filter1.printStdout()
-    print("filter2")
-    test_filter2.printStdout()
+    # # test_filter1.printStdout()
+    # # print("filter2")
+    # # test_filter2.printStdout()
+    #
+    for ti in test_filter2.getInsList():
+        pr = test_filter1.predict(ti)
+        print(ti.lo,ti.hi,ti.cnt)
+        print(pr.lo,pr.hi,pr.cnt)
+        print("next")
+    #
+    # for ti in dict2.getInsList():
+    #     if ti.col == 'TMP':
+    #         print(ti.short)
+        # pr = test_filter1.predict(ti)
+        # print(ti.lo,ti.hi,ti.cnt)
+        # print(pr.lo,pr.hi,pr.cnt)
+        # print("next")
+
     # for k in stats.keys():
         # print(k, stats[k])
 

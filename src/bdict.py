@@ -15,12 +15,19 @@ class BDict:
             for i in self.values():
                 f.write(i.toStr())
 
-    def predictMem(self,ins):
-        cand = [i for i in self.bd.get(ins.method,[]) if i.col == ins.col and i.op == ins.op]
-        return None #TODO fill this
+    def getInsList(self):
+        il = []
+        for l in self.bd.values():
+            il.extend(l)
+        return il
+    # def predictMem(self,ins):
+    #     cand = [i for i in self.bd.get(ins.method,[]) if i.col == ins.col and i.op == ins.op]
+    #     return None #TODO fill this
 
     def predict(self, ins):
-        return None
+        cand = [[i,i.distance(ins)] for i in self.bd.get(ins.method,[]) if i.col == ins.col and i.op == ins.op]
+        mins = min(cand, key=lambda ins: ins[1])
+        return mins[0]
 
     def filter(self, f):
         newd = copy.deepcopy(self.bd)
