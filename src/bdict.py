@@ -24,10 +24,25 @@ class BDict:
     #     cand = [i for i in self.bd.get(ins.method,[]) if i.col == ins.col and i.op == ins.op]
     #     return None #TODO fill this
 
-    def predict(self, ins):
+    def kNN(self, ins):
         cand = [[i,i.distance(ins)] for i in self.bd.get(ins.method,[]) if i.col == ins.col and i.op == ins.op]
         mins = min(cand, key=lambda ins: ins[1])
         return mins[0]
+
+    def predictCount(self, ins, default=0):
+        cand = [[i,i.distance(ins)] for i in self.bd.get(ins.method,[]) if i.col == ins.col and i.op == ins.op]
+        if len(cand)==0:
+            return default
+        knn = min(cand, key=lambda ins: ins[1])[0]
+        return knn.extrapolate(ins)
+
+    def avgAcc(self, test_set):
+        self_list = self.getInsList()
+        test_list = test_set.getInsList()
+        non_zeros = [i for i in test_list if i.cnt > 0]
+        acc = [self.predictCount(i)/i.cnt for i in non_zeros]
+        print(len(acc))
+        return sum(acc)/len(acc)
 
     def filter(self, f):
         newd = copy.deepcopy(self.bd)

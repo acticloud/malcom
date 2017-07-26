@@ -16,7 +16,7 @@ class BetaIns:
         self.ctype  = col_type
         self.op     = operator
         self.cnt    = cnt
-        if self.ctype == 'bat[:int]' or self.ctype == 'bat[:lng]':
+        if self.ctype in ['bat[:int]','bat[:lng]','lng']:
             self.lo,self.hi    = (int(lo),int(hi))
         elif self.ctype == 'bat[:date]':
             # print(lo,hi)
@@ -47,7 +47,7 @@ class BetaIns:
     def isIncluded(self,other):
         assert self.ctype == other.ctype
         t = self.ctype
-        if t == 'bat[:int]' or t == 'bat[:lng]' or t == 'bat[:date]':
+        if t in ['bat[:int]','bat[:lng]','bat[:date]','lng']:
             return self.lo >= other.lo and self.hi <= other.hi
 
         return None
@@ -55,7 +55,7 @@ class BetaIns:
     def includes(self, other):
         assert self.ctype == other.ctype
         t = self.ctype
-        if t == 'bat[:int]' or t == 'bat[:lng]' or t == 'bat[:date]':
+        if t in ['bat[:int]','bat[:lng]','bat[:date]','lng']:
             return self.lo <= other.lo and self.hi >= other.hi
 
         return None
@@ -63,28 +63,32 @@ class BetaIns:
     def distance(self, other):
         assert self.ctype == other.ctype
         if self.includes(other) or self.isIncluded(other):
-            if self.ctype == 'bat[:int]' or self.ctype == 'bat[:lng]':
+            if self.ctype in ['bat[:int]','bat[:lng]','lng']:
                 return float((self.lo-other.lo)**2 + (self.hi-other.hi)**2)
             elif self.ctype == 'bat[:date]':
                 (min_lo,max_lo) = (min(self.lo,other.lo),max(self.lo,other.lo))
                 (min_hi,max_hi) = (min(self.hi,other.hi),max(self.hi,other.hi))
-                # d = (max_lo-min_lo)
-                # print(d.days/)
-                # print(type(d)
                 return float((max_lo-min_lo).days + (max_hi-min_hi).days)
         else:
             return float('inf')
         return None
 
     def extrapolate(self, other):
-        if self.ctype == 'bat[:int]' or self.ctype == 'bat[:lng]':
-            self_lo,self_hi    = (int(self.lo),int(self.lo))
-            other_lo, other_hi = (int(other.lo),int(other.lo))
+        if self.ctype in ['bat[:int]','bat[:lng]','lng']:
+            self_dist  = self.hi  - self.lo
+            other_dist = other.hi - other.lo
 
-            return self.count*(other_hi-other_lo)/(self_hi-self_lo)
+            if self_dist*other_dist != 0:
+                return self.cnt*other_dist/other_dist
+            else:
+                return self.cnt
         elif self.ctype == 'bat[:date]':
-            diff1 = (other_hi-other_lo)
-            diff2 = (self_hi-self_lo)
+            diff1 = (other.hi-other.lo)
+            diff2 = (self.hi-self.lo)
 
-            return self.count * (diff1.days() / diff2.days())
-        return None
+            return self.cnt * (diff1.days / diff2.days)
+        elif self.ctype == 'bat[:str]':
+            return self.cnt
+        else:
+            print("type ==",self.ctype,self.lo,self.hi)
+            return None

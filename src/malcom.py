@@ -39,12 +39,13 @@ if __name__ == '__main__':
     train_class = MalDictionary.fromJsonFile(trainset,blacklist, stats)
 
     # train_class.beta_dict.printStdout()
-    # dict2 = train_class.beta_dict
+    dict2 = train_class.beta_dict
 
-    # test_filter = dict2.filter(lambda ins: ins.ctype != 'bat[:bit]')
+    test_filter = dict2.filter(lambda ins: ins.ctype not in  ['bat[:bit]','bat[:hge]','lng'])
 
     # test_filter.printStdout()
-    # (test_filter1,test_filter2) = test_filter.randomSplit(0.1)
+    (test_filter1,test_filter2) = test_filter.randomSplit(0.1)
+    print( test_filter1.avgAcc(test_filter2) )
     # # test_filter1.printStdout()
     # # print("filter2")
     # # test_filter2.printStdout()
@@ -56,13 +57,13 @@ if __name__ == '__main__':
     #     print(pr.lo,pr.hi,pr.cnt)
     #     print("next")
 
-    il = train_class.getInsList()
-    il.sort(key = lambda i: -i.mem_fprint)
-
-    for i in il:
-        print(i.mem_fprint,i.short)
-
-    print(len(il))
+    # il = train_class.getInsList()
+    # il.sort(key = lambda i: -i.mem_fprint)
+    #
+    # for i in il:
+    #     print(i.mem_fprint,i.short)
+    #
+    # print(len(il))
     #
     # for ti in dict2.getInsList():
     #     if ti.col == 'TMP':
