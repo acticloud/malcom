@@ -28,12 +28,14 @@ class BetaIns:
 
     @staticmethod
     def fromJsonObj(jobj, method, stats):
-        count  = int(jobj["ret"][0]["count"])
+        # print(jobj["short"])
+        count  = int(jobj["ret"][0].get("count",0))
         ctype  = jobj["arg"][0].get("type","UNKNOWN")
-        column = jobj["arg"][0].get("alias","TMP").split('.')[-1]
+        column = next(iter([o["alias"] for o in jobj["arg"] if "alias" in o]),"TMP").split('.')[-1]
+        # column = jobj["arg"][0].get("alias","TMP").split('.')[-1]
         op     = Utils.extract_operator(method, jobj)
         # print(method, op)
-        lo, hi = Utils.hi_lo(method, op, jobj, stats.get(column,Stats("UNK","UNK")))
+        lo, hi = Utils.hi_lo(method, op, jobj, stats.get(column,Stats(0,0)))
         # print("HI,LO: ",hi,lo)
         return BetaIns(jobj["tag"],jobj["short"], method, column,ctype, op, hi, lo, count)
 

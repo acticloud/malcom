@@ -39,22 +39,30 @@ if __name__ == '__main__':
     train_class = MalDictionary.fromJsonFile(trainset,blacklist, stats)
 
     # train_class.beta_dict.printStdout()
+    # dict2 = train_class.beta_dict
 
-    dict2 = train_class.beta_dict
-
-    test_filter = dict2.filter(lambda ins: ins.ctype != 'bat[:bit]')
+    # test_filter = dict2.filter(lambda ins: ins.ctype != 'bat[:bit]')
 
     # test_filter.printStdout()
-    (test_filter1,test_filter2) = test_filter.randomSplit(0.1)
+    # (test_filter1,test_filter2) = test_filter.randomSplit(0.1)
     # # test_filter1.printStdout()
     # # print("filter2")
     # # test_filter2.printStdout()
     #
-    for ti in test_filter2.getInsList():
-        pr = test_filter1.predict(ti)
-        print(ti.lo,ti.hi,ti.cnt)
-        print(pr.lo,pr.hi,pr.cnt)
-        print("next")
+    # for ti in test_filter2.getInsList():
+    #     pr = test_filter1.predict(ti)
+    #     print(ti.short)
+    #     print(ti.lo,ti.hi,ti.cnt)
+    #     print(pr.lo,pr.hi,pr.cnt)
+    #     print("next")
+
+    il = train_class.getInsList()
+    il.sort(key = lambda i: -i.mem_fprint)
+
+    for i in il:
+        print(i.mem_fprint,i.short)
+
+    print(len(il))
     #
     # for ti in dict2.getInsList():
     #     if ti.col == 'TMP':

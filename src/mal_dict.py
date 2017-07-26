@@ -32,7 +32,7 @@ class MalDictionary:
             query_tags = set()
             varflow    = Dataflow()
             bins       = {}
-
+            blist      = ["thetaselect","select","+","-","*"]
             while 1: #while not EOF
                 jobj = Utils.read_json_object(f)
                 if jobj is None:
@@ -51,7 +51,7 @@ class MalDictionary:
                         maldict[fname] = maldict.get(fname,[]) + [new_mals]
                         query_tags.add(int(jobj["tag"]))
                         tag = int(jobj["tag"])
-                        if fname == "thetaselect" or fname == "select":
+                        if fname in blist:
                             bi = BetaIns.fromJsonObj(jobj, fname, stats)
                             bins[fname] = bins.get(fname,[])
                             bins[fname].append(bi)

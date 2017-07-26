@@ -100,6 +100,8 @@ class Utils:
                 raise ValueError("da??")
         elif method == "select":
             return "between"
+        elif method in ["+","-","*"]:
+            return "batcalc"
         else:
             raise ValueError("e??")
 
@@ -128,6 +130,8 @@ class Utils:
             else:
                 print(op)
                 raise ValueError("op??")
+        elif method in ["+","-","*"]:
+            return (stats.min,stats.max)
         else:
             print(jobj["short"])
             raise ValueError("ttt")
