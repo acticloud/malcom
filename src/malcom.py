@@ -41,11 +41,30 @@ if __name__ == '__main__':
     # train_class.beta_dict.printStdout()
     dict2 = train_class.beta_dict
 
-    test_filter = dict2.filter(lambda ins: ins.ctype not in  ['bat[:bit]','bat[:hge]','lng'])
+    test_filter = dict2.filter(lambda ins: ins.ctype not in  ['bat[:bit]','bat[:hge]'] and ins.method in ['select','thetaselect'])
 
     # test_filter.printStdout()
-    (test_filter1,test_filter2) = test_filter.randomSplit(0.1)
-    print( test_filter1.avgAcc(test_filter2) )
+    s = {}
+    for i in [1]:#[1,2,3,4,5]:
+        (test_filter1,test_filter2) = test_filter.randomSplit(0.9)
+        print(len(test_filter1.getInsList()),len(test_filter2.getInsList()))
+        l = [1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.07,0.05,0.03,0.01]
+        # l.rev()
+        l2 = [0.005]
+        for p in l2:
+                (train_set,_) = test_filter1.randomSplit(p)
+                # print("ntrain:",len(train_set.getInsList()))
+                # print( train_set.avgAcc(test_filter2) )
+                print( train_set.printPredictions(test_filter2) )
+                s[p] = s.get(p,0.0) + train_set.avgAcc(test_filter2)
+
+    ke = list(s.keys())
+    ke.sort()
+    for k in ke:
+        print(k,s[k]/5)
+
+    # v = list([s[k]/5 for k in ke])
+    # Utils.plotBar(ke,v,"12346","some_bar.pdf")
     # # test_filter1.printStdout()
     # # print("filter2")
     # # test_filter2.printStdout()

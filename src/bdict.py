@@ -30,19 +30,33 @@ class BDict:
         return mins[0]
 
     def predictCount(self, ins, default=0):
-        cand = [[i,i.distance(ins)] for i in self.bd.get(ins.method,[]) if i.col == ins.col and i.op == ins.op]
-        if len(cand)==0:
-            return default
-        knn = min(cand, key=lambda ins: ins[1])[0]
-        return knn.extrapolate(ins)
+        if ins.method in ['select','thetaselect']:
+            cand = [[i,i.distance(ins)] for i in self.bd.get(ins.method,[]) if i.col == ins.col and i.op == ins.op]
+            if len(cand)==0:
+                return default
+            knn = min(cand, key=lambda ins: ins[1])[0]
+            return knn.extrapolate(ins)
+        elif ins.method in ['join']:
+            print("What do we do with joins ???")
+            return None
 
     def avgAcc(self, test_set):
         self_list = self.getInsList()
         test_list = test_set.getInsList()
         non_zeros = [i for i in test_list if i.cnt > 0]
-        acc = [self.predictCount(i)/i.cnt for i in non_zeros]
-        print(len(acc))
-        return sum(acc)/len(acc)
+        acc = [1 for i in non_zeros if abs(self.predictCount(i)-i.cnt)/i.cnt < 0.1]
+        # print(len(acc))
+        return float(sum(acc))/len(non_zeros)
+
+    def printPredictions(self, test_set):
+        self_list = self.getInsList()
+        test_list = test_set.getInsList()
+        non_zeros = [i for i in test_list if i.cnt > 0]
+        for test_i in non_zeros:
+            pred = self.predictCount(test_i)
+            # print(test_i.short)
+            # print(pred.short)
+            print("{} {:10.0f} {:10.0f} {:4.1f}".format(test_i.op, pred,test_i.cnt, abs(self.predictCount(test_i)-test_i.cnt)/test_i.cnt))
 
     def filter(self, f):
         newd = copy.deepcopy(self.bd)

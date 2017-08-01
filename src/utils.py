@@ -159,7 +159,7 @@ class Utils:
         ind = numpy.arange(len(x))+1
         rects1 = ax.bar(ind, y, width, color='b',log=lscale)
         ax.set_ylabel('Acc rate')
-        ax.set_title("Query {} Most % expensive instructions".format(q))
+        # ax.set_title("Query {} Most % expensive instructions".format(q))
         ax.set_xticks(ind + width)
         ax.set_xticklabels(x)
 

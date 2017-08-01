@@ -19,9 +19,10 @@ import re
 @attr free_size : int        //amount of memory freed(arguments for which eol == 1)
 @attr arg_vars  : list<str>  //names of the arguments that are vars
 @attr ret_vars  : list<str>  //names of the return output that are vars
+@attr cnt       : int        //the number of elements of the return var
 """
 class MalInstruction:
-    def __init__(self, pc, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars):
+    def __init__(self, pc, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt):
         self.pc         = pc
         self.fname      = fname
         self.time       = 0
@@ -36,6 +37,7 @@ class MalInstruction:
         self.free_size  = free_size
         self.arg_vars   = arg_vars
         self.ret_vars   = ret_vars
+        self.cnt        = cnt
 
     @staticmethod
     def fromJsonObj(jobj):
@@ -51,7 +53,10 @@ class MalInstruction:
         free_size = sum([arg.size for arg in arg_list if arg.eol == 1])
         arg_vars  = [arg.name for arg in arg_list if arg.isVar()]
         ret_vars  = [ret['name'] for ret in jobj.get("ret",[]) if Utils.isVar(ret['name'])]
-        return MalInstruction(pc, short, fname, size, ret_size, tag, arg_size, arg_list, free_size, arg_vars, ret_vars)
+        count     = int(jobj["ret"][0].get("count",0))
+        return MalInstruction(
+            pc, short, fname, size, ret_size, tag, arg_size, arg_list, free_size, arg_vars, ret_vars, count
+        )
 
     #deprecated
     def distance(self,other):
@@ -60,7 +65,7 @@ class MalInstruction:
     def argDist(self, other):
         assert len(self.arg_list) == len(other.arg_list)
         diff = [abs(a.size-b.size) for (a,b) in zip(self.arg_list,other.arg_list)]
-        return reduce(lambda x,y: x+y, diff, 0)
+        return sum(diff)
 
     def similarity(self, other):
         assert len(self.arg_list) == len(other.arg_list)

@@ -74,6 +74,20 @@ class MalDictionary:
                             #     print("lookup: ",r,varflow.lookup(r,tag))
         return MalDictionary(maldict,list(query_tags),varflow, bins)
 
+    """ Constructor from instruction list
+    @arg ilist: List<MalInstruction>
+    @arg varflow
+    @ret: MalDictionary
+    """
+    @staticmethod
+    def fromInsList(ilist, varflow):
+        mdict = {}
+        qtags = set()
+        for i in ilist:
+            mdict[i.fname] = mdict.get(fname,[]) + [i]
+            qtags.add(i.tag)
+        return MalDictionary(mdict, list(qtags), varflow)
+
     """
     @arg mals: MalInstruction
     @ret: List<MalInstriction> //list of all exact matches
@@ -155,7 +169,7 @@ class MalDictionary:
                     raise e
             return nn1
 
-
+    #TODO should rename findExactOR. ...
     def predictMemExactOr(self, ins, default):
         exact = self.findInstr(ins)
         assert len(exact) <= 1
@@ -214,15 +228,21 @@ class MalDictionary:
         )
 
     """
-    @arg f: lamdba k: MalInstruction
+    @arg f: lamdba k: MalInstruction //comparison metric
+    @ret: list of topN instuctions
     """
     def getTopN(self, f, n):
         mal_list = Utils.flatten(self.mal_dict)
         mal_list.sort(key = f)
         return mal_list[0:n]
 
-
-
+    """
+    @arg f: lambda i: MalInstruction -> boolean
+    retain only the mal instructions that satisfy the given function
+    """
+    def filter(self, f):
+        new_ilist = list([i for i in self.mal_dict.values() if f(i) == True])
+        return MalDictionary.fromInsList(new_ilist, self.varflow)
 
     """
     @desc splits the dictionary in two based on the query tags

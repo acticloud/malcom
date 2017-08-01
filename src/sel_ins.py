@@ -1,18 +1,14 @@
-from utils import Utils
-from stats import Stats
-from datetime import datetime
+from mal_instr import MalInstruction
 
-
-class BetaIns:
-    def __init__(self, tag, short, method, column, col_type, operator, arg_size, hi, lo, cnt):
-        self.tag      = tag
-        self.short    = short
-        self.method   = method
-        self.col      = column
-        self.ctype    = col_type
-        self.op       = operator
-        self.cnt      = cnt
-        self.arg_size = arg_size
+class SelectInstruction(MalInstruction):
+    def __init__(self, pc, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt, jobj):
+        MalInstruction.__init__(self, pc, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt)
+        self.ctype  = jobj["arg"][0].get("type","UNKNOWN")
+        self.column = next(iter([o["alias"] for o in jobj["arg"] if "alias" in o]),"TMP").split('.')[-1]
+        self.arg_size = [o.get("size",0) for o in jobj.get("arg",[])]
+        self.op     = Utils.extract_operator(method, jobj)
+        # print(method, op)
+        lo, hi = Utils.hi_lo(method, op, jobj, stats.get(column,Stats(0,0)))
         if self.ctype in ['bat[:int]','bat[:lng]','lng']:
             self.lo,self.hi    = (int(lo),int(hi))
         elif self.ctype == 'bat[:date]':
@@ -23,24 +19,6 @@ class BetaIns:
             self.hi     = hi
             self.lo     = lo
 
-    @staticmethod
-    def fromJsonObj(jobj, method, stats):
-        # print(jobj["short"])
-        count  = int(jobj["ret"][0].get("count",0))
-        ctype  = jobj["arg"][0].get("type","UNKNOWN")
-        column = next(iter([o["alias"] for o in jobj["arg"] if "alias" in o]),"TMP").split('.')[-1]
-        arg_size = [o.get("size",0) for o in jobj.get("arg",[])]
-        # column = jobj["arg"][0].get("alias","TMP").split('.')[-1]
-        op     = Utils.extract_operator(method, jobj)
-        # print(method, op)
-        lo, hi = Utils.hi_lo(method, op, jobj, stats.get(column,Stats(0,0)))
-        # print("HI,LO: ",hi,lo)
-        return BetaIns(jobj["tag"],jobj["short"], method, column,ctype, op, arg_size, hi, lo, count)
-
-    def toStr(self):
-        return "{:15} {:30} {:10} {:10} {} {} {:10}".format(
-            self.method, self.col, self.op, self.ctype, self.lo, self.hi, self.cnt
-        )
 
     def isIncluded(self,other):
         assert self.ctype == other.ctype
