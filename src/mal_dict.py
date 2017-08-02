@@ -2,7 +2,9 @@ import random
 import json
 from utils        import Utils
 from functools    import reduce
-from mal_instr    import MalInstruction
+from mal_instr import MalInstruction
+# from  sel_ins import SelectInstruction
+# from mal_instr    import fromJsonObj
 from mal_bins     import BetaIns
 from mal_dataflow import Dataflow
 from bdict        import BDict
@@ -40,7 +42,7 @@ class MalDictionary:
                 fname,args ,ret  = Utils.extract_fname(jobj["short"])
 
                 if not Utils.is_blacklisted(blacklist,fname):
-                    new_mals = MalInstruction.fromJsonObj(jobj)
+                    new_mals = MalInstruction.fromJsonObj(jobj, stats)
 
                     if jobj["state"] == "start":
                         startd[jobj["pc"]] = jobj["clk"]
@@ -84,7 +86,7 @@ class MalDictionary:
         mdict = {}
         qtags = set()
         for i in ilist:
-            mdict[i.fname] = mdict.get(fname,[]) + [i]
+            mdict[i.fname] = mdict.get(i.fname,[]) + [i]
             qtags.add(i.tag)
         return MalDictionary(mdict, list(qtags), varflow)
 
@@ -241,7 +243,8 @@ class MalDictionary:
     retain only the mal instructions that satisfy the given function
     """
     def filter(self, f):
-        new_ilist = list([i for i in self.mal_dict.values() if f(i) == True])
+        mal_list = Utils.flatten(self.mal_dict)
+        new_ilist = list([i for i in mal_list if f(i) == True])
         return MalDictionary.fromInsList(new_ilist, self.varflow)
 
     """
@@ -372,6 +375,22 @@ class MalDictionary:
         # print(max(list(map(ldiff,test_l))))
         # print("dev")
         return 100 * diff / len(test_l)
+
+    def avgMemAcc(self, test_set, thres):
+        self_list = self.getInsList()
+        test_list = test_set.getInsList()
+        non_zeros = [i for i in test_list if i.mem_fprint > 0]
+        acc = [1 for i in non_zeros if abs(self.predictMem(i,0)-i.mem_fprint)/i.mem_fprint < thres]
+
+        return 100*float(sum(acc))/len(non_zeros)
+
+    def avgCountAcc(self, test_set, thres):
+        self_list = self.getInsList()
+        test_list = test_set.getInsList()
+        non_zeros = [i for i in test_list if i.cnt > 0]
+        acc = [1 for i in non_zeros if abs(i.predictCount(self_list,0)-i.cnt)/i.cnt < thres]
+
+        return 100*float(sum(acc))/len(non_zeros)
 
     def avgErrorExact(self, test_dict):
         suml   = lambda x,y: x+y

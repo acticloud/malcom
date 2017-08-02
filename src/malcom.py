@@ -1,10 +1,10 @@
 #!/usr/bin/python3
 import json
 import sys
-from mal_instr import MalInstruction
+# from mal_instr import MalInstruction
 from pprint import pprint
-from utils import Utils
 from mal_dict import MalDictionary
+from utils import Utils
 import random
 
 def print_usage():
@@ -24,6 +24,17 @@ def test_sampling(train_set, test_set):
     #
     # print("{:10d} {:10d}".format(len(nhits),len(llist)))
 
+def hold_out(data_set):
+    sel_i = data_set.filter(lambda ins: ins.fname in ['select', 'thetaselect'] and ins.ctype not in ['bat[:bit]','bat[:hge]'])
+    print(len(sel_i.getInsList()))
+
+    (train_set,test_set)  = sel_i.splitRandom(0.9,0.1)
+    print(train_set.query_tags)
+    print(len(train_set.getInsList()),len(test_set.getInsList()))
+
+    # print(train_set.avgAcc(test_set))
+    # train_set.printPredictions(test_set)
+    print(train_set.avgCountAcc(test_set,0.01))
 
 if __name__ == '__main__':
     trainset = sys.argv[1]
@@ -38,30 +49,31 @@ if __name__ == '__main__':
 
     train_class = MalDictionary.fromJsonFile(trainset,blacklist, stats)
 
+    hold_out(train_class)
     # train_class.beta_dict.printStdout()
-    dict2 = train_class.beta_dict
-
-    test_filter = dict2.filter(lambda ins: ins.ctype not in  ['bat[:bit]','bat[:hge]'] and ins.method in ['select','thetaselect'])
-
-    # test_filter.printStdout()
-    s = {}
-    for i in [1]:#[1,2,3,4,5]:
-        (test_filter1,test_filter2) = test_filter.randomSplit(0.9)
-        print(len(test_filter1.getInsList()),len(test_filter2.getInsList()))
-        l = [1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.07,0.05,0.03,0.01]
-        # l.rev()
-        l2 = [0.005]
-        for p in l2:
-                (train_set,_) = test_filter1.randomSplit(p)
-                # print("ntrain:",len(train_set.getInsList()))
-                # print( train_set.avgAcc(test_filter2) )
-                print( train_set.printPredictions(test_filter2) )
-                s[p] = s.get(p,0.0) + train_set.avgAcc(test_filter2)
-
-    ke = list(s.keys())
-    ke.sort()
-    for k in ke:
-        print(k,s[k]/5)
+    # dict2 = train_class.beta_dict
+    #
+    # test_filter = dict2.filter(lambda ins: ins.ctype not in  ['bat[:bit]','bat[:hge]'] and ins.method in ['select','thetaselect'])
+    #
+    # # test_filter.printStdout()
+    # s = {}
+    # for i in [1]:#[1,2,3,4,5]:
+    #     (test_filter1,test_filter2) = test_filter.randomSplit(0.9)
+    #     print(len(test_filter1.getInsList()),len(test_filter2.getInsList()))
+    #     l = [1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.07,0.05,0.03,0.01]
+    #     # l.rev()
+    #     l2 = [0.005]
+    #     for p in l2:
+    #             (train_set,_) = test_filter1.randomSplit(p)
+    #             # print("ntrain:",len(train_set.getInsList()))
+    #             # print( train_set.avgAcc(test_filter2) )
+    #             print( train_set.printPredictions(test_filter2) )
+    #             s[p] = s.get(p,0.0) + train_set.avgAcc(test_filter2)
+    #
+    # ke = list(s.keys())
+    # ke.sort()
+    # for k in ke:
+    #     print(k,s[k]/5)
 
     # v = list([s[k]/5 for k in ke])
     # Utils.plotBar(ke,v,"12346","some_bar.pdf")

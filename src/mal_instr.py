@@ -1,5 +1,9 @@
 from utils import Utils
 from mal_arg import Arg
+from stats import Stats
+from datetime import datetime
+
+# from sel_ins import SelectInstruction
 from functools import reduce
 import re
 
@@ -40,7 +44,7 @@ class MalInstruction:
         self.cnt        = cnt
 
     @staticmethod
-    def fromJsonObj(jobj):
+    def fromJsonObj(jobj, stats):
         size      = int(jobj["size"])
         pc        = int(jobj["pc"])
         short     = jobj["short"]
@@ -54,9 +58,14 @@ class MalInstruction:
         arg_vars  = [arg.name for arg in arg_list if arg.isVar()]
         ret_vars  = [ret['name'] for ret in jobj.get("ret",[]) if Utils.isVar(ret['name'])]
         count     = int(jobj["ret"][0].get("count",0))
-        return MalInstruction(
-            pc, short, fname, size, ret_size, tag, arg_size, arg_list, free_size, arg_vars, ret_vars, count
-        )
+        if fname in ['select','thetaselect']:
+            return SelectInstruction(
+                pc, short, fname, size, ret_size, tag, arg_size, arg_list, free_size, arg_vars, ret_vars, count,jobj, stats
+            )
+        else :
+            return MalInstruction(
+                pc, short, fname, size, ret_size, tag, arg_size, arg_list, free_size, arg_vars, ret_vars, count
+            )
 
     #deprecated
     def distance(self,other):
@@ -90,6 +99,17 @@ class MalInstruction:
         if len(j) > 0:
             print('|| '.join(j))
 
+    def kNN(self, ilist, k):
+        cand = [[i,self.argDist(i)] for i in ilist if len(self.arg_list) == len(i.arg_list)]
+        cand.sort(key = lambda t: t[1])
+        return [ t[0] for t in cand[0:k] ]
+
+    def predictCount(self, ilist, default=None):
+        knn = self.kNN(ilist, 1)
+        if len(knn) > 1:
+            return self.mem_fprint
+        else:
+            return default
 
     def printShort(self):
         fmt = "Instr: {} nargs: {} time: {} mem_fprint: {}"
@@ -120,3 +140,91 @@ class MalInstruction:
 
     def __ne__(self, other):
         return self.__ne__(other)
+
+
+class SelectInstruction(MalInstruction):
+    def __init__(self, pc, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt, jobj, stats):
+        MalInstruction.__init__(self, pc, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt)
+        self.ctype    = jobj["arg"][0].get("type","UNKNOWN")
+        self.col      = next(iter([o["alias"] for o in jobj["arg"] if "alias" in o]),"TMP").split('.')[-1]
+        self.arg_size = [o.get("size",0) for o in jobj.get("arg",[])]
+        self.op       = Utils.extract_operator(fname, jobj)
+        # print(method, op)
+        lo, hi = Utils.hi_lo(fname, self.op, jobj, stats.get(self.col,Stats(0,0)))
+        if self.ctype in ['bat[:int]','bat[:lng]','lng']:
+            self.lo,self.hi    = (int(lo),int(hi))
+        elif self.ctype == 'bat[:date]':
+            # print(lo,hi)
+            self.lo  = datetime.strptime(lo,'%Y-%m-%d')
+            self.hi  = datetime.strptime(hi,'%Y-%m-%d')
+        else:
+            self.hi     = hi
+            self.lo     = lo
+
+
+    def isIncluded(self,other):
+        assert self.ctype == other.ctype
+        t = self.ctype
+        if t in ['bat[:int]','bat[:lng]','bat[:date]','lng']:
+            return self.lo >= other.lo and self.hi <= other.hi
+
+        return None
+    #
+    def includes(self, other):
+        assert self.ctype == other.ctype
+        t = self.ctype
+        if t in ['bat[:int]','bat[:lng]','bat[:date]','lng']:
+            return self.lo <= other.lo and self.hi >= other.hi
+
+        return None
+
+    def distance(self, other):
+        # print(self.col, other.col)
+        assert self.ctype == other.ctype
+        if self.includes(other) or self.isIncluded(other):
+            if self.ctype in ['bat[:int]','bat[:lng]','lng']:
+                return float((self.lo-other.lo)**2 + (self.hi-other.hi)**2)
+            elif self.ctype == 'bat[:date]':
+                (min_lo,max_lo) = (min(self.lo,other.lo),max(self.lo,other.lo))
+                (min_hi,max_hi) = (min(self.hi,other.hi),max(self.hi,other.hi))
+                return float((max_lo-min_lo).days + (max_hi-min_hi).days)
+        else:
+            return float('inf')
+        return None
+
+    def kNN(self, ilist, k):
+        cand = [[i,self.distance(i)] for i in ilist if i.col == self.col and i.op == self.op and i.ctype == self.ctype]
+        cand.sort( key = lambda t: t[1] )
+        return [ t[0] for t in cand[0:k] ]
+
+    def predictCount(self, ilist, default=0):
+        knn = self.kNN(ilist, 1)
+        if len(knn) >= 1:
+            return self.extrapolate(knn[0])
+        else:
+            print("None found")
+            return default
+
+
+    def extrapolate(self, other):
+        if self.ctype in ['bat[:int]','bat[:lng]','lng']:
+            self_dist  = self.hi  - self.lo
+            other_dist = other.hi - other.lo
+
+            if self_dist*other_dist != 0:
+                return self.cnt*other_dist/other_dist
+            else:
+                return self.cnt
+        elif self.ctype == 'bat[:date]':
+            diff1 = (other.hi-other.lo)
+            diff2 = (self.hi-self.lo)
+
+            if diff1.days * diff2.days != 0:
+                return self.cnt * (diff1.days / diff2.days)
+            else:
+                return self.cnt
+        elif self.ctype == 'bat[:str]':
+            return self.cnt
+        else:
+            print("type ==",self.ctype,self.lo,self.hi)
+            return None

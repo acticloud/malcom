@@ -5,8 +5,8 @@ from stats import Stats
 import numpy
 import json
 
-
 class Utils:
+
     @staticmethod
     #readline until you reach '}' or EOF
     def read_json_object(f):
