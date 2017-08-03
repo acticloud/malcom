@@ -36,6 +36,43 @@ def hold_out(data_set):
     # train_set.printPredictions(test_set)
     print(train_set.avgCountAcc(test_set,0.01))
 
+def hold_out2(train_set, test_set):
+    sel_train = train_set.filter(lambda ins: ins.fname in ['select', 'thetaselect'] and ins.ctype not in ['bat[:bit]','bat[:hge]'])
+    sel_test  = test_set.filter(lambda ins: ins.fname in ['select', 'thetaselect'] and ins.ctype not in ['bat[:bit]','bat[:hge]'])
+
+    for i in sel_test.getInsList():
+        print(i.short)
+    l = [0.01, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0]
+    for p in l:
+        (train_p,_) = sel_train.splitRandom(p)
+        # for ins in train_p.getInsList():
+        #     print(ins.short)
+        print("Train set perc: ", p," length: ",len(train_p.getInsList()))
+
+        for ins in sel_test.getInsList():
+            knn = train_p.predictCount(ins)
+            print("Test    ins: ", ins.short, " Count: ", ins.cnt)
+            print("closest ins: ", knn.short, " Count: ", knn.cnt, "Extrapolate: ", knn.extrapolate(ins))
+
+def hold_out3(train_set, test_set):
+    sel_train = train_set.filter(lambda ins: ins.fname in ['select', 'thetaselect'] and ins.ctype not in ['bat[:bit]','bat[:hge]'])
+    sel_test  = test_set.filter(lambda ins: ins.fname in ['select', 'thetaselect'] and ins.ctype not in ['bat[:bit]','bat[:hge]'])
+
+    l = [0.05, 0.1, 0.2, 0.3,  0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    e = []
+    for p in l:
+        error = 0
+        for ins in sel_test.getInsList():
+            for i in [1,2,3,4,5,6,7,8,9,10]:
+                (train_p,_) = sel_train.splitRandom(p)
+                error       += train_p.errorCount(ins)
+            print(error/10)
+        e.append(error/(10*len(sel_test.getInsList())) )
+    Utils.plotBar(l,e,"results/q4.pdf","Error %","perc of training set")
+                # print("Error: ", train_p.errorCount(i), "%")
+    print(sel_train.avgCountAcc(sel_test,0.1))
+
+
 if __name__ == '__main__':
     trainset = sys.argv[1]
     testset  = sys.argv[2]
@@ -48,8 +85,13 @@ if __name__ == '__main__':
     stats = Utils.loadStatistics('tpch10_stats.txt')
 
     train_class = MalDictionary.fromJsonFile(trainset,blacklist, stats)
+    test_class  = MalDictionary.fromJsonFile(testset, blacklist, stats)
+    hold_out2(train_class, test_class)
+    # hold_out3(train_class, test_class)
 
-    hold_out(train_class)
+    # sel_d = train_class.filter(lambda ins: ins.fname in ['thetaselect','select'])
+    # for i in sel_d.getInsList():
+    #     print(i.short)
     # train_class.beta_dict.printStdout()
     # dict2 = train_class.beta_dict
     #

@@ -222,6 +222,7 @@ class SelectInstruction(MalInstruction):
             if diff1.days * diff2.days != 0:
                 return self.cnt * (diff1.days / diff2.days)
             else:
+                print("0 product", self.hi, self.lo, other.hi, other.lo)
                 return self.cnt
         elif self.ctype == 'bat[:str]':
             return self.cnt

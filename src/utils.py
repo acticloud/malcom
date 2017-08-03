@@ -112,8 +112,15 @@ class Utils:
             if len(args) == 7:
                 return (args[2]["value"].strip('\"'),args[3]["value"].strip('\"'))
             elif len(args) == 6:
-                val = args[1]["value"]
-                return (val,val)
+                if op == "between":
+                    val1 = args[1]["value"]
+                    val2 = args[2]["value"]
+                    return (val1,val2)
+                else:
+                    assert op == "=="
+                    # print("weird stuff")
+                    val = args[1]["value"]
+                    return (val,val)
             else:
                 print(jobj["short"])
                 print(jobj["arg"][0])
@@ -151,15 +158,15 @@ class Utils:
             raise ValueError("e??")
 
     @staticmethod
-    def plotBar(x,y,q,output,lscale=False):
+    def plotBar(x,y,output,ylabel,xlabel, lscale=False):
         fig, ax = plt.subplots()
         width = 0.5
-        bar_width = 0.35
+        bar_width = 0.5
         # rects1 = ax.bar(ind-width, sp, width, color='b')
         ind = numpy.arange(len(x))+1
         rects1 = ax.bar(ind, y, width, color='b',log=lscale)
-        ax.set_ylabel('Acc rate')
-        # ax.set_title("Query {} Most % expensive instructions".format(q))
+        ax.set_ylabel(ylabel)
+        ax.set_title(xlabel)
         ax.set_xticks(ind + width)
         ax.set_xticklabels(x)
 

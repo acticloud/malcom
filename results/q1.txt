@@ -1,0 +1,64 @@
+Train set perc:  0.01  length:  1
+Test    ins:  C_71[59142609]:= thetaselect( X_61[59986052], C_13[59986052], X_70=1998-09-02 , "<=" )  Count:  59142609
+closest ins:  C_71[39669601]:= thetaselect( X_61[59986052], C_13[59986052], X_70=1996-07-09 , "<=" )  Count:  39669601 Extrapolate:  58542714.2030303
+Train set perc:  0.05  length:  9
+Test    ins:  C_71[59142609]:= thetaselect( X_61[59986052], C_13[59986052], X_70=1998-09-02 , "<=" )  Count:  59142609
+closest ins:  C_71[58751001]:= thetaselect( X_61[59986052], C_13[59986052], X_70=1998-08-14 , "<=" )  Count:  58751001 Extrapolate:  59213032.87872516
+Train set perc:  0.1  length:  21
+Test    ins:  C_71[59142609]:= thetaselect( X_61[59986052], C_13[59986052], X_70=1998-09-02 , "<=" )  Count:  59142609
+closest ins:  C_71[59923454]:= thetaselect( X_61[59986052], C_13[59986052], X_70=1998-11-07 , "<=" )  Count:  59923454 Extrapolate:  58342107.35305878
+Train set perc:  0.15  length:  30
+Test    ins:  C_71[59142609]:= thetaselect( X_61[59986052], C_13[59986052], X_70=1998-09-02 , "<=" )  Count:  59142609
+closest ins:  C_71[59284448]:= thetaselect( X_61[59986052], C_13[59986052], X_70=1998-09-10 , "<=" )  Count:  59284448 Extrapolate:  59090311.45313139
+Train set perc:  0.2  length:  35
+Test    ins:  C_71[59142609]:= thetaselect( X_61[59986052], C_13[59986052], X_70=1998-09-02 , "<=" )  Count:  59142609
+closest ins:  C_71[58839715]:= thetaselect( X_61[59986052], C_13[59986052], X_70=1998-08-18 , "<=" )  Count:  58839715 Extrapolate:  59204423.97727273
+Train set perc:  0.25  length:  45
+Test    ins:  C_71[59142609]:= thetaselect( X_61[59986052], C_13[59986052], X_70=1998-09-02 , "<=" )  Count:  59142609
+closest ins:  C_71[59249867]:= thetaselect( X_61[59986052], C_13[59986052], X_70=1998-09-08 , "<=" )  Count:  59249867 Extrapolate:  59104230.292912744
+Train set perc:  0.3  length:  66
+Test    ins:  C_71[59142609]:= thetaselect( X_61[59986052], C_13[59986052], X_70=1998-09-02 , "<=" )  Count:  59142609
+closest ins:  C_71[59027339]:= thetaselect( X_61[59986052], C_13[59986052], X_70=1998-08-27 , "<=" )  Count:  59027339 Extrapolate:  59173145.518732
+Train set perc:  0.35  length:  71
+Test    ins:  C_71[59142609]:= thetaselect( X_61[59986052], C_13[59986052], X_70=1998-09-02 , "<=" )  Count:  59142609
+closest ins:  C_71[59249867]:= thetaselect( X_61[59986052], C_13[59986052], X_70=1998-09-08 , "<=" )  Count:  59249867 Extrapolate:  59104230.292912744
+Train set perc:  0.4  length:  78
+Test    ins:  C_71[59142609]:= thetaselect( X_61[59986052], C_13[59986052], X_70=1998-09-02 , "<=" )  Count:  59142609
+closest ins:  C_71[59249867]:= thetaselect( X_61[59986052], C_13[59986052], X_70=1998-09-08 , "<=" )  Count:  59249867 Extrapolate:  59104230.292912744
+Train set perc:  0.45  length:  83
+Test    ins:  C_71[59142609]:= thetaselect( X_61[59986052], C_13[59986052], X_70=1998-09-02 , "<=" )  Count:  59142609
+closest ins:  C_71[59249867]:= thetaselect( X_61[59986052], C_13[59986052], X_70=1998-09-08 , "<=" )  Count:  59249867 Extrapolate:  59104230.292912744
+Train set perc:  0.5  length:  86
+Test    ins:  C_71[59142609]:= thetaselect( X_61[59986052], C_13[59986052], X_70=1998-09-02 , "<=" )  Count:  59142609
+closest ins:  C_71[59027339]:= thetaselect( X_61[59986052], C_13[59986052], X_70=1998-08-27 , "<=" )  Count:  59027339 Extrapolate:  59173145.518732
+Train set perc:  0.55  length:  102
+Test    ins:  C_71[59142609]:= thetaselect( X_61[59986052], C_13[59986052], X_70=1998-09-02 , "<=" )  Count:  59142609
+closest ins:  C_71[58751001]:= thetaselect( X_61[59986052], C_13[59986052], X_70=1998-08-14 , "<=" )  Count:  58751001 Extrapolate:  59213032.87872516
+Train set perc:  0.6  length:  130
+Test    ins:  C_71[59142609]:= thetaselect( X_61[59986052], C_13[59986052], X_70=1998-09-02 , "<=" )  Count:  59142609
+closest ins:  C_71[59027339]:= thetaselect( X_61[59986052], C_13[59986052], X_70=1998-08-27 , "<=" )  Count:  59027339 Extrapolate:  59173145.518732
+Train set perc:  0.65  length:  126
+Test    ins:  C_71[59142609]:= thetaselect( X_61[59986052], C_13[59986052], X_70=1998-09-02 , "<=" )  Count:  59142609
+closest ins:  C_71[59249867]:= thetaselect( X_61[59986052], C_13[59986052], X_70=1998-09-08 , "<=" )  Count:  59249867 Extrapolate:  59104230.292912744
+Train set perc:  0.7  length:  141
+Test    ins:  C_71[59142609]:= thetaselect( X_61[59986052], C_13[59986052], X_70=1998-09-02 , "<=" )  Count:  59142609
+closest ins:  C_71[59027339]:= thetaselect( X_61[59986052], C_13[59986052], X_70=1998-08-27 , "<=" )  Count:  59027339 Extrapolate:  59173145.518732
+Train set perc:  0.75  length:  138
+Test    ins:  C_71[59142609]:= thetaselect( X_61[59986052], C_13[59986052], X_70=1998-09-02 , "<=" )  Count:  59142609
+closest ins:  C_71[59249867]:= thetaselect( X_61[59986052], C_13[59986052], X_70=1998-09-08 , "<=" )  Count:  59249867 Extrapolate:  59104230.292912744
+Train set perc:  0.8  length:  165
+Test    ins:  C_71[59142609]:= thetaselect( X_61[59986052], C_13[59986052], X_70=1998-09-02 , "<=" )  Count:  59142609
+closest ins:  C_71[59249867]:= thetaselect( X_61[59986052], C_13[59986052], X_70=1998-09-08 , "<=" )  Count:  59249867 Extrapolate:  59104230.292912744
+Train set perc:  0.85  length:  173
+Test    ins:  C_71[59142609]:= thetaselect( X_61[59986052], C_13[59986052], X_70=1998-09-02 , "<=" )  Count:  59142609
+closest ins:  C_71[59249867]:= thetaselect( X_61[59986052], C_13[59986052], X_70=1998-09-08 , "<=" )  Count:  59249867 Extrapolate:  59104230.292912744
+Train set perc:  0.9  length:  174
+Test    ins:  C_71[59142609]:= thetaselect( X_61[59986052], C_13[59986052], X_70=1998-09-02 , "<=" )  Count:  59142609
+closest ins:  C_71[59249867]:= thetaselect( X_61[59986052], C_13[59986052], X_70=1998-09-08 , "<=" )  Count:  59249867 Extrapolate:  59104230.292912744
+Train set perc:  0.95  length:  189
+Test    ins:  C_71[59142609]:= thetaselect( X_61[59986052], C_13[59986052], X_70=1998-09-02 , "<=" )  Count:  59142609
+closest ins:  C_71[59249867]:= thetaselect( X_61[59986052], C_13[59986052], X_70=1998-09-08 , "<=" )  Count:  59249867 Extrapolate:  59104230.292912744
+Train set perc:  1.0  length:  200
+Test    ins:  C_71[59142609]:= thetaselect( X_61[59986052], C_13[59986052], X_70=1998-09-02 , "<=" )  Count:  59142609
+closest ins:  C_71[59249867]:= thetaselect( X_61[59986052], C_13[59986052], X_70=1998-09-08 , "<=" )  Count:  59249867 Extrapolate:  59104230.292912744
+

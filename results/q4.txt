@@ -1,0 +1,64 @@
+Train set perc:  0.01  length:  5
+Test    ins:  C_39[573671]:= select( X_27[15000000], 1993-07-01, X_38=1993-10-01 , true, false, false )  Count:  573671
+closest ins:  C_39[1340049]:= select( X_27[15000000], 1993-07-01, X_38=1994-02-01 , true, false, false )  Count:  1340049 Extrapolate:  573416.3162790698
+Train set perc:  0.05  length:  10
+Test    ins:  C_39[573671]:= select( X_27[15000000], 1993-07-01, X_38=1993-10-01 , true, false, false )  Count:  573671
+closest ins:  C_39[2661580]:= select( X_27[15000000], 1993-07-01, X_38=1994-09-01 , true, false, false )  Count:  2661580 Extrapolate:  573455.1756440281
+Train set perc:  0.1  length:  19
+Test    ins:  C_39[573671]:= select( X_27[15000000], 1993-07-01, X_38=1993-10-01 , true, false, false )  Count:  573671
+closest ins:  C_39[1146828]:= select( X_27[15000000], 1993-07-01, X_38=1994-01-01 , true, false, false )  Count:  1146828 Extrapolate:  573414.0
+Train set perc:  0.15  length:  24
+Test    ins:  C_39[573671]:= select( X_27[15000000], 1993-07-01, X_38=1993-10-01 , true, false, false )  Count:  573671
+closest ins:  C_39[386518]:= select( X_27[15000000], 1993-07-01, X_38=1993-09-01 , true, false, false )  Count:  386518 Extrapolate:  573542.8387096775
+Train set perc:  0.2  length:  42
+Test    ins:  C_39[573671]:= select( X_27[15000000], 1993-07-01, X_38=1993-10-01 , true, false, false )  Count:  573671
+closest ins:  C_39[573671]:= select( X_27[15000000], 1993-07-01, X_38=1993-10-01 , true, false, false )  Count:  573671 Extrapolate:  573671.0
+Train set perc:  0.25  length:  52
+Test    ins:  C_39[573671]:= select( X_27[15000000], 1993-07-01, X_38=1993-10-01 , true, false, false )  Count:  573671
+closest ins:  C_39[573671]:= select( X_27[15000000], 1993-07-01, X_38=1993-10-01 , true, false, false )  Count:  573671 Extrapolate:  573671.0
+Train set perc:  0.3  length:  64
+Test    ins:  C_39[573671]:= select( X_27[15000000], 1993-07-01, X_38=1993-10-01 , true, false, false )  Count:  573671
+closest ins:  C_39[573671]:= select( X_27[15000000], 1993-07-01, X_38=1993-10-01 , true, false, false )  Count:  573671 Extrapolate:  573671.0
+Train set perc:  0.35  length:  79
+Test    ins:  C_39[573671]:= select( X_27[15000000], 1993-07-01, X_38=1993-10-01 , true, false, false )  Count:  573671
+closest ins:  C_39[573671]:= select( X_27[15000000], 1993-07-01, X_38=1993-10-01 , true, false, false )  Count:  573671 Extrapolate:  573671.0
+Train set perc:  0.4  length:  69
+Test    ins:  C_39[573671]:= select( X_27[15000000], 1993-07-01, X_38=1993-10-01 , true, false, false )  Count:  573671
+closest ins:  C_39[573671]:= select( X_27[15000000], 1993-07-01, X_38=1993-10-01 , true, false, false )  Count:  573671 Extrapolate:  573671.0
+Train set perc:  0.45  length:  93
+Test    ins:  C_39[573671]:= select( X_27[15000000], 1993-07-01, X_38=1993-10-01 , true, false, false )  Count:  573671
+closest ins:  C_39[573671]:= select( X_27[15000000], 1993-07-01, X_38=1993-10-01 , true, false, false )  Count:  573671 Extrapolate:  573671.0
+Train set perc:  0.5  length:  105
+Test    ins:  C_39[573671]:= select( X_27[15000000], 1993-07-01, X_38=1993-10-01 , true, false, false )  Count:  573671
+closest ins:  C_39[573671]:= select( X_27[15000000], 1993-07-01, X_38=1993-10-01 , true, false, false )  Count:  573671 Extrapolate:  573671.0
+Train set perc:  0.55  length:  94
+Test    ins:  C_39[573671]:= select( X_27[15000000], 1993-07-01, X_38=1993-10-01 , true, false, false )  Count:  573671
+closest ins:  C_39[573671]:= select( X_27[15000000], 1993-07-01, X_38=1993-10-01 , true, false, false )  Count:  573671 Extrapolate:  573671.0
+Train set perc:  0.6  length:  132
+Test    ins:  C_39[573671]:= select( X_27[15000000], 1993-07-01, X_38=1993-10-01 , true, false, false )  Count:  573671
+closest ins:  C_39[573671]:= select( X_27[15000000], 1993-07-01, X_38=1993-10-01 , true, false, false )  Count:  573671 Extrapolate:  573671.0
+Train set perc:  0.65  length:  130
+Test    ins:  C_39[573671]:= select( X_27[15000000], 1993-07-01, X_38=1993-10-01 , true, false, false )  Count:  573671
+closest ins:  C_39[573671]:= select( X_27[15000000], 1993-07-01, X_38=1993-10-01 , true, false, false )  Count:  573671 Extrapolate:  573671.0
+Train set perc:  0.7  length:  143
+Test    ins:  C_39[573671]:= select( X_27[15000000], 1993-07-01, X_38=1993-10-01 , true, false, false )  Count:  573671
+closest ins:  C_39[573671]:= select( X_27[15000000], 1993-07-01, X_38=1993-10-01 , true, false, false )  Count:  573671 Extrapolate:  573671.0
+Train set perc:  0.75  length:  141
+Test    ins:  C_39[573671]:= select( X_27[15000000], 1993-07-01, X_38=1993-10-01 , true, false, false )  Count:  573671
+closest ins:  C_39[573671]:= select( X_27[15000000], 1993-07-01, X_38=1993-10-01 , true, false, false )  Count:  573671 Extrapolate:  573671.0
+Train set perc:  0.8  length:  164
+Test    ins:  C_39[573671]:= select( X_27[15000000], 1993-07-01, X_38=1993-10-01 , true, false, false )  Count:  573671
+closest ins:  C_39[573671]:= select( X_27[15000000], 1993-07-01, X_38=1993-10-01 , true, false, false )  Count:  573671 Extrapolate:  573671.0
+Train set perc:  0.85  length:  177
+Test    ins:  C_39[573671]:= select( X_27[15000000], 1993-07-01, X_38=1993-10-01 , true, false, false )  Count:  573671
+closest ins:  C_39[573671]:= select( X_27[15000000], 1993-07-01, X_38=1993-10-01 , true, false, false )  Count:  573671 Extrapolate:  573671.0
+Train set perc:  0.9  length:  186
+Test    ins:  C_39[573671]:= select( X_27[15000000], 1993-07-01, X_38=1993-10-01 , true, false, false )  Count:  573671
+closest ins:  C_39[573671]:= select( X_27[15000000], 1993-07-01, X_38=1993-10-01 , true, false, false )  Count:  573671 Extrapolate:  573671.0
+Train set perc:  0.95  length:  192
+Test    ins:  C_39[573671]:= select( X_27[15000000], 1993-07-01, X_38=1993-10-01 , true, false, false )  Count:  573671
+closest ins:  C_39[573671]:= select( X_27[15000000], 1993-07-01, X_38=1993-10-01 , true, false, false )  Count:  573671 Extrapolate:  573671.0
+Train set perc:  1.0  length:  206
+Test    ins:  C_39[573671]:= select( X_27[15000000], 1993-07-01, X_38=1993-10-01 , true, false, false )  Count:  573671
+closest ins:  C_39[573671]:= select( X_27[15000000], 1993-07-01, X_38=1993-10-01 , true, false, false )  Count:  573671 Extrapolate:  573671.0
+

@@ -288,8 +288,8 @@ class MalDictionary:
     @desc splits the dictionary in two based on the query tags
     @arg: list<int>
     """
-    def splitRandom(self, trainp, testp):
-        assert trainp + testp == 1.0
+    def splitRandom(self, trainp):
+        # assert trainp + testp == 1.0
         s1,s2 = {}, {}
         s1_tags, s2_tags = set(), set()
 
@@ -300,7 +300,7 @@ class MalDictionary:
                     s1[k] = s1.get(k,[]) + [mali]
                     s1_tags.add(mali.tag)
                 else:
-                    assert r + testp >= 1
+                    # assert r + testp >= 1
                     s2[k] = s2.get(k,[]) + [mali]
                     s2_tags.add(mali.tag)
         return (MalDictionary(s1,list(s1_tags),self.varflow), MalDictionary(s2,list(s2_tags),self.varflow))
@@ -391,6 +391,18 @@ class MalDictionary:
         acc = [1 for i in non_zeros if abs(i.predictCount(self_list,0)-i.cnt)/i.cnt < thres]
 
         return 100*float(sum(acc))/len(non_zeros)
+
+    def predictCount(self, test_i):
+        # alias = {}
+        # alias["thetaselect"] = "select"
+        # alias["select"]      = "thetaselect"
+        self_list = self.mal_dict.get(test_i.fname,[])# + self.mal_dict.get(alias[test_i.fname],[])
+        nn        = test_i.kNN(self_list,1)[0]
+        return nn
+
+    def errorCount(self, test_i):
+        nn = self.predictCount(test_i)
+        return 100 * abs(nn.extrapolate(test_i)-test_i.cnt)/test_i.cnt
 
     def avgErrorExact(self, test_dict):
         suml   = lambda x,y: x+y
