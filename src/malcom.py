@@ -42,25 +42,31 @@ def hold_out2(train_set, test_set):
 
     for i in sel_test.getInsList():
         print(i.short)
-    l = [0.01, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0]
-    for p in l:
+    l = [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0]
+    for p in [1.0]:
         (train_p,_) = sel_train.splitRandom(p)
         # for ins in train_p.getInsList():
         #     print(ins.short)
         print("Train set perc: ", p," length: ",len(train_p.getInsList()))
 
         for ins in sel_test.getInsList():
+            # print("testing ins : ", ins.short)
+            print(ins.lo, ins.hi)
             knn = train_p.predictCount(ins)
+            p2 = train_p.predictCount2(ins)
+            print(ins.col, knn.col)
             print("Test    ins: ", ins.short, " Count: ", ins.cnt)
             print("closest ins: ", knn.short, " Count: ", knn.cnt, "Extrapolate: ", knn.extrapolate(ins))
+            print("knn5: ",knn.extrapolate(ins), 100* abs(knn.extrapolate(ins)-ins.cnt) / ins.cnt)
+            print("knn3: ",p2, 100* abs(p2-ins.cnt) / ins.cnt)
 
 def hold_out3(train_set, test_set):
     sel_train = train_set.filter(lambda ins: ins.fname in ['select', 'thetaselect'] and ins.ctype not in ['bat[:bit]','bat[:hge]'])
     sel_test  = test_set.filter(lambda ins: ins.fname in ['select', 'thetaselect'] and ins.ctype not in ['bat[:bit]','bat[:hge]'])
 
-    l = [0.05, 0.1, 0.2, 0.3,  0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    l = [0.1, 0.2, 0.3,  0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     e = []
-    for p in l:
+    for p in [1.0]:
         error = 0
         for ins in sel_test.getInsList():
             for i in [1,2,3,4,5,6,7,8,9,10]:
@@ -68,7 +74,7 @@ def hold_out3(train_set, test_set):
                 error       += train_p.errorCount(ins)
             print(error/10)
         e.append(error/(10*len(sel_test.getInsList())) )
-    Utils.plotBar(l,e,"results/q4.pdf","Error %","perc of training set")
+    Utils.plotBar(l,e,"results/q3.pdf","Error %","perc of training set")
                 # print("Error: ", train_p.errorCount(i), "%")
     print(sel_train.avgCountAcc(sel_test,0.1))
 

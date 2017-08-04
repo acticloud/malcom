@@ -393,12 +393,20 @@ class MalDictionary:
         return 100*float(sum(acc))/len(non_zeros)
 
     def predictCount(self, test_i):
-        # alias = {}
-        # alias["thetaselect"] = "select"
-        # alias["select"]      = "thetaselect"
+
         self_list = self.mal_dict.get(test_i.fname,[])# + self.mal_dict.get(alias[test_i.fname],[])
         nn        = test_i.kNN(self_list,1)[0]
         return nn
+
+    def predictCount2(self, test_i):
+
+        self_list = self.mal_dict.get(test_i.fname,[])# + self.mal_dict.get(alias[test_i.fname],[])
+        nn        = test_i.kNN(self_list,10)
+        nn.sort(key = lambda i: i.argDist(test_i))
+        nn3 = nn[0:3]
+        print("nn3: ", nn3[0].short, nn3[0].cnt)
+        ex = sum([nni.extrapolate(test_i)*nni.argDiv(test_i) for nni in nn3]) / len(nn3)
+        return ex
 
     def errorCount(self, test_i):
         nn = self.predictCount(test_i)

@@ -178,6 +178,16 @@ class SelectInstruction(MalInstruction):
 
         return None
 
+    def argDist(self, other):
+        # assert len(self.arg_list) == len(other.arg_list)
+        print(self.arg_list[1].cnt, other.arg_list[1].cnt)
+        diff = [abs(a.cnt-b.cnt) for (a,b) in zip(self.arg_list[1:2],other.arg_list[1:2])]
+        return sum(diff)
+
+    def argDiv(self, other):
+        return other.arg_list[1].cnt /self.arg_list[1].cnt
+
+
     def distance(self, other):
         # print(self.col, other.col)
         assert self.ctype == other.ctype
@@ -193,6 +203,8 @@ class SelectInstruction(MalInstruction):
         return None
 
     def kNN(self, ilist, k):
+        # for i in ilist:
+            # print(i.short)
         cand = [[i,self.distance(i)] for i in ilist if i.col == self.col and i.op == self.op and i.ctype == self.ctype]
         cand.sort( key = lambda t: t[1] )
         return [ t[0] for t in cand[0:k] ]

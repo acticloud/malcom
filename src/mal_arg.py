@@ -7,13 +7,13 @@ Arg class
 @attr eol  : int //end of life (if == 1 the arg is freed by the server)
 """
 class Arg:
-    def __init__(self, name, atype, val, size, eol):
+    def __init__(self, name, atype, val, size, eol, count):
         self.name   = name
         self.atype  = atype
         self.aval   = val
         self.size   = size
         self.eol    = eol
-
+        self.cnt    = count
     @staticmethod
     def fromJsonObj(jobj):
         name  = jobj['name']
@@ -21,7 +21,8 @@ class Arg:
         aval  = jobj.get('value',None)
         size  = int(jobj.get('size',0))
         eol   = int(jobj["eol"])
-        return Arg(name,atype,aval,size,eol)
+        count = int(jobj.get("count",0))
+        return Arg(name,atype,aval,size,eol,count)
 
     def isVar(self):
         return self.name.startswith("X_") or self.name.startswith("C_")
