@@ -43,7 +43,7 @@ def hold_out2(train_set, test_set):
     for i in sel_test.getInsList():
         print(i.short)
     l = [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0]
-    for p in [1.0]:
+    for p in l:
         (train_p,_) = sel_train.splitRandom(p)
         # for ins in train_p.getInsList():
         #     print(ins.short)
@@ -54,11 +54,13 @@ def hold_out2(train_set, test_set):
             print(ins.lo, ins.hi)
             knn = train_p.predictCount(ins)
             p2 = train_p.predictCount2(ins)
+            # p3 = train_p.pred
             print(ins.col, knn.col)
             print("Test    ins: ", ins.short, " Count: ", ins.cnt)
             print("closest ins: ", knn.short, " Count: ", knn.cnt, "Extrapolate: ", knn.extrapolate(ins))
-            print("knn5: ",knn.extrapolate(ins), 100* abs(knn.extrapolate(ins)-ins.cnt) / ins.cnt)
-            print("knn3: ",p2, 100* abs(p2-ins.cnt) / ins.cnt)
+            print("ArgDiv  ins: ", p2.short, "Count: ", p2.cnt, "ExtraExtrapolate: ", p2.extrapolate(ins)*p2.argDiv(ins))
+            # print("knn5: ",knn.extrapolate(ins), 100* abs(knn.extrapolate(ins)-ins.cnt) / ins.cnt)
+            # print("knn3: ",p2, 100* abs(p2-ins.cnt) / ins.cnt)
 
 def hold_out3(train_set, test_set):
     sel_train = train_set.filter(lambda ins: ins.fname in ['select', 'thetaselect'] and ins.ctype not in ['bat[:bit]','bat[:hge]'])
@@ -79,6 +81,21 @@ def hold_out3(train_set, test_set):
     print(sel_train.avgCountAcc(sel_test,0.1))
 
 
+def test_pickle():
+    d = MalDictionary.loadFromFile("test.pickle")
+    for i in d.getInsList():
+        print(i.short)
+
+def test_approx():
+    blacklist = Utils.init_blacklist("mal_blacklist.txt")
+
+    stats = Utils.loadStatistics('tpch10_stats.txt')
+
+    d1 = MalDictionary.fromJsonFile("traces/random_tpch_sf10/ran1_200_sf10.json", blacklist, stats)
+    d2 = MalDictionary.fromJsonFile("traces/tpch-sf10/01.json", blacklist, stats)
+
+    approx = d2.approxGraph(d1)
+
 if __name__ == '__main__':
     trainset = sys.argv[1]
     testset  = sys.argv[2]
@@ -90,11 +107,13 @@ if __name__ == '__main__':
 
     stats = Utils.loadStatistics('tpch10_stats.txt')
 
-    train_class = MalDictionary.fromJsonFile(trainset,blacklist, stats)
-    test_class  = MalDictionary.fromJsonFile(testset, blacklist, stats)
-    hold_out2(train_class, test_class)
+    # train_class = MalDictionary.fromJsonFile(trainset,blacklist, stats)
+    # test_class  = MalDictionary.fromJsonFile(testset, blacklist, stats)
+    # hold_out2(train_class, test_class)
     # hold_out3(train_class, test_class)
-
+    test_approx()
+    # test_pickle()
+    # test_class.writeToFile("test.pickle")
     # sel_d = train_class.filter(lambda ins: ins.fname in ['thetaselect','select'])
     # for i in sel_d.getInsList():
     #     print(i.short)

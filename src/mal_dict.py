@@ -1,10 +1,8 @@
 import random
 import json
+import pickle
 from utils        import Utils
-from functools    import reduce
-from mal_instr import MalInstruction
-# from  sel_ins import SelectInstruction
-# from mal_instr    import fromJsonObj
+from mal_instr    import MalInstruction
 from mal_bins     import BetaIns
 from mal_dataflow import Dataflow
 from bdict        import BDict
@@ -20,7 +18,25 @@ class MalDictionary:
         self.mal_dict   = mal_dict
         self.query_tags = q_tags
         self.varflow    = varflow
-        self.beta_dict  = BDict(beta_dict)
+        self.beta_dict  = BDict(beta_dict) #TODO remove
+
+    @staticmethod
+    def loadFromFile(file_name):
+        with open(file_name,'rb') as f:
+            obj = pickle.load(f)
+            return obj
+
+    def writeToFile(self, file_name):
+        with open(file_name,'wb') as f:
+            pickle.dump(self, f)
+
+
+    def union(self, other):
+        union_ilist   = self.getInsList() + other.getInsList()
+        # union_qtags   = self.query_tags.union(other.query_tags)
+        union_varflow = self.varflow.union(other.varflow)
+
+        return MalDictionary.fromInsList(union_ilist, union_varflow)
 
     """
     @arg mfile    : json file containing mal execution info (link??)
@@ -53,12 +69,15 @@ class MalDictionary:
                         maldict[fname] = maldict.get(fname,[]) + [new_mals]
                         query_tags.add(int(jobj["tag"]))
                         tag = int(jobj["tag"])
+
+                        #deprecated
                         if fname in blist:
                             bi = BetaIns.fromJsonObj(jobj, fname, stats)
                             bins[fname] = bins.get(fname,[])
                             bins[fname].append(bi)
 
                         for r in jobj["ret"]:
+
                             if "alias" in r:
                                 varflow.add(tag,r["name"],r["alias"].split('.')[-1])
                             # print(bi.toStr())
@@ -90,6 +109,33 @@ class MalDictionary:
             qtags.add(i.tag)
         return MalDictionary(mdict, list(qtags), varflow)
 
+    def approxGraph(self, traind):
+        ilist = self.getInsList()
+        ilist.sort( key = lambda ins: ins.clk)
+        g = {}
+
+        for ins in ilist:
+            if ins.fname in ['tid']:
+                g[ins.ret_vars[0]] = ins.cnt
+            elif ins.fname in ['select', 'thetaselect']:
+                g[ins.ret_vars[0]] = traind.predictCountG(ins,g)
+                print(ins.ret_vars[0], traind.predictCountG(ins,g), ins.cnt)
+            else: #TODO batcalc instructions
+                g[ins.ret_vars[0]] = None
+
+    #deprecated
+    def estimate_arg_size(self, ins):
+        o = self.varflow.get(ins.arg,None)
+        if isinstance(o, SelectInstruction):
+            return estimate_arg_size(self, o)
+        elif isinstance(o ,int):
+            return o
+
+
+    def getFirst(self, field, N):
+            ilist = self.getInsList()
+            ilist.sort(key = lambda ins: getattr(ins, field) )
+            MalDictionary.fromInsList(ilist[0:N], self.varflow)
     """
     @arg mals: MalInstruction
     @ret: List<MalInstriction> //list of all exact matches
@@ -114,7 +160,7 @@ class MalDictionary:
 
     def getMaxMem(self):
         ilist = self.getInsList()
-        ilist.sort(key = lambda i: i.start)
+        ilist.sort(key = lambda i: i.start) #clk ???
         max_mem  = 0
         curr_mem = 0
         for i in ilist:
@@ -136,6 +182,7 @@ class MalDictionary:
         return [x for x in dic[fname] if len(x.arg_list) == nargs]
 
 
+    #deprecated???
     def findClosestSize(self, target):
         mlist     = self.mal_dict[target.fname]
         dist_list = [abs(i.arg_size-tsize) for x in mlist]
@@ -243,7 +290,7 @@ class MalDictionary:
     retain only the mal instructions that satisfy the given function
     """
     def filter(self, f):
-        mal_list = Utils.flatten(self.mal_dict)
+        mal_list = self.getInsList()
         new_ilist = list([i for i in mal_list if f(i) == True])
         return MalDictionary.fromInsList(new_ilist, self.varflow)
 
@@ -399,14 +446,25 @@ class MalDictionary:
         return nn
 
     def predictCount2(self, test_i):
-
         self_list = self.mal_dict.get(test_i.fname,[])# + self.mal_dict.get(alias[test_i.fname],[])
         nn        = test_i.kNN(self_list,10)
         nn.sort(key = lambda i: i.argDist(test_i))
         nn3 = nn[0:3]
-        print("nn3: ", nn3[0].short, nn3[0].cnt)
-        ex = sum([nni.extrapolate(test_i)*nni.argDiv(test_i) for nni in nn3]) / len(nn3)
-        return ex
+        # print("nn3: ", nn3[0].short, nn3[0].cnt)
+        # ex = sum([nni.extrapolate(test_i)*nni.argDiv(test_i) for nni in nn3]) / len(nn3)
+        return nn3[0]
+
+    def predictCountG(self, test_i, approxG):
+        self_list = self.mal_dict.get(test_i.fname,[])# + self.mal_dict.get(alias[test_i.fname],[])
+        nn        = test_i.kNN(self_list,5)
+        nn.sort( key = lambda ins: test_i.approxArgDist(ins, approxG))
+        nn1       = nn[0]
+        arg_cnt   = test_i.approxArgCnt(approxG)
+        if arg_cnt != None:
+            print("Success")
+            return nn1.extrapolate(test_i) * ( arg_cnt / nn1.argCnt())
+        else:
+            return nn1.extrapolate(test_i)
 
     def errorCount(self, test_i):
         nn = self.predictCount(test_i)

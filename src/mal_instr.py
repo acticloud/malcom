@@ -26,8 +26,9 @@ import re
 @attr cnt       : int        //the number of elements of the return var
 """
 class MalInstruction:
-    def __init__(self, pc, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt):
+    def __init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt):
         self.pc         = pc
+        self.clk        = clk
         self.fname      = fname
         self.time       = 0
         self.size       = size
@@ -47,6 +48,7 @@ class MalInstruction:
     def fromJsonObj(jobj, stats):
         size      = int(jobj["size"])
         pc        = int(jobj["pc"])
+        clk       = int(jobj["clk"])
         short     = jobj["short"]
         fname,_,_ = Utils.extract_fname(jobj["short"])
         tag       = int(jobj["tag"])
@@ -60,11 +62,11 @@ class MalInstruction:
         count     = int(jobj["ret"][0].get("count",0))
         if fname in ['select','thetaselect']:
             return SelectInstruction(
-                pc, short, fname, size, ret_size, tag, arg_size, arg_list, free_size, arg_vars, ret_vars, count,jobj, stats
+                pc, clk, short, fname, size, ret_size, tag, arg_size, arg_list, free_size, arg_vars, ret_vars, count,jobj, stats
             )
         else :
             return MalInstruction(
-                pc, short, fname, size, ret_size, tag, arg_size, arg_list, free_size, arg_vars, ret_vars, count
+                pc, clk, short, fname, size, ret_size, tag, arg_size, arg_list, free_size, arg_vars, ret_vars, count
             )
 
     #deprecated
@@ -143,8 +145,8 @@ class MalInstruction:
 
 
 class SelectInstruction(MalInstruction):
-    def __init__(self, pc, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt, jobj, stats):
-        MalInstruction.__init__(self, pc, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt)
+    def __init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt, jobj, stats):
+        MalInstruction.__init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt)
         self.ctype    = jobj["arg"][0].get("type","UNKNOWN")
         self.col      = next(iter([o["alias"] for o in jobj["arg"] if "alias" in o]),"TMP").split('.')[-1]
         self.arg_size = [o.get("size",0) for o in jobj.get("arg",[])]
@@ -178,9 +180,19 @@ class SelectInstruction(MalInstruction):
 
         return None
 
+    def approxArgCnt(self, G):
+        return G.get(self.arg_list[1].name,None)
+
+    def argCnt(self):
+        return self.arg_list[1].cnt
+
+    def approxArgDist(self, other, G):
+        approx_count = float(G.get(self.arg_list[1].name,'inf'))
+        return abs(other.cnt-approx_count)
+
     def argDist(self, other):
         # assert len(self.arg_list) == len(other.arg_list)
-        print(self.arg_list[1].cnt, other.arg_list[1].cnt)
+        # print(self.arg_list[1].cnt, other.arg_list[1].cnt)
         diff = [abs(a.cnt-b.cnt) for (a,b) in zip(self.arg_list[1:2],other.arg_list[1:2])]
         return sum(diff)
 
