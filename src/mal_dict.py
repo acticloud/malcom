@@ -1,12 +1,16 @@
 import random
 import json
 import pickle
+import collections
+
 from utils        import Utils
 from mal_instr    import MalInstruction
 from mal_bins     import BetaIns
 from mal_dataflow import Dataflow
 from bdict        import BDict
 #TODO add method find closest instruction
+
+Prediction = collections.namedtuple('Prediction', ['ins', 'cnt', 'avg'])
 
 class MalDictionary:
     """
@@ -118,11 +122,12 @@ class MalDictionary:
             if ins.fname in ['tid']:
                 g[ins.ret_vars[0]] = ins.cnt
             elif ins.fname in ['select', 'thetaselect']:
-                g[ins.ret_vars[0]] = traind.predictCountG(ins,g)
-                print(ins.ret_vars[0], traind.predictCountG(ins,g), ins.cnt)
-            else: #TODO batcalc instructions
-                g[ins.ret_vars[0]] = None
-
+                print(ins.short)
+                # print(ins.ret_vars[0], traind.predictCountG(ins,g), ins.cnt)
+                g[ins.ret_vars[0]] = traind.predictCountG(ins,g).cnt
+            # else: #TODO batcalc instructions
+                # g[ins.ret_vars[0]] = None
+        return g
     #deprecated
     def estimate_arg_size(self, ins):
         o = self.varflow.get(ins.arg,None)
@@ -135,7 +140,7 @@ class MalDictionary:
     def getFirst(self, field, N):
             ilist = self.getInsList()
             ilist.sort(key = lambda ins: getattr(ins, field) )
-            MalDictionary.fromInsList(ilist[0:N], self.varflow)
+            return MalDictionary.fromInsList(ilist[0:N], self.varflow)
     """
     @arg mals: MalInstruction
     @ret: List<MalInstriction> //list of all exact matches
@@ -455,16 +460,22 @@ class MalDictionary:
         return nn3[0]
 
     def predictCountG(self, test_i, approxG):
+        assert approxG != None
         self_list = self.mal_dict.get(test_i.fname,[])# + self.mal_dict.get(alias[test_i.fname],[])
         nn        = test_i.kNN(self_list,5)
+
         nn.sort( key = lambda ins: test_i.approxArgDist(ins, approxG))
         nn1       = nn[0]
         arg_cnt   = test_i.approxArgCnt(approxG)
+        if test_i.fname == 'select' and test_i.col == 'l_discount':
+            for i in nn:
+                print(i.short, i.extrapolate(test_i) * ( arg_cnt / i.argCnt()))
+        avg = sum([i.extrapolate(test_i) * ( arg_cnt / i.argCnt()) for i in nn]) / len(nn)
         if arg_cnt != None:
-            print("Success")
-            return nn1.extrapolate(test_i) * ( arg_cnt / nn1.argCnt())
+            # print("extrapolate", nn1.cnt, nn1.extrapolate(test_i))
+            return Prediction(ins=nn1,cnt = nn1.extrapolate(test_i) * ( arg_cnt / nn1.argCnt()), avg = avg)
         else:
-            return nn1.extrapolate(test_i)
+            return Prediction(ins=nn1, cnt = nn1.extrapolate(test_i), avg = None)
 
     def errorCount(self, test_i):
         nn = self.predictCount(test_i)

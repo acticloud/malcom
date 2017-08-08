@@ -4,8 +4,11 @@ import sys
 # from mal_instr import MalInstruction
 from pprint import pprint
 from mal_dict import MalDictionary
+from mal_dict import Prediction
 from utils import Utils
 import random
+
+
 
 def print_usage():
     print("Usage: ./parser.py <trainset> <testset>")
@@ -96,9 +99,42 @@ def test_approx():
 
     approx = d2.approxGraph(d1)
 
+def test_tpch6():
+    blacklist = Utils.init_blacklist("mal_blacklist.txt")
+
+    stats = Utils.loadStatistics('tpch10_stats.txt')
+
+    d1 = MalDictionary.fromJsonFile("traces/random_tpch_sf10/ran6_200_discount_sf10.json", blacklist, stats)
+    d2 = MalDictionary.fromJsonFile("traces/tpch-sf10/06.json", blacklist, stats)
+
+    G = d2.approxGraph(d1)
+    print(G)
+    sel_train = d1.filter(lambda ins: ins.fname in ['select', 'thetaselect'] and ins.ctype not in ['bat[:bit]','bat[:hge]'])
+    sel_test  = d2.filter(lambda ins: ins.fname in ['select', 'thetaselect'] and ins.ctype not in ['bat[:bit]','bat[:hge]'])
+
+    for sel in [3,15,30,60,90,120,150,180,210,240,270,300,330,360,390,420,450,480,510]:
+        print("Top {} instruction".format(int(sel/3)))
+        sub_sel_train = sel_train.getFirst('clk',sel)
+        for ins in sel_test.getInsList():
+            p = sub_sel_train.predictCountG(ins,G)
+            print("Test    ins: ", ins.short, " Count: ", ins.cnt)
+            print("closest ins: ", p.ins.short, " Count: ", p.ins.cnt, "Extrapolate: ", p.cnt)
+            print("Error", 100* abs(p.cnt - ins.cnt) / ins.cnt)
+            print("Avg Error", 100* abs(p.avg - ins.cnt) / ins.cnt)
+            # print(i.short)
+            # print(p.ins.short)
+            # print(p.ins.cnt)
+            # print(i.cnt, p.cnt)
+
+
+    # for i in sub_sel_train.getInsList():
+        # print(i.short)
+
+
 if __name__ == '__main__':
     trainset = sys.argv[1]
     testset  = sys.argv[2]
+
 
     print("Using dataset {} as train set".format(trainset))
     # print("Using dataset {} as test set".format(testset))
@@ -111,7 +147,7 @@ if __name__ == '__main__':
     # test_class  = MalDictionary.fromJsonFile(testset, blacklist, stats)
     # hold_out2(train_class, test_class)
     # hold_out3(train_class, test_class)
-    test_approx()
+    test_tpch6()
     # test_pickle()
     # test_class.writeToFile("test.pickle")
     # sel_d = train_class.filter(lambda ins: ins.fname in ['thetaselect','select'])

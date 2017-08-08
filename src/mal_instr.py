@@ -187,8 +187,10 @@ class SelectInstruction(MalInstruction):
         return self.arg_list[1].cnt
 
     def approxArgDist(self, other, G):
+        assert G != None
         approx_count = float(G.get(self.arg_list[1].name,'inf'))
-        return abs(other.cnt-approx_count)
+        #TODO rethink
+        return abs(other.arg_list[1].cnt-approx_count)
 
     def argDist(self, other):
         # assert len(self.arg_list) == len(other.arg_list)
@@ -217,6 +219,7 @@ class SelectInstruction(MalInstruction):
     def kNN(self, ilist, k):
         # for i in ilist:
             # print(i.short)
+        # print(self.col, self.op, self.ctype)
         cand = [[i,self.distance(i)] for i in ilist if i.col == self.col and i.op == self.op and i.ctype == self.ctype]
         cand.sort( key = lambda t: t[1] )
         return [ t[0] for t in cand[0:k] ]
@@ -236,7 +239,7 @@ class SelectInstruction(MalInstruction):
             other_dist = other.hi - other.lo
 
             if self_dist*other_dist != 0:
-                return self.cnt*other_dist/other_dist
+                return self.cnt*other_dist/self_dist
             else:
                 return self.cnt
         elif self.ctype == 'bat[:date]':
