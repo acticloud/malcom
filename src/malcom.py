@@ -112,21 +112,27 @@ def test_tpch6():
     sel_train = d1.filter(lambda ins: ins.fname in ['select', 'thetaselect'] and ins.ctype not in ['bat[:bit]','bat[:hge]'])
     sel_test  = d2.filter(lambda ins: ins.fname in ['select', 'thetaselect'] and ins.ctype not in ['bat[:bit]','bat[:hge]'])
 
-    for sel in [3,15,30,60,90,120,150,180,210,240,270,300,330,360,390,420,450,480,510]:
-        print("Top {} instruction".format(int(sel/3)))
+    y = []
+    nins = [3,15,30,60,90,120,180,240,300,360,420,480,540,600]
+    for sel in nins:
+        print("First {} instructions".format(int(sel/3)))
         sub_sel_train = sel_train.getFirst('clk',sel)
         for ins in sel_test.getInsList():
             p = sub_sel_train.predictCountG(ins,G)
             print("Test    ins: ", ins.short, " Count: ", ins.cnt)
             print("closest ins: ", p.ins.short, " Count: ", p.ins.cnt, "Extrapolate: ", p.cnt)
             print("Error", 100* abs(p.cnt - ins.cnt) / ins.cnt)
-            print("Avg Error", 100* abs(p.avg - ins.cnt) / ins.cnt)
+            print("Knn5 Avg Error", 100* abs(p.avg - ins.cnt) / ins.cnt)
+            if ins.col == 'l_discount':
+                y.append(100* abs(p.avg - ins.cnt) / ins.cnt)
             # print(i.short)
             # print(p.ins.short)
             # print(p.ins.cnt)
             # print(i.cnt, p.cnt)
 
-
+    print(y)
+    ind = [i/3 for i in nins]
+    Utils.plotBar(ind, y, 'q6_discount.pdf', 'Error perc', 'Number of instructions')
     # for i in sub_sel_train.getInsList():
         # print(i.short)
 

@@ -5,6 +5,7 @@ import collections
 
 from utils        import Utils
 from mal_instr    import MalInstruction
+from mal_instr    import SelectInstruction
 from mal_bins     import BetaIns
 from mal_dataflow import Dataflow
 from bdict        import BDict
@@ -462,14 +463,16 @@ class MalDictionary:
     def predictCountG(self, test_i, approxG):
         assert approxG != None
         self_list = self.mal_dict.get(test_i.fname,[])# + self.mal_dict.get(alias[test_i.fname],[])
+        if test_i.fname in ['select', 'thetaselect']:
+            self_list = SelectInstruction.removeDuplicates(self_list)
         nn        = test_i.kNN(self_list,5)
 
         nn.sort( key = lambda ins: test_i.approxArgDist(ins, approxG))
         nn1       = nn[0]
         arg_cnt   = test_i.approxArgCnt(approxG)
-        if test_i.fname == 'select' and test_i.col == 'l_discount':
-            for i in nn:
-                print(i.short, i.extrapolate(test_i) * ( arg_cnt / i.argCnt()))
+        # if test_i.fname == 'select' and test_i.col == 'l_discount':
+        #     for i in nn:
+        #         print(i.short, i.extrapolate(test_i) * ( arg_cnt / i.argCnt()))
         avg = sum([i.extrapolate(test_i) * ( arg_cnt / i.argCnt()) for i in nn]) / len(nn)
         if arg_cnt != None:
             # print("extrapolate", nn1.cnt, nn1.extrapolate(test_i))

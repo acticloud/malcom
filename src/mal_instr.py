@@ -164,6 +164,17 @@ class SelectInstruction(MalInstruction):
             self.lo     = lo
 
 
+    @staticmethod
+    def removeDuplicates(ins_list):
+        bounds_set = set()
+        uniqs = []
+        for ins in ins_list:
+            if (ins.hi, ins.lo) not in bounds_set:
+                bounds_set.add((ins.hi, ins.lo))
+                uniqs.append(ins)
+
+        return uniqs
+
     def isIncluded(self,other):
         assert self.ctype == other.ctype
         t = self.ctype
