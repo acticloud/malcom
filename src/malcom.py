@@ -104,24 +104,68 @@ def test_tpch6():
 
     stats = Utils.loadStatistics('tpch10_stats.txt')
 
+    d1 = MalDictionary.fromJsonFile("traces/random_tpch_sf10/ran6_200_sf10.json", blacklist, stats)
+    d2 = MalDictionary.fromJsonFile("traces/tpch-sf10/06.json", blacklist, stats)
+
+    G = d2.approxGraph(d1)
+    # print(G)
+    train_tids = d1.filter(lambda ins: ins.fname in ['tid'])
+    sel_train  = d1.filter(lambda ins: ins.fname in ['select', 'thetaselect'])# and ins.ctype not in ['bat[:bit]','bat[:hge]'])
+    sel_test   = d2.filter(lambda ins: ins.fname in ['select', 'thetaselect'] and ins.ctype not in ['bat[:bit]','bat[:hge]'])
+
+    y = []
+    nins = [3,15,30,60,90,120,150,180,210,240,270,300,330,360,390,450,480,540,600]
+    for sel in nins:
+        print("First {} instructions".format(int(sel/3)))
+        sub_sel_train = sel_train.getFirst('clk',sel)
+        sub_graph = d2.approxGraph(sub_sel_train.union(train_tids))
+        # print(sub_graph)
+        for ins in sel_test.getInsList():
+            p = sub_sel_train.predictCountG(ins,sub_graph,True)
+            print("Test    ins: ", ins.short, " Count: ", ins.cnt)
+            print("closest ins: ", p.ins.short, " Count: ", p.ins.cnt, "Extrapolate: ", p.cnt)
+            print("Error", 100* abs(p.cnt - ins.cnt) / ins.cnt)
+            print("Knn5 Avg Error", 100* abs(p.avg - ins.cnt) / ins.cnt)
+            if ins.col == 'l_quantity':
+                y.append(100* abs(p.avg - ins.cnt) / ins.cnt)
+            # print(i.short)
+            # print(p.ins.short)
+            # print(p.ins.cnt)
+            # print(i.cnt, p.cnt)
+
+    print(y)
+    ind = [int(i/3) for i in nins]
+    Utils.plotBar(ind, y, 'q6.pdf', 'Error perc', 'Number of instructions')
+    # for i in sub_sel_train.getInsList():
+        # print(i.short)
+
+def test_tpch6_discount():
+    blacklist = Utils.init_blacklist("mal_blacklist.txt")
+
+    stats = Utils.loadStatistics('tpch10_stats.txt')
+
     d1 = MalDictionary.fromJsonFile("traces/random_tpch_sf10/ran6_200_discount_sf10.json", blacklist, stats)
     d2 = MalDictionary.fromJsonFile("traces/tpch-sf10/06.json", blacklist, stats)
 
     G = d2.approxGraph(d1)
-    print(G)
-    sel_train = d1.filter(lambda ins: ins.fname in ['select', 'thetaselect'] and ins.ctype not in ['bat[:bit]','bat[:hge]'])
-    sel_test  = d2.filter(lambda ins: ins.fname in ['select', 'thetaselect'] and ins.ctype not in ['bat[:bit]','bat[:hge]'])
+    # print(G)
+    train_tids = d1.filter(lambda ins: ins.fname in ['tid'])
+    sel_train  = d1.filter(lambda ins: ins.fname in ['select', 'thetaselect'] and ins.col == 'l_discount')# and ins.ctype not in ['bat[:bit]','bat[:hge]'])
+    sel_test   = d2.filter(lambda ins: ins.fname in ['select', 'thetaselect'] and ins.ctype not in ['bat[:bit]','bat[:hge]'] and ins.col == 'l_discount')
 
     y = []
-    nins = [3,15,30,60,90,120,180,240,300,360,420,480,540,600]
+    nins = [3,15,30,60,90,120,150,180,210,240,270,300,330,360,390,420,450,480,510,540,600]
     for sel in nins:
         print("First {} instructions".format(int(sel/3)))
-        sub_sel_train = sel_train.getFirst('clk',sel)
+        sub_sel_train = sel_train.getFirst('clk',int(sel/3))
+        # sub_graph = d2.approxGraph(sub_sel_train.union(train_tids))
+        # print(sub_graph)
         for ins in sel_test.getInsList():
-            p = sub_sel_train.predictCountG(ins,G)
+            print(ins.short)
+            p = sub_sel_train.predictCountG(ins,{},False)
             print("Test    ins: ", ins.short, " Count: ", ins.cnt)
             print("closest ins: ", p.ins.short, " Count: ", p.ins.cnt, "Extrapolate: ", p.cnt)
-            print("Error", 100* abs(p.cnt - ins.cnt) / ins.cnt)
+            print("NN1 Error", 100* abs(p.cnt - ins.cnt) / ins.cnt)
             print("Knn5 Avg Error", 100* abs(p.avg - ins.cnt) / ins.cnt)
             if ins.col == 'l_discount':
                 y.append(100* abs(p.avg - ins.cnt) / ins.cnt)
@@ -131,11 +175,8 @@ def test_tpch6():
             # print(i.cnt, p.cnt)
 
     print(y)
-    ind = [i/3 for i in nins]
+    ind = [int(i/3) for i in nins]
     Utils.plotBar(ind, y, 'q6_discount.pdf', 'Error perc', 'Number of instructions')
-    # for i in sub_sel_train.getInsList():
-        # print(i.short)
-
 
 if __name__ == '__main__':
     trainset = sys.argv[1]
@@ -153,7 +194,7 @@ if __name__ == '__main__':
     # test_class  = MalDictionary.fromJsonFile(testset, blacklist, stats)
     # hold_out2(train_class, test_class)
     # hold_out3(train_class, test_class)
-    test_tpch6()
+    test_tpch6_discount()
     # test_pickle()
     # test_class.writeToFile("test.pickle")
     # sel_d = train_class.filter(lambda ins: ins.fname in ['thetaselect','select'])

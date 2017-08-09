@@ -81,29 +81,15 @@ class MalDictionary:
                             bins[fname] = bins.get(fname,[])
                             bins[fname].append(bi)
 
-                        for r in jobj["ret"]:
-
+                        for r in jobj["ret"]: #TODO rethink
                             if "alias" in r:
                                 varflow.add(tag,r["name"],r["alias"].split('.')[-1])
-                            # print(bi.toStr())
-                        # if fname == "bind" or fname == "bind_idxbat":
-                        #     varflow.add(tag, ret, [args[3].strip()])
-                        #     # varflow.add(tag, ret, [args[2].strip(), args[3].strip()])
-                        # elif fname == "tid":
-                        #     # print("tid")
-                        #     varflow.add(tag, ret, [args[2].strip()])
-                        # else:
-                        #     # print("ret_vars {}".format(new_mals.ret_vars))
-                        #     varflow.addI(tag,new_mals.arg_vars,new_mals.ret_vars)
-                            # for r in new_mals.arg_vars:
-                            #     print("short",new_mals.short)
-                            #     print("lookup: ",r,varflow.lookup(r,tag))
         return MalDictionary(maldict,list(query_tags),varflow, bins)
 
     """ Constructor from instruction list
     @arg ilist: List<MalInstruction>
     @arg varflow
-    @ret: MalDictionary
+    @ret MalDictionary
     """
     @staticmethod
     def fromInsList(ilist, varflow):
@@ -114,18 +100,25 @@ class MalDictionary:
             qtags.add(i.tag)
         return MalDictionary(mdict, list(qtags), varflow)
 
+    """
+    @des builds a graph that approximates the cardinality for each variable
+    @arg Maldictionary
+    @ret dict<str,int> //dictionary with var name as a key,est count as val
+    """
     def approxGraph(self, traind):
         ilist = self.getInsList()
-        ilist.sort( key = lambda ins: ins.clk)
+        ilist.sort( key = lambda ins: ins.clk )
         g = {}
 
         for ins in ilist:
             if ins.fname in ['tid']:
                 g[ins.ret_vars[0]] = ins.cnt
             elif ins.fname in ['select', 'thetaselect']:
-                print(ins.short)
-                # print(ins.ret_vars[0], traind.predictCountG(ins,g), ins.cnt)
-                g[ins.ret_vars[0]] = traind.predictCountG(ins,g).cnt
+                pred = traind.predictCountG(ins,g)
+                # print(ins.short)
+                # print(pred.ins.short)
+                # print(ins.ret_vars[0], pred.cnt)
+                g[ins.ret_vars[0]] = pred.avg
             # else: #TODO batcalc instructions
                 # g[ins.ret_vars[0]] = None
         return g
@@ -460,7 +453,7 @@ class MalDictionary:
         # ex = sum([nni.extrapolate(test_i)*nni.argDiv(test_i) for nni in nn3]) / len(nn3)
         return nn3[0]
 
-    def predictCountG(self, test_i, approxG):
+    def predictCountG(self, test_i, approxG, verbose=False):
         assert approxG != None
         self_list = self.mal_dict.get(test_i.fname,[])# + self.mal_dict.get(alias[test_i.fname],[])
         if test_i.fname in ['select', 'thetaselect']:
@@ -470,15 +463,16 @@ class MalDictionary:
         nn.sort( key = lambda ins: test_i.approxArgDist(ins, approxG))
         nn1       = nn[0]
         arg_cnt   = test_i.approxArgCnt(approxG)
-        # if test_i.fname == 'select' and test_i.col == 'l_discount':
-        #     for i in nn:
-        #         print(i.short, i.extrapolate(test_i) * ( arg_cnt / i.argCnt()))
-        avg = sum([i.extrapolate(test_i) * ( arg_cnt / i.argCnt()) for i in nn]) / len(nn)
+
+        if (verbose == True):
+            print("ArgumentEstimation: real: {} estimated: {}".format(test_i.argCnt(), test_i.approxArgCnt(approxG)))
+
         if arg_cnt != None:
-            # print("extrapolate", nn1.cnt, nn1.extrapolate(test_i))
+            avg = sum([i.extrapolate(test_i) * ( arg_cnt / i.argCnt()) for i in nn]) / len(nn)
             return Prediction(ins=nn1,cnt = nn1.extrapolate(test_i) * ( arg_cnt / nn1.argCnt()), avg = avg)
         else:
-            return Prediction(ins=nn1, cnt = nn1.extrapolate(test_i), avg = None)
+            avg = sum([i.extrapolate(test_i) for i in nn]) / len(nn)
+            return Prediction(ins=nn1, cnt = nn1.extrapolate(test_i), avg = avg)
 
     def errorCount(self, test_i):
         nn = self.predictCount(test_i)
