@@ -119,6 +119,9 @@ class MalDictionary:
                 # print(pred.ins.short)
                 # print(ins.ret_vars[0], pred.cnt)
                 g[ins.ret_vars[0]] = pred.avg
+            elif ins.fname in ['projection']:
+                g[ins.ret_vars[0]] = ins.approxArgCnt(G)
+                pred
             # else: #TODO batcalc instructions
                 # g[ins.ret_vars[0]] = None
         return g

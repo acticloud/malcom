@@ -143,6 +143,31 @@ class MalInstruction:
     def __ne__(self, other):
         return self.__ne__(other)
 
+    def extrapolate(self, other):
+        return self.cnt
+
+class ProjectInstruction(MalInstruction):
+    def __init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt, jobj, stats):
+        MalInstruction.__init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt)
+
+    def approxArgCnt(self, G):
+        return G.get(self.arg_list[0].name,None)
+
+    def argCnt(self):
+        return self.arg_list[0].cnt
+
+    # def predictCountG(self, trainD, G):
+    #     return float(G.get(self.arg_list[0].name,'inf'))
+
+class BatCalcInstruction(MalInstruction):
+    def __init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt, jobj, stats):
+        MalInstruction.__init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt)
+
+    def approxArgCnt(self, G):
+        return G.get(self.arg_list[1].name,None)
+
+    def argCnt(self):
+        return self.arg_list[1].cnt
 
 class SelectInstruction(MalInstruction):
     def __init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt, jobj, stats):
