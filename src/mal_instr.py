@@ -106,6 +106,9 @@ class MalInstruction:
         cand.sort(key = lambda t: t[1])
         return [ t[0] for t in cand[0:k] ]
 
+    # def extrapolate(self, other):
+        # return other.cnt
+
     def predictCount(self, ilist, default=None):
         knn = self.kNN(ilist, 1)
         if len(knn) > 1:
@@ -149,12 +152,16 @@ class MalInstruction:
 class ProjectInstruction(MalInstruction):
     def __init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt, jobj, stats):
         MalInstruction.__init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt)
+        self.arg1 = self.arg_list[0]
 
     def approxArgCnt(self, G):
-        return G.get(self.arg_list[0].name,None)
+        return G.get(self.arg1.name,None)
 
     def argCnt(self):
-        return self.arg_list[0].cnt
+        return self.arg1.cnt
+
+    # def predictCountG(self, G):
+    #     return int(G[self.arg1])
 
     # def predictCountG(self, trainD, G):
     #     return float(G.get(self.arg_list[0].name,'inf'))
@@ -168,6 +175,41 @@ class BatCalcInstruction(MalInstruction):
 
     def argCnt(self):
         return self.arg_list[1].cnt
+
+class JoinInstruction(MalInstruction):
+    def __init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt, jobj, stats):
+        MalInstruction.__init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt)
+        self.arg1 = arg_list[0]
+        self.arg2 = arg_list[1]
+
+    def approxArgCnt(self, G):
+        return [G.get(self.arg1.name,None),G.get(self.arg2.name,None)]
+
+    def argCnt(self):
+        return [self.arg1.cnt,self.arg2.cnt]
+
+    def approxArgDiv(self, ins, G): #TODO rethink the order
+        div = 1
+        app = self.approxArgCnt(G)
+        ac  = ins.argCnt()
+        for (a1,a2) in app.zip(ac):
+            if a1 != None:
+                div = div * a1 / a2 #Hoping the order is correct...
+        return div
+
+    def approxArgDist(self, ins, G):
+        assert G != None
+        self_cnt  = [float(G.get(arg.name,'inf') for arg in [self.arg1, self,arg2])
+        ins_count = [arg.cnt for arg in [ins.arg1,ins.arg2]]
+        return sum([(c1-c2)**2 for (c1,c2) in zip(self_count,ins_count)])
+
+    def extrapolate(self, other):
+        return int(self.ret_vars[0]["count"])
+
+    def kNN(self, ilist, k, G):
+        cand = [[i,self.approxArgDist(i)] for i in ilist] #TODO check for columns ???
+        cand.sort( key = lambda t: t[1] )
+        return [ t[0] for t in cand[0:k] ]
 
 class SelectInstruction(MalInstruction):
     def __init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt, jobj, stats):

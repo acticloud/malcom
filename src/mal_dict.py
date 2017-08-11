@@ -115,16 +115,18 @@ class MalDictionary:
                 g[ins.ret_vars[0]] = ins.cnt
             elif ins.fname in ['select', 'thetaselect']:
                 pred = traind.predictCountG(ins,g)
-                # print(ins.short)
-                # print(pred.ins.short)
-                # print(ins.ret_vars[0], pred.cnt)
                 g[ins.ret_vars[0]] = pred.avg
-            elif ins.fname in ['projection']:
+            elif ins.fname in ['projection','projectionpath','projectdelta']:
                 g[ins.ret_vars[0]] = ins.approxArgCnt(G)
-                pred
+            elif ins.fname in ['+','-','*','/','==','or','dbl']:
+                g[ins.ret_vars[0]] = ins.approxArgCnt(G)
+            elif ins.fname in ['join']:
+                pred = traind.predictCountG(ins,g)
+                g[ins.ret_vars[0]] = pred.avg
             # else: #TODO batcalc instructions
                 # g[ins.ret_vars[0]] = None
         return g
+
     #deprecated
     def estimate_arg_size(self, ins):
         o = self.varflow.get(ins.arg,None)
