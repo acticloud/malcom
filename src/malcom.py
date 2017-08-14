@@ -181,6 +181,16 @@ def test_tpch6_discount():
     ind = [int(i) for i in nins2]
     Utils.plotBar(ind, y, 'q6_discount2.pdf', 'Error perc', 'Number of instructions')
 
+def test_test():
+    blacklist = Utils.init_blacklist("mal_blacklist.txt")
+
+    stats = Utils.loadStatistics('tpch10_stats.txt')
+
+    d1 = MalDictionary.fromJsonFile("traces/random_tpch_sf10/ran3_200_sf10.json", blacklist, stats)
+    d2 = MalDictionary.fromJsonFile("traces/tpch-sf10/03.json", blacklist, stats)
+
+    G = d2.approxGraph(d1)
+
 if __name__ == '__main__':
     trainset = sys.argv[1]
     testset  = sys.argv[2]
@@ -189,15 +199,15 @@ if __name__ == '__main__':
     print("Using dataset {} as train set".format(trainset))
     # print("Using dataset {} as test set".format(testset))
 
-    blacklist = Utils.init_blacklist("mal_blacklist.txt")
+    # blacklist = Utils.init_blacklist("mal_blacklist.txt")
 
-    stats = Utils.loadStatistics('tpch10_stats.txt')
+    # stats = Utils.loadStatistics('tpch10_stats.txt')
 
     # train_class = MalDictionary.fromJsonFile(trainset,blacklist, stats)
     # test_class  = MalDictionary.fromJsonFile(testset, blacklist, stats)
     # hold_out2(train_class, test_class)
     # hold_out3(train_class, test_class)
-    test_tpch6()
+    test_test()
     # test_pickle()
     # test_class.writeToFile("test.pickle")
     # sel_d = train_class.filter(lambda ins: ins.fname in ['thetaselect','select'])
