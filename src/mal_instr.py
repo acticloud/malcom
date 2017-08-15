@@ -60,14 +60,47 @@ class MalInstruction:
         arg_vars  = [arg.name for arg in arg_list if arg.isVar()]
         ret_vars  = [ret['name'] for ret in jobj.get("ret",[]) if Utils.isVar(ret['name'])]
         count     = int(jobj["ret"][0].get("count",0))
-        # if fname in ['select','thetaselect']:
-        #     return SelectInstruction(
-        #         pc, clk, short, fname, size, ret_size, tag, arg_size, arg_list, free_size, arg_vars, ret_vars, count,jobj, stats
-        #     )
-        # else :
-        return MalInstruction(
-            pc, clk, short, fname, size, ret_size, tag, arg_size, arg_list, free_size, arg_vars, ret_vars, count
-        )
+
+        if fname in ['select','thetaselect']:
+            return SelectInstruction(
+                pc, clk, short, fname, size, ret_size, tag, arg_size, arg_list, free_size, arg_vars, ret_vars, count,jobj, stats
+            )
+        elif fname in ['projection','projectionpath','projectdelta']:
+            return ProjectInstruction(
+                pc, clk, short, fname, size, ret_size, tag, arg_size, arg_list, free_size, arg_vars, ret_vars, count
+            )
+        elif fname in ['+','-','*','/','==','or','dbl']:
+            return BatCalcInstruction(
+                pc, clk, short, fname, size, ret_size, tag, arg_size, arg_list, free_size, arg_vars, ret_vars, count
+            )
+        elif fname in ['join']:
+            return JoinInstruction(
+                pc, clk, short, fname, size, ret_size, tag, arg_size, arg_list, free_size, arg_vars, ret_vars, count
+            )
+        elif fname in ['group','subgroup','subgroupdone']:
+            return GroupInstruction(
+                pc, clk, short, fname, size, ret_size, tag, arg_size, arg_list, free_size, arg_vars, ret_vars, count
+            )
+        elif fname in ['firstn']:
+            return FirstnInstruction(
+                pc, clk, short, fname, size, ret_size, tag, arg_size, arg_list, free_size, arg_vars, ret_vars, count
+            )
+        elif fname in ['sort']:
+            return SortInstruction(
+                pc, clk, short, fname, size, ret_size, tag, arg_size, arg_list, free_size, arg_vars, ret_vars, count
+            )
+        elif fname in ['subsum']:
+            return SubsumInstruction(
+                pc, clk, short, fname, size, ret_size, tag, arg_size, arg_list, free_size, arg_vars, ret_vars, count
+            )
+        elif fname in ['subslice']:
+            return SubsliceInstruction(
+                pc, clk, short, fname, size, ret_size, tag, arg_size, arg_list, free_size, arg_vars, ret_vars, count
+            )
+        else :
+            return MalInstruction(
+                pc, clk, short, fname, size, ret_size, tag, arg_size, arg_list, free_size, arg_vars, ret_vars, count
+            )
 
     #deprecated
     def distance(self,other):
@@ -106,6 +139,9 @@ class MalInstruction:
         cand.sort(key = lambda t: t[1])
         return [ t[0] for t in cand[0:k] ]
 
+    # def extrapolate(self, other):
+        # return other.cnt
+
     def predictCount(self, ilist, default=None):
         knn = self.kNN(ilist, 1)
         if len(knn) > 1:
@@ -143,6 +179,130 @@ class MalInstruction:
     def __ne__(self, other):
         return self.__ne__(other)
 
+    def extrapolate(self, other):
+        return self.cnt
+
+"""
+DirectIntruction: What goes in, goes out....
+@arg
+"""
+class DirectIntruction(MalInstruction):
+    def __init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt, base_arg_i):
+        MalInstruction.__init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt)
+        self.base_arg = self.arg_list[base_arg_i]
+
+    def approxArgCnt(self, G, default=None): #TODO estimArgCnt
+        return G.get(self.base_arg.name,default)
+
+    def argCnt(self):
+        return self.base_arg.cnt
+
+    def predictCount(self, traind, G, default=None):
+        return self.approxArgCnt(G, default)
+
+class ProjectInstruction(DirectIntruction):
+    def __init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt):
+        DirectIntruction.__init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt, 0)
+
+class SortInstruction(DirectIntruction):
+    def __init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt):
+        DirectIntruction.__init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt, 0)
+
+class SubsliceInstruction(DirectIntruction):
+    def __init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt):
+        DirectIntruction.__init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt, 0)
+
+class SubsumInstruction(DirectIntruction):
+    def __init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt):
+        MalInstruction.__init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt, 2)
+
+class BatCalcInstruction(DirectIntruction):
+    def __init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt):
+        DirectIntruction.__init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt, 1)
+
+class GroupInstruction(MalInstruction):
+    def __init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt):
+        MalInstruction.__init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt)
+        #TODO fix this for 4 arguments!
+        self.arg1 = self.arg_list[0]
+
+    def approxArgCnt(self, G, default=None):
+        return G.get(self.arg1.name,default)
+
+    def argCnt(self):
+        return self.arg1.cnt
+
+
+class FirstnInstruction(MalInstruction):
+    def __init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt):
+        MalInstruction.__init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt)
+        self.arg1 = self.arg_list[0]
+
+        if len(alist) == 6:
+            self.n = int(self.arg_list[3].aval)
+        elif len(alist) == 4:
+            self.n = int(self.arg_list[1].aval)
+        else:
+            assert False
+
+    def approxArgCnt(self, G, default):
+        print("approxArgCnt: ", G.get(self.arg1.name,default), default)
+        return G.get(self.arg1.name,default)
+
+    def argCnt(self):
+        return self.arg1.cnt
+    # def predictCountG(self, G):
+    #     return int(G[self.arg1])
+
+    # def predictCountG(self, trainD, G):
+    #     return float(G.get(self.arg_list[0].name,'inf'))
+
+
+class JoinInstruction(MalInstruction):
+    def __init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt):
+        MalInstruction.__init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt)
+        self.arg1 = self.arg_list[0]
+        self.arg2 = self.arg_list[1]
+
+    def approxArgCnt(self, G):
+        return [G.get(self.arg1.name,None),G.get(self.arg2.name,None)]
+
+    def argCnt(self):
+        return [self.arg1.cnt,self.arg2.cnt]
+
+    def approxArgDiv(self, ins, G): #TODO rethink the order
+        div = 1
+        app = self.approxArgCnt(G)
+        ac  = ins.argCnt()
+        for (a1,a2) in zip(app,ac):
+            if a1 != None:
+                div = div * a1 / a2 #Hoping the order is correct...
+        return div
+
+    def approxArgDiv2(self, ins, G): #TODO rethink the order
+        div = 1
+        app = ins.approxArgCnt(G)
+        ac  = self.argCnt()
+        for (a1,a2) in zip(app,ac):
+            if a1 != None:
+                div = div * a1 / a2 #Hoping the order is correct...
+        # print("div == ",div)
+        return div
+
+    def approxArgDist(self, ins, G):
+        assert G != None
+        lead_args = [self.arg1, self.arg2]
+        self_cnt  = [float(G.get(a.name,'inf')) for a in lead_args]
+        ins_count = [arg.cnt for arg in [ins.arg1,ins.arg2]]
+        return sum([(c1-c2)**2 for (c1,c2) in zip(self_cnt,ins_count)])
+
+    def extrapolate(self, other):
+        return self.cnt
+
+    def kNN(self, ilist, k, G):
+        cand = [[i,self.approxArgDist(i,G)] for i in ilist] #TODO check for columns ???
+        cand.sort( key = lambda t: t[1] )
+        return [ t[0] for t in cand[0:k] ]
 
 class SelectInstruction(MalInstruction):
     def __init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt, jobj, stats):
@@ -227,10 +387,7 @@ class SelectInstruction(MalInstruction):
             return float('inf')
         return None
 
-    def kNN(self, ilist, k):
-        # for i in ilist:
-            # print(i.short)
-        # print(self.col, self.op, self.ctype)
+    def kNN(self, ilist, k, G):
         cand = [[i,self.distance(i)] for i in ilist if i.col == self.col and i.op == self.op and i.ctype == self.ctype]
         cand.sort( key = lambda t: t[1] )
         return [ t[0] for t in cand[0:k] ]

@@ -2,6 +2,7 @@ import random
 import json
 import pickle
 import collections
+import sys
 
 from utils        import Utils
 from mal_instr    import MalInstruction
@@ -115,13 +116,54 @@ class MalDictionary:
                 g[ins.ret_vars[0]] = ins.cnt
             elif ins.fname in ['select', 'thetaselect']:
                 pred = traind.predictCountG(ins,g)
-                # print(ins.short)
-                # print(pred.ins.short)
-                # print(ins.ret_vars[0], pred.cnt)
                 g[ins.ret_vars[0]] = pred.avg
-            # else: #TODO batcalc instructions
+            elif ins.fname in ['projection','projectionpath','projectdelta']:
+                g[ins.ret_vars[0]] = ins.approxArgCnt(g, sys.maxsize)
+                if g[ins.ret_vars[0]] == sys.maxsize:
+                    print("None in the graph: ", ins.short)
+                print("approxGraph",ins.fname,ins.ret_vars[0],g[ins.ret_vars[0]])
+            elif ins.fname in ['group','subgroup','subgroupdone']:
+                #TODO fix this
+                for r in ins.ret_vars:
+                    g[r] = ins.approxArgCnt(g, sys.maxsize)
+
+            elif ins.fname in ['+','-','*','/','==','or','dbl']:
+                g[ins.ret_vars[0]] = ins.approxArgCnt(g)
+                print("approxGraph",ins.fname,ins.ret_vars[0],g[ins.ret_vars[0]])
+            elif ins.fname in ['join']:
+                pred = traind.predictCountG(ins,g)
+                g[ins.ret_vars[0]] = pred.avg
+                g[ins.ret_vars[1]] = pred.avg
+                print("approxGraph",ins.fname,ins.ret_vars[0],g[ins.ret_vars[0]])
+                print("approxGraph",ins.fname,ins.ret_vars[1],g[ins.ret_vars[0]])
+            elif ins.fname in ['firstn']:
+                # print(ins.approxArgCnt(g, sys.maxsize),ins.n)
+                g[ins.ret_vars[0]] = min(ins.approxArgCnt(g, int(sys.maxsize)),ins.n)
+                print("approxGraph",ins.fname,ins.ret_vars[0],g[ins.ret_vars[0]])
+            elif ins.fname in ['append']:
+                g[ins.ret_vars[0]] = g[ins.arg_list[0].name] + 1
+                print("approxGraph",ins.fname,ins.ret_vars[0],g[ins.ret_vars[0]])
+
+                # print("append: ",ins.arg_list[0].name,g[ins.arg_list[0].name])
+            elif ins.fname in ['new']:
+                g[ins.ret_vars[0]] = 0
+            elif ins.fname in ['sort']:
+                #TODO maybe the other ret args ???
+                g[ins.ret_vars[1]] = ins.approxArgCnt(g, sys.maxsize)
+                print("approxGraph",ins.fname,ins.ret_vars[1],g[ins.ret_vars[1]])
+
+            elif ins.fname in ['subsum','subslice']:
+                #TODO maybe the other ret args ???
+                g[ins.ret_vars[0]] = ins.approxArgCnt(g, sys.maxsize)
+                print("approxGraph",ins.fname,ins.ret_vars[0],g[ins.ret_vars[0]])
+
+            elif ins.fname in ['bind','bind_idxbat']:
+                g[ins.ret_vars[0]] = ins.cnt
+            else: #TODO batcalc instructions
+                print("Unknown ins", ins.fname)
                 # g[ins.ret_vars[0]] = None
         return g
+
     #deprecated
     def estimate_arg_size(self, ins):
         o = self.varflow.get(ins.arg,None)
@@ -458,7 +500,7 @@ class MalDictionary:
         self_list = self.mal_dict.get(test_i.fname,[])# + self.mal_dict.get(alias[test_i.fname],[])
         if test_i.fname in ['select', 'thetaselect']:
             self_list = SelectInstruction.removeDuplicates(self_list)
-        nn        = test_i.kNN(self_list,5)
+        nn        = test_i.kNN(self_list,5, approxG)
 
         nn.sort( key = lambda ins: test_i.approxArgDist(ins, approxG))
         nn1       = nn[0]
@@ -468,8 +510,13 @@ class MalDictionary:
             print("ArgumentEstimation: real: {} estimated: {}".format(test_i.argCnt(), test_i.approxArgCnt(approxG)))
 
         if arg_cnt != None:
-            avg = sum([i.extrapolate(test_i) * ( arg_cnt / i.argCnt()) for i in nn]) / len(nn)
-            return Prediction(ins=nn1,cnt = nn1.extrapolate(test_i) * ( arg_cnt / nn1.argCnt()), avg = avg)
+            if test_i.fname in ['select', 'thetaselect']:
+                avg = sum([i.extrapolate(test_i) * ( arg_cnt / i.argCnt()) for i in nn]) / len(nn)
+                return Prediction(ins=nn1,cnt = nn1.extrapolate(test_i) * ( arg_cnt / nn1.argCnt()), avg = avg)
+            elif test_i.fname in ['join']:
+                avg = sum([i.extrapolate(test_i) * i.approxArgDiv2(test_i,approxG) for i in nn]) / len(nn)
+                return Prediction(ins=nn1,cnt = nn1.extrapolate(test_i) * nn1.approxArgDiv2(test_i,approxG), avg = avg)
+
         else:
             avg = sum([i.extrapolate(test_i) for i in nn]) / len(nn)
             return Prediction(ins=nn1, cnt = nn1.extrapolate(test_i), avg = avg)
