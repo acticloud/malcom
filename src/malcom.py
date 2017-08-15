@@ -178,23 +178,63 @@ def test_tpch6_discount():
     ind = [int(i/3) for i in nins]
     Utils.plotBar(ind, y, 'q6_discount.pdf', 'Error perc', 'Number of instructions')
 
+def topMemInstructions(q):
+    blacklist = Utils.init_blacklist("mal_blacklist.txt")
+    # stats = Utils.loadStatistics('tpch10_stats.txt')
+
+    d = MalDictionary.fromJsonFile("traces/tpch-sf10/{}.json".format(q), blacklist, None)
+
+    df = d.filter(lambda ins: ins.fname not in ['bind','tid','bind_idxbat'])
+    ins_list = df.getInsList()
+
+    ins_list.sort(key=lambda ins: -ins.mem_fprint)
+
+    N = len(ins_list)
+    y = []
+    total_mem = sum([ins.mem_fprint for ins in ins_list])
+    # for i in ins_list:
+        # print(i.mem_fprint, i.short)
+    mem = 0
+    with open("results/topN/{}.txt".format(q),'w') as f:
+        for i in range(0,N):
+            if mem / total_mem >= 0.9:
+                break
+            mem += ins_list[i].mem_fprint
+            f.write("{:12d} {}\n".format(ins_list[i].mem_fprint,ins_list[i].short))
+    # for i in range(1,N):
+    #     topN = ins_list[0:i]
+    #     mem  = sum([ins.mem_fprint for ins in topN])
+    #     y.append(int(100*mem/total_mem))
+    #     # print(mem)
+    # Utils.plotLine(range(1,N),y,"graphs/{}_mem.pdf".format(q),'perc of total','topN instructions')
+
+
+
+    # return ret
+
 if __name__ == '__main__':
     trainset = sys.argv[1]
     testset  = sys.argv[2]
 
 
     print("Using dataset {} as train set".format(trainset))
+
     # print("Using dataset {} as test set".format(testset))
 
-    blacklist = Utils.init_blacklist("mal_blacklist.txt")
+    # blacklist = Utils.init_blacklist("mal_blacklist.txt")
 
-    stats = Utils.loadStatistics('tpch10_stats.txt')
+    # stats = Utils.loadStatistics('tpch10_stats.txt')
 
+    for i in range(1,23):
+        q = "{}".format(i)
+        if i < 10:
+            q = "0{}".format(i)
+        topMemInstructions(q)
     # train_class = MalDictionary.fromJsonFile(trainset,blacklist, stats)
     # test_class  = MalDictionary.fromJsonFile(testset, blacklist, stats)
     # hold_out2(train_class, test_class)
     # hold_out3(train_class, test_class)
-    test_tpch6_discount()
+    # test_tpch6_discount()
     # test_pickle()
     # test_class.writeToFile("test.pickle")
     # sel_d = train_class.filter(lambda ins: ins.fname in ['thetaselect','select'])

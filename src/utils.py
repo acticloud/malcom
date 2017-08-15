@@ -173,6 +173,16 @@ class Utils:
         savefig(output)#.format(sys.argv[1].split('.')[0]))
 
     @staticmethod
+    def plotLine(x,y,output,ylabel,xlabel, lscale=False):
+        plt.xlabel(xlabel)
+        plt.ylabel(ylabel)
+        # plt.xticks(x, ind)
+
+        plot1 = plt.plot(x, y, marker='o', color='b')
+
+        savefig(output)#.format(sys.argv[1].split('.')[0]))
+        plt.clf()
+    @staticmethod
     def sizeof(type_str):
         if type_str == "int":
             return 4

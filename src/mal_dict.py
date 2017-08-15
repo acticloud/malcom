@@ -76,10 +76,10 @@ class MalDictionary:
                         tag = int(jobj["tag"])
 
                         #deprecated
-                        if fname in blist:
-                            bi = BetaIns.fromJsonObj(jobj, fname, stats)
-                            bins[fname] = bins.get(fname,[])
-                            bins[fname].append(bi)
+                        # if fname in blist:
+                        #     bi = BetaIns.fromJsonObj(jobj, fname, stats)
+                        #     bins[fname] = bins.get(fname,[])
+                        #     bins[fname].append(bi)
 
                         for r in jobj["ret"]: #TODO rethink
                             if "alias" in r:

@@ -60,14 +60,14 @@ class MalInstruction:
         arg_vars  = [arg.name for arg in arg_list if arg.isVar()]
         ret_vars  = [ret['name'] for ret in jobj.get("ret",[]) if Utils.isVar(ret['name'])]
         count     = int(jobj["ret"][0].get("count",0))
-        if fname in ['select','thetaselect']:
-            return SelectInstruction(
-                pc, clk, short, fname, size, ret_size, tag, arg_size, arg_list, free_size, arg_vars, ret_vars, count,jobj, stats
-            )
-        else :
-            return MalInstruction(
-                pc, clk, short, fname, size, ret_size, tag, arg_size, arg_list, free_size, arg_vars, ret_vars, count
-            )
+        # if fname in ['select','thetaselect']:
+        #     return SelectInstruction(
+        #         pc, clk, short, fname, size, ret_size, tag, arg_size, arg_list, free_size, arg_vars, ret_vars, count,jobj, stats
+        #     )
+        # else :
+        return MalInstruction(
+            pc, clk, short, fname, size, ret_size, tag, arg_size, arg_list, free_size, arg_vars, ret_vars, count
+        )
 
     #deprecated
     def distance(self,other):
