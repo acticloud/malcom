@@ -1,1 +1,10 @@
-!=
+mergecand
+groupdone
+thetajoin
+delta
+difference
+fix projection path (take the min of all)
+fix select for boolean types
+likeselect
+<
+intersect

@@ -1,14 +1,11 @@
 #!/usr/bin/python3
+import random
 import json
 import sys
-# from mal_instr import MalInstruction
-from pprint import pprint
+from pprint   import pprint
 from mal_dict import MalDictionary
-from mal_dict import Prediction
-from utils import Utils
-import random
-
-
+from utils    import Prediction
+from utils    import Utils
 
 def print_usage():
     print("Usage: ./parser.py <trainset> <testset>")
@@ -186,10 +183,46 @@ def test_test():
 
     stats = Utils.loadStatistics('tpch10_stats.txt')
 
-    d1 = MalDictionary.fromJsonFile("traces/random_tpch_sf10/ran3_200_sf10.json", blacklist, stats)
-    d2 = MalDictionary.fromJsonFile("traces/tpch-sf10/03.json", blacklist, stats)
+    d1 = MalDictionary.fromJsonFile("traces/random_tpch_sf10/ran4_200_sf10.json", blacklist, stats)
+    d2 = MalDictionary.fromJsonFile("traces/tpch-sf10/04.json", blacklist, stats)
 
+    # for ins in d2.getInsList():
+    #     print(ins.short)
     G = d2.approxGraph(d1)
+
+def topMemInstructions(q):
+    blacklist = Utils.init_blacklist("mal_blacklist.txt")
+    # stats = Utils.loadStatistics('tpch10_stats.txt')
+
+    d = MalDictionary.fromJsonFile("traces/tpch-sf10/{}.json".format(q), blacklist, None)
+
+    df = d.filter(lambda ins: ins.fname not in ['bind','tid','bind_idxbat'])
+    ins_list = df.getInsList()
+
+    ins_list.sort(key=lambda ins: -ins.mem_fprint)
+
+    N = len(ins_list)
+    y = []
+    total_mem = sum([ins.mem_fprint for ins in ins_list])
+    # for i in ins_list:
+        # print(i.mem_fprint, i.short)
+    mem = 0
+    with open("results/topN/{}.txt".format(q),'w') as f:
+        for i in range(0,N):
+            if mem / total_mem >= 0.9:
+                break
+            mem += ins_list[i].mem_fprint
+            f.write("{:12d} {}\n".format(ins_list[i].mem_fprint,ins_list[i].short))
+    # for i in range(1,N):
+    #     topN = ins_list[0:i]
+    #     mem  = sum([ins.mem_fprint for ins in topN])
+    #     y.append(int(100*mem/total_mem))
+    #     # print(mem)
+    # Utils.plotLine(range(1,N),y,"graphs/{}_mem.pdf".format(q),'perc of total','topN instructions')
+
+
+
+    # return ret
 
 if __name__ == '__main__':
     trainset = sys.argv[1]
@@ -197,19 +230,19 @@ if __name__ == '__main__':
 
 
     print("Using dataset {} as train set".format(trainset))
+
     # print("Using dataset {} as test set".format(testset))
 
     # blacklist = Utils.init_blacklist("mal_blacklist.txt")
 
     # stats = Utils.loadStatistics('tpch10_stats.txt')
 
-    # train_class = MalDictionary.fromJsonFile(trainset,blacklist, stats)
-    # test_class  = MalDictionary.fromJsonFile(testset, blacklist, stats)
-    # hold_out2(train_class, test_class)
-    # hold_out3(train_class, test_class)
+    #for i in range(1,23):
+    #    q = "{}".format(i)
+    #    if i < 10:
+    #        q = "0{}".format(i)
+    #    topMemInstructions(q)
     test_test()
-    # test_pickle()
-    # test_class.writeToFile("test.pickle")
     # sel_d = train_class.filter(lambda ins: ins.fname in ['thetaselect','select'])
     # for i in sel_d.getInsList():
     #     print(i.short)
