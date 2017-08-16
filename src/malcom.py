@@ -1,14 +1,11 @@
 #!/usr/bin/python3
+import random
 import json
 import sys
-# from mal_instr import MalInstruction
-from pprint import pprint
+from pprint   import pprint
 from mal_dict import MalDictionary
-from mal_dict import Prediction
-from utils import Utils
-import random
-
-
+from utils    import Prediction
+from utils    import Utils
 
 def print_usage():
     print("Usage: ./parser.py <trainset> <testset>")
@@ -186,9 +183,11 @@ def test_test():
 
     stats = Utils.loadStatistics('tpch10_stats.txt')
 
-    d1 = MalDictionary.fromJsonFile("traces/random_tpch_sf10/ran3_200_sf10.json", blacklist, stats)
-    d2 = MalDictionary.fromJsonFile("traces/tpch-sf10/03.json", blacklist, stats)
+    d1 = MalDictionary.fromJsonFile("traces/random_tpch_sf10/ran6_200_sf10.json", blacklist, stats)
+    d2 = MalDictionary.fromJsonFile("traces/tpch-sf10/06.json", blacklist, stats)
 
+    # for ins in d2.getInsList():
+    #     print(ins.short)
     G = d2.approxGraph(d1)
 
 def topMemInstructions(q):

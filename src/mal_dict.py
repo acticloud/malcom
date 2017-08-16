@@ -1,30 +1,24 @@
 import random
-import json
 import pickle
-import collections
+import json
 import sys
-
 from utils        import Utils
 from mal_instr    import MalInstruction
 from mal_instr    import SelectInstruction
-from mal_bins     import BetaIns
 from mal_dataflow import Dataflow
-from bdict        import BDict
 #TODO add method find closest instruction
 
-Prediction = collections.namedtuple('Prediction', ['ins', 'cnt', 'avg'])
-
+from utils import Prediction
 class MalDictionary:
     """
     @arg mal_dict: dict<List<MalInstruction>>
     @arg q_tags  : list<int> //list of the unique query tags
     @arg varflow: dic<tag,dic<var,table>>
     """
-    def __init__(self, mal_dict, q_tags, varflow, beta_dict = {}):
+    def __init__(self, mal_dict, q_tags, varflow):
         self.mal_dict   = mal_dict
         self.query_tags = q_tags
         self.varflow    = varflow
-        self.beta_dict  = BDict(beta_dict) #TODO remove
 
     @staticmethod
     def loadFromFile(file_name):
@@ -39,7 +33,6 @@ class MalDictionary:
 
     def union(self, other):
         union_ilist   = self.getInsList() + other.getInsList()
-        # union_qtags   = self.query_tags.union(other.query_tags)
         union_varflow = self.varflow.union(other.varflow)
 
         return MalDictionary.fromInsList(union_ilist, union_varflow)
@@ -55,8 +48,6 @@ class MalDictionary:
             startd     = {}
             query_tags = set()
             varflow    = Dataflow()
-            bins       = {}
-            blist      = ["thetaselect","select","+","-","*"]
             while 1: #while not EOF
                 jobj = Utils.read_json_object(f)
                 if jobj is None:
@@ -85,7 +76,7 @@ class MalDictionary:
                         for r in jobj["ret"]: #TODO rethink
                             if "alias" in r:
                                 varflow.add(tag,r["name"],r["alias"].split('.')[-1])
-        return MalDictionary(maldict,list(query_tags),varflow, bins)
+        return MalDictionary(maldict,list(query_tags),varflow)
 
     """ Constructor from instruction list
     @arg ilist: List<MalInstruction>
@@ -117,6 +108,7 @@ class MalDictionary:
             elif ins.fname in ['select', 'thetaselect']:
                 pred = traind.predictCountG(ins,g)
                 g[ins.ret_vars[0]] = pred.avg
+                print("approxGraph",ins.fname,ins.ret_vars[0],g[ins.ret_vars[0]])
             elif ins.fname in ['projection','projectionpath','projectdelta']:
                 g[ins.ret_vars[0]] = ins.approxArgCnt(g, sys.maxsize)
                 if g[ins.ret_vars[0]] == sys.maxsize:
@@ -126,7 +118,6 @@ class MalDictionary:
                 #TODO fix this
                 for r in ins.ret_vars:
                     g[r] = ins.approxArgCnt(g, sys.maxsize)
-
             elif ins.fname in ['+','-','*','/','==','or','dbl']:
                 g[ins.ret_vars[0]] = ins.approxArgCnt(g)
                 print("approxGraph",ins.fname,ins.ret_vars[0],g[ins.ret_vars[0]])
@@ -151,10 +142,12 @@ class MalDictionary:
                 #TODO maybe the other ret args ???
                 g[ins.ret_vars[1]] = ins.approxArgCnt(g, sys.maxsize)
                 print("approxGraph",ins.fname,ins.ret_vars[1],g[ins.ret_vars[1]])
-
             elif ins.fname in ['subsum','subslice']:
                 #TODO maybe the other ret args ???
                 g[ins.ret_vars[0]] = ins.approxArgCnt(g, sys.maxsize)
+                print("approxGraph",ins.fname,ins.ret_vars[0],g[ins.ret_vars[0]])
+            elif ins.fname in ['sum']:
+                g[ins.ret_vars[0]] = ins.predictCount(traind, g).cnt
                 print("approxGraph",ins.fname,ins.ret_vars[0],g[ins.ret_vars[0]])
 
             elif ins.fname in ['bind','bind_idxbat']:

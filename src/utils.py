@@ -4,6 +4,8 @@ from pylab import savefig
 from stats import Stats
 import numpy
 import json
+import collections
+Prediction = collections.namedtuple('Prediction', ['ins', 'cnt', 'avg'])
 
 class Utils:
 

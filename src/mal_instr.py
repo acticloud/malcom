@@ -1,12 +1,10 @@
-from utils import Utils
-from mal_arg import Arg
-from stats import Stats
-from datetime import datetime
-
-# from sel_ins import SelectInstruction
-from functools import reduce
+import sys
 import re
-
+from utils    import Utils
+from mal_arg  import Arg
+from stats    import Stats
+from datetime import datetime
+from utils    import Prediction
 
 """ MalInstruction Class:
 @attr pc        : int        //mal programm counter
@@ -61,46 +59,36 @@ class MalInstruction:
         ret_vars  = [ret['name'] for ret in jobj.get("ret",[]) if Utils.isVar(ret['name'])]
         count     = int(jobj["ret"][0].get("count",0))
 
+        con_args =  [pc, clk, short, fname, size, ret_size, tag, arg_size, arg_list, free_size, arg_vars, ret_vars, count]
+
         if fname in ['select','thetaselect']:
-            return SelectInstruction(
-                pc, clk, short, fname, size, ret_size, tag, arg_size, arg_list, free_size, arg_vars, ret_vars, count,jobj, stats
-            )
+            return SelectInstruction(*con_args,jobj, stats) #TODO replace jobj
         elif fname in ['projection','projectionpath','projectdelta']:
-            return ProjectInstruction(
-                pc, clk, short, fname, size, ret_size, tag, arg_size, arg_list, free_size, arg_vars, ret_vars, count
-            )
+            return ProjectInstruction(*con_args)
         elif fname in ['+','-','*','/','==','or','dbl']:
-            return BatCalcInstruction(
-                pc, clk, short, fname, size, ret_size, tag, arg_size, arg_list, free_size, arg_vars, ret_vars, count
-            )
+            return BatCalcInstruction(*con_args)
         elif fname in ['join']:
-            return JoinInstruction(
-                pc, clk, short, fname, size, ret_size, tag, arg_size, arg_list, free_size, arg_vars, ret_vars, count
-            )
-        elif fname in ['group','subgroup','subgroupdone']:
-            return GroupInstruction(
-                pc, clk, short, fname, size, ret_size, tag, arg_size, arg_list, free_size, arg_vars, ret_vars, count
-            )
+            return JoinInstruction(*con_args)
+        elif fname in ['group','subgroup','subgroupdone','groupdone']:
+            return GroupInstruction(*con_args)
         elif fname in ['firstn']:
-            return FirstnInstruction(
-                pc, clk, short, fname, size, ret_size, tag, arg_size, arg_list, free_size, arg_vars, ret_vars, count
-            )
+            return FirstnInstruction(*con_args)
+        elif fname in ['hash','bulk_xor_rotate_hash']:
+            return DirectIntruction(*con_args, base_arg_i = 0)
+        elif fname in ['dbl']:
+            return DirectIntruction(*con_args, base_arg_i = 1)
         elif fname in ['sort']:
-            return SortInstruction(
-                pc, clk, short, fname, size, ret_size, tag, arg_size, arg_list, free_size, arg_vars, ret_vars, count
-            )
-        elif fname in ['subsum']:
-            return SubsumInstruction(
-                pc, clk, short, fname, size, ret_size, tag, arg_size, arg_list, free_size, arg_vars, ret_vars, count
-            )
+            return SortInstruction(*con_args)
+        elif fname in ['subsum','subavg','subcount']:
+            return SubCalcInstruction(*con_args)
         elif fname in ['subslice']:
-            return SubsliceInstruction(
-                pc, clk, short, fname, size, ret_size, tag, arg_size, arg_list, free_size, arg_vars, ret_vars, count
-            )
+            return SubsliceInstruction(*con_args)
+        elif fname in ['sum','avg']:
+            return ReduceInstruction(*con_args)
+        elif fname in ['mergecand']:
+            return MergeInstruction(*con_args)
         else :
-            return MalInstruction(
-                pc, clk, short, fname, size, ret_size, tag, arg_size, arg_list, free_size, arg_vars, ret_vars, count
-            )
+            return MalInstruction(*con_args)
 
     #deprecated
     def distance(self,other):
@@ -187,56 +175,67 @@ DirectIntruction: What goes in, goes out....
 @arg
 """
 class DirectIntruction(MalInstruction):
-    def __init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt, base_arg_i):
-        MalInstruction.__init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt)
+    def __init__(self, *args, base_arg_i):
+        MalInstruction.__init__(self, *args)
         self.base_arg = self.arg_list[base_arg_i]
 
-    def approxArgCnt(self, G, default=None): #TODO estimArgCnt
+
+    def approxArgCnt(self, G, default=None):
         return G.get(self.base_arg.name,default)
 
     def argCnt(self):
         return self.base_arg.cnt
 
     def predictCount(self, traind, G, default=None):
-        return self.approxArgCnt(G, default)
+        p = self.approxArgCnt(G, default)
+        return Prediction(ins=None, cnt = p, avg = p)
 
-class ProjectInstruction(DirectIntruction):
-    def __init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt):
-        DirectIntruction.__init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt, 0)
-
-class SortInstruction(DirectIntruction):
-    def __init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt):
-        DirectIntruction.__init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt, 0)
-
-class SubsliceInstruction(DirectIntruction):
-    def __init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt):
-        DirectIntruction.__init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt, 0)
-
-class SubsumInstruction(DirectIntruction):
-    def __init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt):
-        MalInstruction.__init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt, 2)
-
-class BatCalcInstruction(DirectIntruction):
-    def __init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt):
-        DirectIntruction.__init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt, 1)
-
-class GroupInstruction(MalInstruction):
-    def __init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt):
-        MalInstruction.__init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt)
-        #TODO fix this for 4 arguments!
+""" ret count = arg1.cnt + arg2.cnt """
+class MergeInstruction(MalInstruction):
+    def __init__(self, *args):
+        MalInstruction.__init__(self, *args)
         self.arg1 = self.arg_list[0]
+        self.arg2 = self.arg_list[1]
 
     def approxArgCnt(self, G, default=None):
-        return G.get(self.arg1.name,default)
+        return [G.get(self.arg1.name,default),G.get(self.arg2.name,default)]
 
     def argCnt(self):
-        return self.arg1.cnt
+        return [self.arg1.cnt,self.arg2.cnt]
+
+    def predictCount(self, traind, G, default=None):
+        ac = sum(self.approxArgCnt(G, default))
+        return Prediction(ins=None, cnt = ac, avg = ac)
 
 
-class FirstnInstruction(MalInstruction):
-    def __init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt):
-        MalInstruction.__init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt)
-        self.arg1 = self.arg_list[0]
+class ProjectInstruction(DirectIntruction):
+    def __init__(self, *args):
+        DirectIntruction.__init__(self, *args, base_arg_i = 0)
+
+class SortInstruction(DirectIntruction):
+    def __init__(self, *args):
+        DirectIntruction.__init__(self, *args, base_arg_i = 0)
+
+class SubsliceInstruction(DirectIntruction):
+    def __init__(self, *args):
+        DirectIntruction.__init__(self, *args, base_arg_i = 0)
+
+class SubCalcInstruction(DirectIntruction):
+    def __init__(self, *args):
+        DirectIntruction.__init__(self, *args, base_arg_i = 2)
+
+class BatCalcInstruction(DirectIntruction):
+    def __init__(self,*args):
+        DirectIntruction.__init__(self,*args, base_arg_i = 1)
+
+class GroupInstruction(MalInstruction):
+    def __init__(self, *args):
+        DirectIntruction.__init__(self, *args, base_arg_i = 0)
+
+class FirstnInstruction(DirectIntruction):
+    def __init__(self, *args):
+        MalInstruction.__init__(self, *args)
+        self.base_arg = self.arg_list[0]
 
         if len(alist) == 6:
             self.n = int(self.arg_list[3].aval)
@@ -245,17 +244,24 @@ class FirstnInstruction(MalInstruction):
         else:
             assert False
 
-    def approxArgCnt(self, G, default):
-        print("approxArgCnt: ", G.get(self.arg1.name,default), default)
-        return G.get(self.arg1.name,default)
+    def predictCount(self, traind, G, default = None):
+        p = min(self.approxArgCnt(g, int(sys.maxsize)),self.n)
+        return Prediction(ins = None, cnt = p, avg = p)
+
+
+class ReduceInstruction(MalInstruction):
+    def __init__(self, *args):
+        MalInstruction.__init__(self,*args)
+        self.base_arg = self.arg_list[0]
 
     def argCnt(self):
-        return self.arg1.cnt
-    # def predictCountG(self, G):
-    #     return int(G[self.arg1])
+        return self.base_arg.cnt
 
-    # def predictCountG(self, trainD, G):
-    #     return float(G.get(self.arg_list[0].name,'inf'))
+    def approxArgCnt(self, G, default = None):
+        return G.get(self.base_arg.name,default)
+
+    def predictCount(self, traind, G, default = None):
+        return Prediction(ins= None, cnt = 1, avg = 1)
 
 
 class JoinInstruction(MalInstruction):
