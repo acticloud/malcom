@@ -183,8 +183,8 @@ def test_test():
 
     stats = Utils.loadStatistics('tpch10_stats.txt')
 
-    d1 = MalDictionary.fromJsonFile("traces/random_tpch_sf10/ran4_200_sf10.json", blacklist, stats)
-    d2 = MalDictionary.fromJsonFile("traces/tpch-sf10/04.json", blacklist, stats)
+    d1 = MalDictionary.fromJsonFile("traces/tpch-sf10/19.json", blacklist, stats)
+    d2 = MalDictionary.fromJsonFile("traces/tpch-sf10/19.json", blacklist, stats)
 
     # for ins in d2.getInsList():
     #     print(ins.short)

@@ -65,19 +65,27 @@ class MalInstruction:
             return SelectInstruction(*con_args,jobj, stats) #TODO replace jobj
         elif fname in ['projection','projectionpath','projectdelta']:
             return ProjectInstruction(*con_args)
-        elif fname in ['+','-','*','/','==','or','dbl']:
+        elif fname in ['+','-','*','/','or','dbl','and']:
             return BatCalcInstruction(*con_args)
-        elif fname in ['join']:
+        elif fname in ['join','thetajoin']:
             return JoinInstruction(*con_args)
         elif fname in ['group','subgroup','subgroupdone','groupdone']:
             return GroupInstruction(*con_args)
         elif fname in ['firstn']:
             return FirstnInstruction(*con_args)
-        elif fname in ['hash','bulk_xor_rotate_hash','identity','mirror']:
+        elif fname in ['hash','bulk_rotate_xor_hash','identity','mirror','year','ifthenelse','delta']:
             return DirectIntruction(*con_args, base_arg_i = 0)
         elif fname in ['dbl']:
             return DirectIntruction(*con_args, base_arg_i = 1)
-        elif fname in ['intersect','<']:
+        elif fname in ['hge']:
+            if arg_list[1].cnt > 0:
+                return DirectIntruction(*con_args, base_arg_i = 1)
+            else:
+                return ReduceInstruction(*con_args)
+        elif fname in ['==','isnil','!=','like']:
+            #TODO fix this
+            return DirectIntruction(*con_args, base_arg_i = 0)
+        elif fname in ['intersect','<','>']:
             return CompareIntruction(*con_args, arg_i = [0,1])
         elif fname in ['sort']:
             return SortInstruction(*con_args)
@@ -85,7 +93,9 @@ class MalInstruction:
             return SubCalcInstruction(*con_args)
         elif fname in ['subslice']:
             return SubsliceInstruction(*con_args)
-        elif fname in ['sum','avg']:
+        elif fname in ['difference']:
+            return DiffInstruction(*con_args)
+        elif fname in ['sum','avg','single','dec_round','single']:
             return ReduceInstruction(*con_args)
         elif fname in ['mergecand']:
             return MergeInstruction(*con_args)
@@ -229,6 +239,22 @@ class MergeInstruction(MalInstruction):
         ac = sum(self.approxArgCnt(G, default))
         return Prediction(ins=None, cnt = ac, avg = ac)
 
+""" ret count = arg1.cnt + arg2.cnt """
+class DiffInstruction(MalInstruction):
+    def __init__(self, *args):
+        MalInstruction.__init__(self, *args)
+        self.arg1 = self.arg_list[0]
+        self.arg2 = self.arg_list[1]
+
+    def approxArgCnt(self, G, default=None):
+        return [G.get(self.arg1.name,default),G.get(self.arg2.name,default)]
+
+    def argCnt(self):
+        return [self.arg1.cnt,self.arg2.cnt]
+
+    def predictCount(self, traind, G, default=None):
+        ac = max(self.approxArgCnt(G, default))
+        return Prediction(ins=None, cnt = ac, avg = ac)
 
 class ProjectInstruction(DirectIntruction):
     def __init__(self, *args):
@@ -248,7 +274,7 @@ class SubCalcInstruction(DirectIntruction):
 
 class BatCalcInstruction(DirectIntruction):
     def __init__(self,*args):
-        bi = 0 if args[3] == '+' else 1
+        bi = 0 if args[3] in ['+','*'] else 1 #TODO fix this
         DirectIntruction.__init__(self,*args, base_arg_i = bi)
 
 class GroupInstruction(DirectIntruction):
@@ -268,7 +294,7 @@ class FirstnInstruction(DirectIntruction):
             assert False
 
     def predictCount(self, traind, G, default = None):
-        p = min(self.approxArgCnt(g, int(sys.maxsize)),self.n)
+        p = min(self.approxArgCnt(G, int(sys.maxsize)),self.n)
         return Prediction(ins = None, cnt = p, avg = p)
 
 
@@ -333,6 +359,12 @@ class JoinInstruction(MalInstruction):
         cand.sort( key = lambda t: t[1] )
         return [ t[0] for t in cand[0:k] ]
 
+    def predictCount(self, traind, g):
+        cand_list = traind.mal_dict[self.fname]
+        knn5      = self.kNN(cand_list, 5, g)
+        avg       = sum([ins.cnt for ins in knn5]) / len(knn5) #TODO add argdiv
+        return Prediction(ins=knn5[0].short, cnt = knn5[0].cnt, avg = avg)
+
 class SelectInstruction(MalInstruction):
     def __init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt, jobj, stats):
         MalInstruction.__init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt)
@@ -347,7 +379,7 @@ class SelectInstruction(MalInstruction):
 
         # print(method, op)
         lo, hi = Utils.hi_lo(fname, self.op, jobj, stats.get(self.col,Stats(0,0)))
-        if self.ctype in ['bat[:int]','bat[:lng]','lng']:
+        if self.ctype in ['bat[:int]','bat[:lng]','lng','bat[:hge]']:
             self.lo,self.hi    = (int(lo),int(hi))
         elif self.ctype == 'bat[:date]':
             # print(lo,hi)
@@ -372,7 +404,7 @@ class SelectInstruction(MalInstruction):
     def isIncluded(self,other):
         assert self.ctype == other.ctype
         t = self.ctype
-        if t in ['bat[:int]','bat[:lng]','bat[:date]','lng']:
+        if t in ['bat[:int]','bat[:lng]','bat[:date]','lng','bat[:hge]']:
             return self.lo >= other.lo and self.hi <= other.hi
 
         return None
@@ -380,7 +412,7 @@ class SelectInstruction(MalInstruction):
     def includes(self, other):
         assert self.ctype == other.ctype
         t = self.ctype
-        if t in ['bat[:int]','bat[:lng]','bat[:date]','lng']:
+        if t in ['bat[:int]','bat[:lng]','bat[:date]','lng','bat[:hge]']:
             return self.lo <= other.lo and self.hi >= other.hi
 
         return None
@@ -411,7 +443,7 @@ class SelectInstruction(MalInstruction):
         # print(self.col, other.col)
         assert self.ctype == other.ctype
         if self.includes(other) or self.isIncluded(other):
-            if self.ctype in ['bat[:int]','bat[:lng]','lng']:
+            if self.ctype in ['bat[:int]','bat[:lng]','lng','bat[:hge]']:
                 return float((self.lo-other.lo)**2 + (self.hi-other.hi)**2)
             elif self.ctype == 'bat[:date]':
                 (min_lo,max_lo) = (min(self.lo,other.lo),max(self.lo,other.lo))
@@ -441,6 +473,12 @@ class SelectInstruction(MalInstruction):
         self_list = SelectInstruction.removeDuplicates(self_list)
         nn        = self.kNN(self_list,5, approxG)
 
+        if len(nn) == 0:
+            print("0 knn len in select ??", self.short, self.fname, self.op, self.ctype, self.col)
+            print(len(self_list))
+            for i in self_list:
+                print(i.short, i.fname, i.op, i.ctype, i.col)
+
         nn.sort( key = lambda ins: self.approxArgDist(ins, approxG))
         nn1       = nn[0]
         arg_cnt   = self.approxArgCnt(approxG)
@@ -457,7 +495,7 @@ class SelectInstruction(MalInstruction):
             return Prediction(ins=nn1, cnt = nn1.extrapolate(self), avg = avg)
 
     def extrapolate(self, other):
-        if self.ctype in ['bat[:int]','bat[:lng]','lng']:
+        if self.ctype in ['bat[:int]','bat[:lng]','lng','bat[:hge]']:
             self_dist  = self.hi  - self.lo
             other_dist = other.hi - other.lo
 
