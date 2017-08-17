@@ -1,3 +1,4 @@
+import logging
 import sys
 import re
 from utils    import Utils
@@ -88,7 +89,7 @@ class MalInstruction:
         elif fname in ['intersect','<','>']:
             return CompareIntruction(*con_args, arg_i = [0,1])
         elif fname in ['sort']:
-            return SortInstruction(*con_args)
+            return DirectIntruction(*con_args, base_arg_i = 0, base_ret_i = 1)#TODO fix this (multiple ret??)
         elif fname in ['subsum','subavg','subcount','submin']:
             return SubCalcInstruction(*con_args)
         elif fname in ['subslice']:
@@ -99,6 +100,8 @@ class MalInstruction:
             return ReduceInstruction(*con_args)
         elif fname in ['mergecand']:
             return MergeInstruction(*con_args)
+        elif fname in ['append']:
+            return AppendInstruction(*con_args)
         else :
             return MalInstruction(*con_args)
 
@@ -187,10 +190,10 @@ DirectIntruction: What goes in, goes out....
 @arg
 """
 class DirectIntruction(MalInstruction):
-    def __init__(self, *args, base_arg_i):
+    def __init__(self, *args, base_arg_i, base_ret_i = 0):
         MalInstruction.__init__(self, *args)
         self.base_arg = self.arg_list[base_arg_i]
-
+        self.base_ret = self.ret_vars[base_ret_i]
 
     def approxArgCnt(self, G, default=None):
         return G.get(self.base_arg.name,default)
@@ -200,7 +203,7 @@ class DirectIntruction(MalInstruction):
 
     def predictCount(self, traind, G, default=None):
         p = self.approxArgCnt(G, default)
-        return Prediction(ins=None, cnt = p, avg = p)
+        return Prediction(retv = self.base_ret, ins=None, cnt = p, avg = p)
 
 """
 CompareIntruction: output is at most min of the inputs
@@ -260,10 +263,6 @@ class ProjectInstruction(DirectIntruction):
     def __init__(self, *args):
         DirectIntruction.__init__(self, *args, base_arg_i = 0)
 
-class SortInstruction(DirectIntruction):
-    def __init__(self, *args):
-        DirectIntruction.__init__(self, *args, base_arg_i = 0)
-
 class SubsliceInstruction(DirectIntruction):
     def __init__(self, *args):
         DirectIntruction.__init__(self, *args, base_arg_i = 0)
@@ -310,8 +309,15 @@ class ReduceInstruction(MalInstruction):
         return G.get(self.base_arg.name,default)
 
     def predictCount(self, traind, G, default = None):
-        return Prediction(ins= None, cnt = 1, avg = 1)
+        return Prediction(self.ret_vars[0],ins= None, cnt = 1, avg = 1)
 
+class AppendInstruction(ReduceInstruction):
+    def __init__(self, *args):
+        ReduceInstruction.__init__(self,*args)
+
+    def predictCount(self, traind, G, default = None):
+        ac = G[self.base_arg.name]
+        return Prediction(retv=self.ret_vars[0],ins= None, cnt = 1+ac, avg = 1+ac)
 
 class JoinInstruction(MalInstruction):
     def __init__(self, pc, clk, short, fname, size, ret_size, tag, arg_size, alist, free_size, arg_vars, ret_vars, cnt):
@@ -490,11 +496,11 @@ class SelectInstruction(MalInstruction):
 
         if arg_cnt != None:
             avg = sum([i.extrapolate(self) * ( arg_cnt / i.argCnt()) for i in nn]) / len(nn)
-            return Prediction(ins=nn1,cnt = nn1.extrapolate(self) * ( arg_cnt / nn1.argCnt()), avg = avg)
+            return Prediction(retv = self.ret_vars[0], ins=nn1,cnt = nn1.extrapolate(self) * ( arg_cnt / nn1.argCnt()), avg = avg)
         else:
-            print("None arguments ???", self.lead_arg.name)
+            logging.warn("None arguments ??? {}".format(self.lead_arg.name))
             avg = sum([i.extrapolate(self) for i in nn]) / len(nn)
-            return Prediction(ins=nn1, cnt = nn1.extrapolate(self), avg = avg)
+            return Prediction(retv = self.ret_vars[0], ins=nn1, cnt = nn1.extrapolate(self), avg = avg)
 
     def extrapolate(self, other):
         if self.ctype in ['bat[:int]','bat[:lng]','lng','bat[:hge]']:

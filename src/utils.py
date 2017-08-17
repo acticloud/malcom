@@ -5,7 +5,8 @@ from stats import Stats
 import numpy
 import json
 import collections
-Prediction = collections.namedtuple('Prediction', ['ins', 'cnt', 'avg'])
+
+Prediction = collections.namedtuple('Prediction', ['ins', 'cnt', 'avg','retv'])
 
 class Utils:
 

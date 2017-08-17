@@ -1,3 +1,4 @@
+import logging
 import random
 import pickle
 import json
@@ -93,7 +94,7 @@ class MalDictionary:
         return MalDictionary(mdict, list(qtags), varflow)
 
     """
-    @des builds a graph that approximates the cardinality for each variable
+    @des builds a graph that approximates the count for each variable
     @arg Maldictionary
     @ret dict<str,int> //dictionary with var name as a key,est count as val
     """
@@ -102,51 +103,40 @@ class MalDictionary:
         ilist.sort( key = lambda ins: ins.clk )
         g = {}
 
+        direct = ['append','sort','select', 'thetaselect','likeselect','==','isnil',
+        'ifthenelse','hge','!=','project','substring','avg','>','like',
+        'difference','and','mergecand','single','dec_round','delta','year',
+        'subavg','subsum','subcount','submin','projection','projectionpath',
+        'projectdelta','subsum','subslice','+','-','*','/','or','dbl','intersect',
+        '<','firstn','hash','bulk_rotate_xor_hash','identity','mirror','sum']
+
         for ins in ilist:
             if ins.fname in ['tid']:
                 g[ins.ret_vars[0]] = ins.cnt
             elif ins.fname in ['new']:
                 g[ins.ret_vars[0]] = 0
-            elif ins.fname in ['append']:
-                g[ins.ret_vars[0]] = g[ins.arg_list[0].name] + 1
-                print("approxGraph",ins.fname,ins.ret_vars[0],g[ins.ret_vars[0]])
-            elif ins.fname in ['select', 'thetaselect','likeselect']:
-                # pred = traind.predictCountG(ins,g)
-                pred = ins.predictCount(traind, g)
-                g[ins.ret_vars[0]] = pred.avg
-                print("approxGraph",ins.fname,ins.ret_vars[0],g[ins.ret_vars[0]])
-            elif ins.fname in ['group','subgroup','subgroupdone','groupdone']:
+            elif ins.fname in ['group','subgroup','subgroupdone','groupdone']: #TODO fix this
                 for r in ins.ret_vars:
                     g[r] = ins.approxArgCnt(g, sys.maxsize)
                     print("approxGraph",ins.fname,r,g[r])
-            elif ins.fname in ['project','substring','avg','>','like','difference','and','mergecand','single','dec_round','delta','year','subavg','subsum','subcount','submin','projection','projectionpath','projectdelta','subsum','subslice','+','-','*','/','or','dbl','intersect','<','firstn','hash','bulk_rotate_xor_hash','identity','mirror','sum']:
-                g[ins.ret_vars[0]] = ins.predictCount(traind, g).cnt
-                print("approxGraph",ins.fname,ins.ret_vars[0],g[ins.ret_vars[0]])
-                if g[ins.ret_vars[0]] == sys.maxsize or g[ins.ret_vars[0]] == None:
-                    print("None in the graph: ", ins.short)
+            elif ins.fname in direct:
+                p         = ins.predictCount(traind, g)
+                g[p.retv] = p.avg
+                r         = p.retv
+                # assert(ins.ret_vars[0] == pred.retv)
+                logging.debug("method: {:15} {:5} {:10.0f}".format(ins.fname,r,g[r]))
+                if g[r] == sys.maxsize or g[r] == None:
+                    log.error("None in the graph: {}".format(ins.short))
             elif ins.fname in ['join','thetajoin']:
                 pred = ins.predictCount(traind,g)
                 g[ins.ret_vars[0]] = pred.avg
                 g[ins.ret_vars[1]] = pred.avg
                 print("approxGraph",ins.fname,ins.ret_vars[0],g[ins.ret_vars[0]])
                 print("approxGraph",ins.fname,ins.ret_vars[1],g[ins.ret_vars[0]])
-            elif ins.fname in ['sort']:
-                #TODO maybe the other ret args ???
-                g[ins.ret_vars[1]] = ins.approxArgCnt(g, sys.maxsize)
-                print("approxGraph",ins.fname,ins.ret_vars[1],g[ins.ret_vars[1]])
-            elif ins.fname in ['==','isnil','ifthenelse','hge','!=']: #TODO this is a quick n dirty solution
-                g[ins.ret_vars[0]] = ins.predictCount(traind, g).cnt
-                print("approxGraph",ins.fname,ins.ret_vars[0],g[ins.ret_vars[0]])
-                if g[ins.ret_vars[0]] == sys.maxsize or g[ins.ret_vars[0]] == None:
-                    print("None in the graph: ", ins.short)
-                    print("ArgCnt",ins.approxArgCnt(g))
-                    print(ins.base_arg.name)
             elif ins.fname in ['bind','bind_idxbat']:
                 g[ins.ret_vars[0]] = ins.cnt
             else:
-                print("Unknown ins", ins.fname)
-                print("short: ",ins.short)
-                # g[ins.ret_vars[0]] = None
+                logging.warn("Unknown instruction: {} {}".format(ins.fname, ins.short))
         return g
 
     #deprecated

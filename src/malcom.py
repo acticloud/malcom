@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import logging
 import random
 import json
 import sys
@@ -182,9 +183,9 @@ def test_test():
     blacklist = Utils.init_blacklist("mal_blacklist.txt")
 
     stats = Utils.loadStatistics('tpch10_stats.txt')
-    print("loading training set...")
+    logging.info("loading training set...")
     d1 = MalDictionary.fromJsonFile("traces/tpch-sf10/01.json", blacklist, stats)
-    print("loading test set...")
+    logging.info("loading test set...")
     d2 = MalDictionary.fromJsonFile("traces/tpch-sf10/01.json", blacklist, stats)
 
     # for ins in d2.getInsList():
@@ -225,6 +226,26 @@ def topMemInstructions(q):
 
     # return ret
 
+def init_logger():
+    logger = logging.getLogger('')
+    logger.setLevel(logging.DEBUG)
+
+    # create console handler and set level to debug
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.DEBUG)
+
+    formatter = logging.Formatter('~%(levelname)s~ %(filename)s:%(funcName)s:%(lineno)s --> %(message)s')
+    ch.setFormatter(formatter)
+    # add ch to logger
+    logger.addHandler(ch)
+
+    # 'application' code
+    logger.debug('debug message'+'tralala')
+    logger.info('info message')
+    logger.warn('warn message')
+    logger.error('error message')
+    logger.critical('critical message')
+
 if __name__ == '__main__':
     trainset = sys.argv[1]
     testset  = sys.argv[2]
@@ -232,18 +253,26 @@ if __name__ == '__main__':
 
     print("Using dataset {} as train set".format(trainset))
 
+    init_logger()
+    test_test()
+    # logger = logging.getLogger('root')
+    # FORMAT = "[%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s"
+    # logging.basicConfig(format=FORMAT)
+    # logging.basicConfig(level=logging.DEBUG)
+    # logging.basicConfig(format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s')
+
+    # logger.setLevel(logging.DEBUG)
     # print("Using dataset {} as test set".format(testset))
 
     # blacklist = Utils.init_blacklist("mal_blacklist.txt")
 
     # stats = Utils.loadStatistics('tpch10_stats.txt')
-
     #for i in range(1,23):
     #    q = "{}".format(i)
     #    if i < 10:
     #        q = "0{}".format(i)
     #    topMemInstructions(q)
-    test_test()
+    # test_test()
     # sel_d = train_class.filter(lambda ins: ins.fname in ['thetaselect','select'])
     # for i in sel_d.getInsList():
     #     print(i.short)
