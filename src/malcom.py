@@ -182,9 +182,10 @@ def test_test():
     blacklist = Utils.init_blacklist("mal_blacklist.txt")
 
     stats = Utils.loadStatistics('tpch10_stats.txt')
-
-    d1 = MalDictionary.fromJsonFile("traces/tpch-sf10/19.json", blacklist, stats)
-    d2 = MalDictionary.fromJsonFile("traces/tpch-sf10/19.json", blacklist, stats)
+    print("loading training set...")
+    d1 = MalDictionary.fromJsonFile("traces/tpch-sf10/01.json", blacklist, stats)
+    print("loading test set...")
+    d2 = MalDictionary.fromJsonFile("traces/tpch-sf10/01.json", blacklist, stats)
 
     # for ins in d2.getInsList():
     #     print(ins.short)

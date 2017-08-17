@@ -55,12 +55,12 @@ class MalDictionary:
                 fname,args ,ret  = Utils.extract_fname(jobj["short"])
 
                 if not Utils.is_blacklisted(blacklist,fname):
-                    new_mals = MalInstruction.fromJsonObj(jobj, stats)
 
                     if jobj["state"] == "start":
                         startd[jobj["pc"]] = jobj["clk"]
                     elif jobj["state"] == "done":
                         assert jobj["pc"] in startd
+                        new_mals = MalInstruction.fromJsonObj(jobj, stats)
                         new_mals.time  = float(jobj["clk"]) - float(startd[jobj["pc"]])
                         new_mals.start = int(startd[jobj["pc"]])
                         maldict[fname] = maldict.get(fname,[]) + [new_mals]
@@ -110,7 +110,7 @@ class MalDictionary:
             elif ins.fname in ['append']:
                 g[ins.ret_vars[0]] = g[ins.arg_list[0].name] + 1
                 print("approxGraph",ins.fname,ins.ret_vars[0],g[ins.ret_vars[0]])
-            elif ins.fname in ['select', 'thetaselect']:
+            elif ins.fname in ['select', 'thetaselect','likeselect']:
                 # pred = traind.predictCountG(ins,g)
                 pred = ins.predictCount(traind, g)
                 g[ins.ret_vars[0]] = pred.avg
@@ -119,7 +119,7 @@ class MalDictionary:
                 for r in ins.ret_vars:
                     g[r] = ins.approxArgCnt(g, sys.maxsize)
                     print("approxGraph",ins.fname,r,g[r])
-            elif ins.fname in ['like','difference','and','mergecand','single','dec_round','delta','year','subavg','subsum','subcount','submin','projection','projectionpath','projectdelta','subsum','subslice','+','-','*','/','or','dbl','intersect','<','firstn','hash','bulk_rotate_xor_hash','identity','mirror','sum']:
+            elif ins.fname in ['project','substring','avg','>','like','difference','and','mergecand','single','dec_round','delta','year','subavg','subsum','subcount','submin','projection','projectionpath','projectdelta','subsum','subslice','+','-','*','/','or','dbl','intersect','<','firstn','hash','bulk_rotate_xor_hash','identity','mirror','sum']:
                 g[ins.ret_vars[0]] = ins.predictCount(traind, g).cnt
                 print("approxGraph",ins.fname,ins.ret_vars[0],g[ins.ret_vars[0]])
                 if g[ins.ret_vars[0]] == sys.maxsize or g[ins.ret_vars[0]] == None:

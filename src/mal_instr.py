@@ -61,7 +61,7 @@ class MalInstruction:
 
         con_args =  [pc, clk, short, fname, size, ret_size, tag, arg_size, arg_list, free_size, arg_vars, ret_vars, count]
 
-        if fname in ['select','thetaselect']:
+        if fname in ['select','thetaselect','likeselect']:
             return SelectInstruction(*con_args,jobj, stats) #TODO replace jobj
         elif fname in ['projection','projectionpath','projectdelta']:
             return ProjectInstruction(*con_args)
@@ -73,7 +73,7 @@ class MalInstruction:
             return GroupInstruction(*con_args)
         elif fname in ['firstn']:
             return FirstnInstruction(*con_args)
-        elif fname in ['hash','bulk_rotate_xor_hash','identity','mirror','year','ifthenelse','delta']:
+        elif fname in ['hash','bulk_rotate_xor_hash','identity','mirror','year','ifthenelse','delta','substring','project']:
             return DirectIntruction(*con_args, base_arg_i = 0)
         elif fname in ['dbl']:
             return DirectIntruction(*con_args, base_arg_i = 1)
@@ -377,6 +377,8 @@ class SelectInstruction(MalInstruction):
         nC            = len([a for a in alist if a.name.startswith("C_")])
         self.lead_arg = self.arg_list[1] if nC>0 else self.arg_list[0]
 
+        if self.ret_vars[0] == 'C_235':
+            print(self.short, self.col)
         # print(method, op)
         lo, hi = Utils.hi_lo(fname, self.op, jobj, stats.get(self.col,Stats(0,0)))
         if self.ctype in ['bat[:int]','bat[:lng]','lng','bat[:hge]']:
@@ -395,8 +397,8 @@ class SelectInstruction(MalInstruction):
         bounds_set = set()
         uniqs = []
         for ins in ins_list:
-            if (ins.hi, ins.lo) not in bounds_set:
-                bounds_set.add((ins.hi, ins.lo))
+            if (ins.hi, ins.lo, ins.col) not in bounds_set:
+                bounds_set.add((ins.hi, ins.lo, ins.col))
                 uniqs.append(ins)
 
         return uniqs

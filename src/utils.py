@@ -102,8 +102,10 @@ class Utils:
                 raise ValueError("da??")
         elif method == "select":
             return "between"
-        elif method in ["+","-","*"]:
-            return "batcalc"
+        elif method == 'likeselect':
+            return 'like'
+        # elif method in ["+","-","*"]:
+        #     return "batcalc"
         else:
             raise ValueError("e??")
 
@@ -115,8 +117,8 @@ class Utils:
                 return (args[2]["value"].strip('\"'),args[3]["value"].strip('\"'))
             elif len(args) == 6:
                 if op == "between":
-                    val1 = args[1]["value"]
-                    val2 = args[2]["value"]
+                    val1 = args[1]["value"].strip('\"')
+                    val2 = args[2]["value"].strip('\"')
                     return (val1,val2)
                 else:
                     assert op == "=="
@@ -141,6 +143,9 @@ class Utils:
                 raise ValueError("op??")
         elif method in ["+","-","*"]:
             return (stats.min,stats.max)
+        elif method == 'likeselect':
+            v = args[2]["value"].strip('\"')
+            return (v,v)
         else:
             print(jobj["short"])
             raise ValueError("ttt")
