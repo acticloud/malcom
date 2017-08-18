@@ -184,13 +184,11 @@ def test_test():
 
     stats = Utils.loadStatistics('tpch10_stats.txt')
     logging.info("loading training set...")
-    d1 = MalDictionary.fromJsonFile("traces/tpch-sf10/01.json", blacklist, stats)
+    d1 = MalDictionary.fromJsonFile("traces/tpch-sf10/20.json", blacklist, stats)
     logging.info("loading test set...")
-    d2 = MalDictionary.fromJsonFile("traces/tpch-sf10/01.json", blacklist, stats)
+    d2 = MalDictionary.fromJsonFile("traces/tpch-sf10/20.json", blacklist, stats)
 
-    # for ins in d2.getInsList():
-    #     print(ins.short)
-    G = d2.approxGraph(d1)
+    G = d2.buildApproxGraph(d1)
 
 def topMemInstructions(q):
     blacklist = Utils.init_blacklist("mal_blacklist.txt")
@@ -226,25 +224,20 @@ def topMemInstructions(q):
 
     # return ret
 
-def init_logger():
+def init_logger(log_level):
     logger = logging.getLogger('')
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(log_level)
 
     # create console handler and set level to debug
     ch = logging.StreamHandler()
-    ch.setLevel(logging.DEBUG)
+    ch.setLevel(log_level)
 
-    formatter = logging.Formatter('~%(levelname)s~ %(filename)s:%(funcName)s:%(lineno)s --> %(message)s')
+    f = '~%(levelname)s~ %(filename)s:%(funcName)s:%(lineno)s --> %(message)s'
+    formatter = logging.Formatter(f)
     ch.setFormatter(formatter)
     # add ch to logger
     logger.addHandler(ch)
 
-    # 'application' code
-    logger.debug('debug message'+'tralala')
-    logger.info('info message')
-    logger.warn('warn message')
-    logger.error('error message')
-    logger.critical('critical message')
 
 if __name__ == '__main__':
     trainset = sys.argv[1]
@@ -253,7 +246,7 @@ if __name__ == '__main__':
 
     print("Using dataset {} as train set".format(trainset))
 
-    init_logger()
+    init_logger(logging.DEBUG)
     test_test()
     # logger = logging.getLogger('root')
     # FORMAT = "[%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s"

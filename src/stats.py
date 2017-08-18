@@ -1,4 +1,6 @@
-
+"""
+@desc Column statistics class (for now only min and max)
+"""
 class Stats:
     def __init__(self, minval, maxval):
         self.min = minval

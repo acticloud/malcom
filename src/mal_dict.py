@@ -4,6 +4,7 @@ import pickle
 import json
 import sys
 from utils        import Utils
+from utils        import supported_mal
 from mal_instr    import MalInstruction
 from mal_instr    import SelectInstruction
 from mal_dataflow import Dataflow
@@ -61,18 +62,12 @@ class MalDictionary:
                         startd[jobj["pc"]] = jobj["clk"]
                     elif jobj["state"] == "done":
                         assert jobj["pc"] in startd
-                        new_mals = MalInstruction.fromJsonObj(jobj, stats)
-                        new_mals.time  = float(jobj["clk"]) - float(startd[jobj["pc"]])
+                        new_mals       = MalInstruction.fromJsonObj(jobj, stats)
+                        new_mals.time  = float(jobj["clk"])-float(startd[jobj["pc"]])
                         new_mals.start = int(startd[jobj["pc"]])
                         maldict[fname] = maldict.get(fname,[]) + [new_mals]
                         query_tags.add(int(jobj["tag"]))
                         tag = int(jobj["tag"])
-
-                        #deprecated
-                        # if fname in blist:
-                        #     bi = BetaIns.fromJsonObj(jobj, fname, stats)
-                        #     bins[fname] = bins.get(fname,[])
-                        #     bins[fname].append(bi)
 
                         for r in jobj["ret"]: #TODO rethink
                             if "alias" in r:
@@ -98,45 +93,22 @@ class MalDictionary:
     @arg Maldictionary
     @ret dict<str,int> //dictionary with var name as a key,est count as val
     """
-    def approxGraph(self, traind):
+    def buildApproxGraph(self, traind):
+        global supported_mal
         ilist = self.getInsList()
         ilist.sort( key = lambda ins: ins.clk )
         g = {}
 
-        direct = ['append','sort','select', 'thetaselect','likeselect','==','isnil',
-        'ifthenelse','hge','!=','project','substring','avg','>','like',
-        'difference','and','mergecand','single','dec_round','delta','year',
-        'subavg','subsum','subcount','submin','projection','projectionpath',
-        'projectdelta','subsum','subslice','+','-','*','/','or','dbl','intersect',
-        '<','firstn','hash','bulk_rotate_xor_hash','identity','mirror','sum']
-
         for ins in ilist:
-            if ins.fname in ['tid']:
-                g[ins.ret_vars[0]] = ins.cnt
-            elif ins.fname in ['new']:
-                g[ins.ret_vars[0]] = 0
-            elif ins.fname in ['group','subgroup','subgroupdone','groupdone']: #TODO fix this
-                for r in ins.ret_vars:
-                    g[r] = ins.approxArgCnt(g, sys.maxsize)
-                    print("approxGraph",ins.fname,r,g[r])
-            elif ins.fname in direct:
-                p         = ins.predictCount(traind, g)
+            if not ins.fname in supported_mal:
+                logging.error("Unknown instruction: {}".format(ins.short))
+            # assert ins.fname in direct:
+            for p in ins.predictCount(traind, g):
                 g[p.retv] = p.avg
                 r         = p.retv
-                # assert(ins.ret_vars[0] == pred.retv)
-                logging.debug("method: {:15} {:5} {:10.0f}".format(ins.fname,r,g[r]))
+                logging.debug("m: {:20} {:5} {:10.0f}".format(ins.fname,r,g[r]))
                 if g[r] == sys.maxsize or g[r] == None:
                     log.error("None in the graph: {}".format(ins.short))
-            elif ins.fname in ['join','thetajoin']:
-                pred = ins.predictCount(traind,g)
-                g[ins.ret_vars[0]] = pred.avg
-                g[ins.ret_vars[1]] = pred.avg
-                print("approxGraph",ins.fname,ins.ret_vars[0],g[ins.ret_vars[0]])
-                print("approxGraph",ins.fname,ins.ret_vars[1],g[ins.ret_vars[0]])
-            elif ins.fname in ['bind','bind_idxbat']:
-                g[ins.ret_vars[0]] = ins.cnt
-            else:
-                logging.warn("Unknown instruction: {} {}".format(ins.fname, ins.short))
         return g
 
     #deprecated

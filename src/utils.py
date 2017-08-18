@@ -8,10 +8,17 @@ import collections
 
 Prediction = collections.namedtuple('Prediction', ['ins', 'cnt', 'avg','retv'])
 
-class Utils:
+supported_mal = ['join','thetajoin','tid','bind','bind_idxbat','new','append',
+'sort','select','thetaselect','likeselect','==','isnil','group','subgroup',
+'subgroupdone','groupdone','ifthenelse','hge','!=','project','substring','avg',
+'>','like','difference','and','mergecand','single','dec_round','delta','year',
+'subavg','subsum','subcount','submin','projection','projectionpath',
+'projectdelta','subsum','subslice','+','-','*','/','or','dbl','intersect',
+'<','firstn','hash','bulk_rotate_xor_hash','identity','mirror','sum']
 
-    @staticmethod
+class Utils:
     #readline until you reach '}' or EOF
+    @staticmethod
     def read_json_object(f):
         lines = []
         rbrace = False
@@ -58,7 +65,7 @@ class Utils:
         for line in open(blfile).readlines():
             blacklist.append(line.strip())
 
-        return blacklist
+        return set(blacklist)
 
     @staticmethod
     def loadStatistics(sfile):
@@ -66,11 +73,6 @@ class Utils:
         for line in open(sfile).readlines():
             d.append(Stats.fromStr(line))
         return dict(d)
-
-    @staticmethod
-    def sumJsonList(jlist, sfield):
-        sumf = lambda x,y: x+y
-        return reduce(sumf, map(lambda var: var.get(sfield,0),jlist), 0)
 
     """ @arg stmt: str // short mal statement"""
     @staticmethod
@@ -190,6 +192,7 @@ class Utils:
 
         savefig(output)#.format(sys.argv[1].split('.')[0]))
         plt.clf()
+
     @staticmethod
     def sizeof(type_str):
         if type_str == "int":

@@ -1,10 +1,4 @@
-mergecand
-groupdone
-thetajoin
-delta
-difference
-fix projection path (take the min of all)
+TODO:
+alive ret vars
 fix select for boolean types
-likeselect
-<
-intersect
+fix projection path (take the min of all)
