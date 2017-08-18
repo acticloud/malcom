@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import argparse
 import logging
 import random
 import json
@@ -238,15 +239,29 @@ def init_logger(log_level):
     # add ch to logger
     logger.addHandler(ch)
 
+def init_parser():
+    parser = argparse.ArgumentParser(
+        description    = 'Malcom: Predicting things',
+        epilog         = '''Satisfied ?''',
+        formatter_class=argparse.MetavarTypeHelpFormatter)
+    parser.add_argument('--log_level', type = str, help = '{INFO,DEBUG,WARN,ERROR}', default='DEBUG')
+    # parser.add_argument('--runs', type = int, help = 'Number of variants', default= 3)
+
+
+    return parser
 
 if __name__ == '__main__':
-    trainset = sys.argv[1]
-    testset  = sys.argv[2]
+    # trainset = sys.argv[1]
+    # testset  = sys.argv[2]
 
 
-    print("Using dataset {} as train set".format(trainset))
+    # print("Using dataset {} as train set".format(trainset))
+
 
     init_logger(logging.DEBUG)
+    parser = init_parser()
+    args   = parser.parse_args()
+    print(args.log_level)
     test_test()
     # logger = logging.getLogger('root')
     # FORMAT = "[%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s"
