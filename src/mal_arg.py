@@ -14,6 +14,7 @@ class Arg:
         self.size   = size
         self.eol    = eol
         self.cnt    = count
+
     @staticmethod
     def fromJsonObj(jobj):
         name  = jobj['name']

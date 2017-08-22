@@ -1,12 +1,15 @@
+import collections
+import logging
+import numpy
+import json
 import matplotlib.pyplot as plt
 from functools import reduce
 from pylab import savefig
 from stats import Stats
-import numpy
-import json
-import collections
 
-Prediction = collections.namedtuple('Prediction', ['ins', 'cnt', 'avg','retv'])
+Prediction  = collections.namedtuple('Prediction',['ins','cnt','avg','retv','t'])
+
+# ColumnStats = collections.namedtuple('ColumnStats',['cnt','minv','maxv','uniq'])
 
 supported_mal = ['join','thetajoin','tid','bind','bind_idxbat','new','append',
 'sort','select','thetaselect','likeselect','==','isnil','group','subgroup',
@@ -14,7 +17,7 @@ supported_mal = ['join','thetajoin','tid','bind','bind_idxbat','new','append',
 '>','like','difference','and','mergecand','single','dec_round','delta','year',
 'subavg','subsum','subcount','submin','projection','projectionpath',
 'projectdelta','subsum','subslice','+','-','*','/','or','dbl','intersect',
-'<','firstn','hash','bulk_rotate_xor_hash','identity','mirror','sum']
+'<','firstn','hash','bulk_rotate_xor_hash','identity','mirror','sum','max']
 
 class Utils:
     #readline until you reach '}' or EOF
@@ -58,6 +61,16 @@ class Utils:
                 return True
         # print(line.strip())
         return False
+
+    @staticmethod
+    def approxSize(g,a):
+        if a in g:
+            c = g.get(a)
+            return c.avg*Utils.sizeof(c.t)
+        else:
+            logging.error("{}".format(a))
+            logging.debug("000")
+            return 0
 
     @staticmethod
     def init_blacklist(blfile):
@@ -203,9 +216,12 @@ class Utils:
             return 8
         elif type_str == "boolean":
             return 1
-        elif type_str == "date":
-            return 8
+        elif type_str == '[bat:date]':
+            return 4
+        elif type_str == None:
+            return 0
         else:
+            logging.error("Wtf type?? {}".format(type_str))
             raise TypeError("Unsupported type")
 
     @staticmethod

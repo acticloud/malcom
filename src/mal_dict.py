@@ -97,27 +97,21 @@ class MalDictionary:
         global supported_mal
         ilist = self.getInsList()
         ilist.sort( key = lambda ins: ins.clk )
-        g = {}
-
+        g  = {}
+        pg = {}
         for ins in ilist:
             if not ins.fname in supported_mal:
                 logging.error("Unknown instruction: {}".format(ins.short))
             # assert ins.fname in direct:
             for p in ins.predictCount(traind, g):
-                g[p.retv] = p.avg
-                r         = p.retv
-                logging.debug("m: {:20} {:5} {:10.0f}".format(ins.fname,r,g[r]))
+                g[p.retv]  = p.avg
+                pg[p.retv] = p
+                r          = p.retv
                 if g[r] == sys.maxsize or g[r] == None:
-                    log.error("None in the graph: {}".format(ins.short))
-        return g
+                    logging.error("None in the graph: {}".format(ins.short))
+                logging.debug("m: {:20} {:5} {:10.0f}".format(ins.fname,r,g[r]))
+        return (g,pg)
 
-    #deprecated
-    def estimate_arg_size(self, ins):
-        o = self.varflow.get(ins.arg,None)
-        if isinstance(o, SelectInstruction):
-            return estimate_arg_size(self, o)
-        elif isinstance(o ,int):
-            return o
 
 
     def getFirst(self, field, N):
@@ -152,11 +146,25 @@ class MalDictionary:
         max_mem  = 0
         curr_mem = 0
         for i in ilist:
-            max_mem = max(max_mem,curr_mem + i.mem_fprint)
+            max_mem  = max(max_mem,curr_mem + i.mem_fprint)
             curr_mem = curr_mem + i.ret_size - i.free_size
             # print("{} {} {}".format(i.pc,max_mem,curr_mem))
 
         return max_mem
+
+    def predictMaxMem(self, traind, G):
+        ilist = self.getInsList()
+        ilist.sort(key = lambda i: i.clk)
+        max_mem  = 0
+        curr_mem = 0
+        for i in ilist:
+            max_mem  = max(max_mem,curr_mem + i.approxMemSize(traind, G))
+            curr_mem = curr_mem + i.ret_size - i.approxFreeSize(G)
+            # print("{} {} {}".format(i.pc,max_mem,curr_mem))
+
+        return max_mem
+
+
     """
     @arg mals: string //method name
     @arg nags: int    //nof arguments

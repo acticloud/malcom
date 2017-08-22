@@ -7,3 +7,4 @@ setVariable
 exportOperation
 addmonths
 resultSet
+date_sub_msec_interval

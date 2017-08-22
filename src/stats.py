@@ -16,3 +16,19 @@ class Stats:
 
     def __str__(self):
         return "{:8} {:8}".format(self.min,self.max)
+
+class ColumnStats:
+    def __init__(self, cnt, minv, maxv, uniq):
+        self.cnt  = int(cnt)
+        self.minv = minv
+        self.maxf = maxf
+        self.uniq = int(uniq)
+
+    @staticmethod
+    def fromStr():
+        tokens = line.split("|")
+        column = tokens[0]
+        return (column, *tokens[1::])
+
+    def __str__(self):
+        return "{:8} {:8} {:8} {}".format(self.cnt,self.min,self.max,self.uniq)
