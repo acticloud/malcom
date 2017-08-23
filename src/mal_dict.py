@@ -142,7 +142,7 @@ class MalDictionary:
 
     def getMaxMem(self):
         ilist = self.getInsList()
-        ilist.sort(key = lambda i: i.start) #clk ???
+        ilist.sort(key = lambda i: i.clk) #clk ???
         max_mem  = 0
         curr_mem = 0
         for i in ilist:
@@ -152,7 +152,7 @@ class MalDictionary:
 
         return max_mem
 
-    def predictMaxMem(self, traind, G):
+    def predictMaxMem(self, traind, G): #TODO fix this
         ilist = self.getInsList()
         ilist.sort(key = lambda i: i.clk)
         max_mem  = 0
@@ -162,6 +162,32 @@ class MalDictionary:
             curr_mem = curr_mem + i.ret_size - i.approxFreeSize(G)
             # print("{} {} {}".format(i.pc,max_mem,curr_mem))
 
+        return max_mem
+
+    def testMaxMem(self, traind, G, pG): #TODO fix this
+        # print(self.getMaxMem() / self.predictMaxMem(traind, G))
+        ilist = self.getInsList()
+        ilist.sort(key = lambda i: i.clk)
+        max_mem  = 0
+        curr_mem = 0
+        max_mem2  = 0
+        curr_mem2 = 0
+        # print("came")
+        for i in ilist:
+            # print(i.fname)
+            max_mem  = max(max_mem,curr_mem + i.approxMemSize(traind, G))
+            curr_mem = curr_mem + i.ret_size - i.approxFreeSize(G, pG)
+
+            max_mem2  = max(max_mem2,curr_mem2 + i.mem_fprint)
+            curr_mem2 = curr_mem2 + i.ret_size - i.free_size
+            try:
+                print("{:15} {:10.0f} {:10.0f} {:10.0f} {:10.0f}".format(
+                    i.fname, max_mem , max_mem2, curr_mem , curr_mem2)
+                )
+                # print(max_mem / max_mem2, curr_mem / curr_mem2)
+            except Exception:
+                pass
+        # print(max_mem, max_mem2)
         return max_mem
 
 

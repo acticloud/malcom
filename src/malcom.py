@@ -191,11 +191,11 @@ def test_test():
 
     (G,pG) = d2.buildApproxGraph(d1)
 
-def sanity_test():
+def test_qmem():
     blacklist = Utils.init_blacklist("mal_blacklist.txt")
 
     stats = Utils.loadStatistics('tpch10_stats.txt')
-    for i in range(1,23):
+    for i in range(1,2):#23):
         logging.info("Testing query {}".format(i))
         q = "{}".format(i)
         if i<10:
@@ -207,7 +207,36 @@ def sanity_test():
         d2 = MalDictionary.fromJsonFile("traces/tpch-sf10/{}.json".format(q), blacklist, stats)
 
         (G,pG) = d2.buildApproxGraph(d1)
-        print(d2.predictMaxMem(d1, pG))
+        d2.testMaxMem(d1, G, pG)
+        # print(d2.predictMaxMem(d1, G) / 1000000000, d2.getMaxMem() / 1000000000)
+
+def sanity_test():
+    blacklist = Utils.init_blacklist("mal_blacklist.txt")
+
+    stats = Utils.loadStatistics('tpch10_stats.txt')
+    i=1
+    logging.info("Testing query {}".format(i))
+    q = "{}".format(i)
+    if i<10:
+        q = "0{}".format(q)
+
+    logging.info("loading training set...")
+    d1 = MalDictionary.fromJsonFile("traces/tpch-sf10/{}.json".format(q), blacklist, stats)
+    logging.info("loading test set...")
+    d2 = MalDictionary.fromJsonFile("traces/tpch-sf10/{}.json".format(q), blacklist, stats)
+
+    (G,pG) = d2.buildApproxGraph(d1)
+    for ins in d2.getInsList():
+        if ins.fname != 'append':
+            p = ins.predictCount(d1,G)
+            # try:
+                # print("{:10} {:20} {:10.0f} {:10.0f} ".format(ins.ret_vars[0],ins.fname, ins.ret_size / ins.approxMemSize(d1,G), ins.cnt / ins.predictCount(d1,G)[0].avg))
+            if ins.free_size != ins.approxFreeSize(G, pG):
+                print("{:10} {:20} {:10.0f} {:10.0f} t:{:10.0f} p:{:10.0f}".format(ins.ret_vars[0],ins.fname, ins.ret_size , ins.approxMemSize(d1,G), ins.free_size , ins.approxFreeSize(G, pG)))
+            # except Exception:
+                # pass
+    # print(d2.predictMaxMem(d1, G) / 1000000000, d2.getMaxMem() / 1000000000)
+
 
 def topMemInstructions(q):
     blacklist = Utils.init_blacklist("mal_blacklist.txt")
@@ -282,5 +311,6 @@ if __name__ == '__main__':
     args   = parser.parse_args()
     init_logger(args.log_level)
     # print(args.log_level)
-    test_test()
+    # test_test()
     sanity_test()
+    # test_qmem()

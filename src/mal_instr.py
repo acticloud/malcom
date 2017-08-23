@@ -93,7 +93,7 @@ class MalInstruction:
         elif fname in ['join','thetajoin']:
             return JoinInstruction(*con_args)
         elif fname in ['group','subgroup','subgroupdone','groupdone']:
-            return GroupInstruction(*con_args, base_arg_i=0)
+            return GroupInstruction(*con_args, base_arg_i=0, base_col=arg_list[0].col)
         elif fname in ['firstn']:
             return FirstnInstruction(*con_args)
         elif fname in ['hash','bulk_rotate_xor_hash','identity','mirror','year','ifthenelse','delta','substring','project']:
@@ -176,11 +176,21 @@ class MalInstruction:
         else:
             return default
 
-    def approxFreeSize(self, G):
-        return sum([Utils.approxSize(G, a.name) for a in self.arg_list if a.eol==1])
+    def approxFreeSize(self, G, pG):
+        dp = Prediction(0,0,0,0,0)
+        return sum([pG.get(a.name,dp).getMem(G)  for a in self.arg_list if a.eol==1])
+        # return sum([Utils.approxSize(traind, G, a.name, a.atype))
 
     def approxMemSize(self, traind, G):
-        return sum([Utils.approxSize(G, r.retv) for r in self.predictCount(traind, G)])
+        # if self.fname == 'bind':
+            # return self.ret_args[0].size #TODO fix this
+        # elif self.fname == 'tid':
+            # return 0 #TODO fix this
+        # else:
+        return sum([r.getMem(G) for r in self.predictCount(traind, G)])
+
+    def typeof(self, rv):
+        return next(iter([r.atype for r in self.ret_args if r.name == rv]))
 
     def printShort(self):
         fmt = "Instr: {} nargs: {} time: {} mem_fprint: {}"
@@ -227,7 +237,10 @@ class DirectIntruction(MalInstruction):
         self.rtype    = self.ret_args[base_ret_i].atype
 
     def approxArgCnt(self, G, default=None):
-        return G.get(self.base_arg.name,default)
+        return G[self.base_arg.name]
+
+    def approxArgDist(self, other, G):
+        return abs(self.approxArgCnt(G, sys.maxsize)-other.argCnt())
 
     def argCnt(self):
         return self.base_arg.cnt
@@ -247,7 +260,7 @@ class CompareIntruction(MalInstruction):
         self.base_arg_i = arg_i
 
     def approxArgCnt(self, G, default=None):
-        return [G.get(self.arg_list[i].name,default) for i in self.base_arg_i]
+        return [G[self.arg_list[i].name] for i in self.base_arg_i]
 
     def argCnt(self):
         return [self.arg_list[i].cnt for i in self.base_arg_i]
@@ -297,7 +310,28 @@ class DiffInstruction(MalInstruction):
 class ProjectInstruction(DirectIntruction):
     def __init__(self, *args):
         DirectIntruction.__init__(self, *args, base_arg_i = 0)
+        self.base_col = self.arg_list[1].col
+        self.proj_col = self.arg_list[0].col #maybe we do not need this
 
+    def kNN(self, traind, k, G):
+        l = traind.mal_dict[self.fname]
+        c = [[i,self.approxArgDist(i, G)] for i in l if i.base_col == self.base_col]
+        c.sort( key = lambda t: t[1] )
+        return [e[0] for e in c[0:k]]
+
+    def predictCount(self, traind, G, default=None):
+        p = self.approxArgCnt(G, default)
+        retl = self.ret_args
+        if self.fname == 'projection' and self.ret_args[0].atype == 'bat[:str]':
+            #TODO argDiv
+            # print("came")
+            kNN  = self.kNN(traind, 1, G)
+            if len(kNN)>0:
+                nn1  = kNN[0]
+                nn1r = kNN[0].ret_args[0]
+                return [Prediction(retv=retl[0].name, ins=None, cnt=nn1r.cnt, avg=nn1r.cnt, t=retl[0].atype, mem=nn1.ret_size)]
+
+        return super().predictCount(traind, G, default)
 
 class SubCalcInstruction(DirectIntruction):
     def __init__(self, *args):
@@ -308,9 +342,10 @@ class SubCalcInstruction(DirectIntruction):
 #         DirectIntruction.__init__(self,*args, base_arg_i = bi)
 
 class GroupInstruction(DirectIntruction):
-    def __init__(self, *args, base_arg_i, base_ret_i = 0):
+    def __init__(self, *args, base_arg_i, base_col):
         MalInstruction.__init__(self, *args)
         self.base_arg = self.arg_list[base_arg_i]
+        self.base_col = base_col
         # self.base_ret = self.ret_vars[base_ret_i]
 
     def approxArgCnt(self, G, default=None):
@@ -319,10 +354,22 @@ class GroupInstruction(DirectIntruction):
     def argCnt(self):
         return self.base_arg.cnt
 
+    def kNN(self, traind, k, G):
+        l = traind.mal_dict[self.fname]
+        c = [[i,self.approxArgDist(i, G)] for i in l if i.base_col == self.base_col]
+        c.sort( key = lambda t: t[1] )
+        return [e[0] for e in c[0:k]]
+
     def predictCount(self, traind, G, default=None):
-        p    = self.approxArgCnt(G, default)
+        p = self.approxArgCnt(G, default)
         retl = self.ret_args
-        #overoverestimation but ok for now
+        if self.fname == 'subgroupdone':
+            #TODO argDiv
+            kNN  = self.kNN(traind, 1, G)
+            if len(kNN)>0:
+                nn1r = kNN[0].ret_args
+                return [Prediction(retv=r.name, ins=None, cnt=nnr.cnt, avg=nnr.cnt, t=r.atype) for (r,nnr) in zip(retl,nn1r) if r.eol==0]
+
         return [Prediction(retv=r.name, ins=None, cnt=p, avg=p, t=r.atype) for r in retl if r.eol==0]
 
 class FirstnInstruction(DirectIntruction):
@@ -388,8 +435,18 @@ class LoadInstruction(MalInstruction):
         MalInstruction.__init__(self,*args)
 
     def predictCount(self, traind, G, default = None):
+        # if self.fname in ['tid','bind_idxbat']:
+            # m=0
+        # else:
+            #TODO column statistics
+            # l = traind.mal_dict[self.fname] if i.arg_list[0].col==self.arg_list[0].col][0]
+            # m = [i.ret_size for i in
         t = self.ret_args[0].atype
-        return [Prediction(retv=self.ret_vars[0],ins= None, cnt=self.cnt, avg=self.cnt, t=t)]
+        return [Prediction(retv=self.ret_vars[0],ins= None, cnt=self.cnt, avg=self.cnt, t=t, mem=self.ret_size)]
+
+        # if self.ret_vars[0] == 'X_54':
+            # print("came")
+
 
 """
 @desc Join group (join, thetajoin) ret count can be bigger than input
@@ -428,7 +485,7 @@ class JoinInstruction(MalInstruction):
     def approxArgDist(self, ins, G):
         assert G != None
         lead_args = [self.arg1, self.arg2]
-        self_cnt  = [float(G.get(a.name,'inf')) for a in lead_args]
+        self_cnt  = [float(G.get(a.name,None)) for a in lead_args]
         ins_count = [arg.cnt for arg in [ins.arg1,ins.arg2]]
         return sum([(c1-c2)**2 for (c1,c2) in zip(self_cnt,ins_count)])
 
@@ -509,8 +566,11 @@ class SelectInstruction(MalInstruction):
 
     def approxArgDist(self, other, G):
         assert G != None
-        approx_count = float(G.get(self.lead_arg.name,'inf'))
-        return abs(other.lead_arg.cnt-approx_count)
+        lead_arg = self.lead_arg
+        # print(G[lead_arg.name])
+        ac = G[lead_arg.name] if lead_arg.name in G else 'inf'
+        # approx_count = float(G.get(self.lead_arg.name,'inf'))
+        return abs(other.lead_arg.cnt-float(ac))
 
     def argDist(self, other):
         assert False
@@ -542,6 +602,7 @@ class SelectInstruction(MalInstruction):
         cand.sort( key = lambda t: t[1] )
         return [ t[0] for t in cand[0:k] ]
 
+    #deprecated
     def predictCount2(self, ilist, default=0):
         knn = self.kNN(ilist, 1)
         if len(knn) >= 1:
@@ -571,10 +632,11 @@ class SelectInstruction(MalInstruction):
             # print("ArgumentEstimation: real: {} estimated: {}".format(test_i.argCnt(), test_i.approxArgCnt(approxG)))
 
         if arg_cnt != None:
-            avg = sum([i.extrapolate(self) * ( arg_cnt / i.argCnt()) for i in nn]) / len(nn)
-            return [Prediction(retv = self.ret_vars[0], ins=nn1,cnt = nn1.extrapolate(self) * ( arg_cnt / nn1.argCnt()), avg = avg, t=rt)]
+            avg  = sum([i.extrapolate(self) * ( arg_cnt / i.argCnt()) for i in nn]) / len(nn)
+            avgm = sum([i.ret_size for i in nn]) / len(nn)
+            return [Prediction(retv = self.ret_vars[0], ins=nn1,cnt = nn1.extrapolate(self) * ( arg_cnt / nn1.argCnt()), avg=avg, t=rt, mem=avgm)]
         else:
-            logging.warn("None arguments ??? {}".format(self.lead_arg.name))
+            logging.error("None arguments ??? {}".format(self.lead_arg.name))
             avg = sum([i.extrapolate(self) for i in nn]) / len(nn)
             return [Prediction(retv = self.ret_vars[0], ins=nn1, cnt = nn1.extrapolate(self), avg = avg, t=rt)]
 

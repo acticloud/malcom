@@ -7,8 +7,26 @@ from functools import reduce
 from pylab import savefig
 from stats import Stats
 
-Prediction  = collections.namedtuple('Prediction',['ins','cnt','avg','retv','t'])
+# Prediction  = collections.namedtuple('Prediction',['retv','ins','cnt','avg','t'])
 
+class Prediction():
+    def __init__(self,retv,ins,cnt,avg,t,mem=None):
+        self.retv = retv
+        self.ins  = ins
+        self.cnt  = cnt
+        self.avg  = avg
+        self.t    = t
+        self.mem  = mem
+
+    def getMem(self, G):
+        if self.mem != None:
+            # if ins.fname == 'thetaselect':
+                # print(ins.ret_size,self.mem)
+            return self.mem
+        else:
+            return Utils.approxSize(G, self.retv, self.t)
+# def Prediction(retv, ins, cnt, avg, t, mem=None):
+    # return Prediction(retv=retv, ins=ins, cnt=cnt, avg=avg, t=t, mem=mem)
 # ColumnStats = collections.namedtuple('ColumnStats',['cnt','minv','maxv','uniq'])
 
 supported_mal = ['join','thetajoin','tid','bind','bind_idxbat','new','append',
@@ -63,13 +81,13 @@ class Utils:
         return False
 
     @staticmethod
-    def approxSize(g,a):
-        if a in g:
-            c = g.get(a)
-            return c.avg*Utils.sizeof(c.t)
+    def approxSize(g,name, typ):
+        if name in g:
+            c = g.get(name)
+            return c*Utils.sizeof(typ)
         else:
-            logging.error("{}".format(a))
-            logging.debug("000")
+            # logging.error("{}".format(name))
+            # logging.debug("000")
             return 0
 
     @staticmethod
@@ -208,20 +226,26 @@ class Utils:
 
     @staticmethod
     def sizeof(type_str):
-        if type_str == "int":
+        if type_str == "bat[:int]":
             return 4
-        elif type_str == "bat[:oid]":
+        elif type_str in ["bat[:oid]",'bat[:lng]','bat[:dbl]']:
             return 8
-        elif type_str == "float":
+        elif type_str in ["float","dbl"]:
             return 8
-        elif type_str == "boolean":
+        elif type_str in ["bat[:hge]",'hge']:
+            return 16
+        elif type_str in ["bat[:bit]",'bat[:bte]']:
             return 1
-        elif type_str == '[bat:date]':
+        elif type_str == 'bat[:date]':
             return 4
+        elif type_str == 'bat[:str]':
+            return 8 #TODO fix this
         elif type_str == None:
             return 0
         else:
             logging.error("Wtf type?? {}".format(type_str))
+            print(type_str)
+            print(type_str == 'bat[:date]')
             raise TypeError("Unsupported type")
 
     @staticmethod
