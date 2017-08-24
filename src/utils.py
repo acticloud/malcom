@@ -5,7 +5,6 @@ import json
 import matplotlib.pyplot as plt
 from functools import reduce
 from pylab import savefig
-from stats import Stats
 
 # Prediction  = collections.namedtuple('Prediction',['retv','ins','cnt','avg','t'])
 
@@ -18,13 +17,11 @@ class Prediction():
         self.t    = t
         self.mem  = mem
 
-    def getMem(self, G):
+    def getMem(self):
         if self.mem != None:
-            # if ins.fname == 'thetaselect':
-                # print(ins.ret_size,self.mem)
             return self.mem
         else:
-            return Utils.approxSize(G, self.retv, self.t)
+            return self.cnt * Utils.sizeof(self.t)
 # def Prediction(retv, ins, cnt, avg, t, mem=None):
     # return Prediction(retv=retv, ins=ins, cnt=cnt, avg=avg, t=t, mem=mem)
 # ColumnStats = collections.namedtuple('ColumnStats',['cnt','minv','maxv','uniq'])
@@ -105,6 +102,7 @@ class Utils:
             d.append(Stats.fromStr(line))
         return dict(d)
 
+
     """ @arg stmt: str // short mal statement"""
     @staticmethod
     def extract_fname(stmt): #TODO change name
@@ -167,16 +165,16 @@ class Utils:
             val = args[-2]["value"]
             # print("VAL,OP: ", val, op)
             if op == "<=" or op == "<":
-                return (stats.min,val)
+                return (stats.minv,val)
             elif op == ">" or op == ">=":
-                return (val,stats.max)
+                return (val,stats.maxv)
             elif op == "==" or op == "!=":
                 return (val,val)
             else:
                 print(op)
                 raise ValueError("op??")
         elif method in ["+","-","*"]:
-            return (stats.min,stats.max)
+            return (stats.minv,stats.maxv)
         elif method == 'likeselect':
             v = args[2]["value"].strip('\"')
             return (v,v)

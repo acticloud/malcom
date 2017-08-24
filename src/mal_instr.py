@@ -1,11 +1,11 @@
-import logging
-import sys
 import re
-from utils    import Utils
+import sys
+import logging
 from mal_arg  import Arg
-from stats    import Stats
+from utils    import Utils
 from datetime import datetime
 from utils    import Prediction
+from stats    import ColumnStats
 
 """
 interface MalInstruction {
@@ -153,41 +153,28 @@ class MalInstruction:
     def getArgVars(self):
         return [arg for arg in self.arg_list if arg.isVar()]
 
-    def printVarFlow(self,varflow):
-        l = [(a.name,varflow.lookup(a.name,self.tag)) for a in self.arg_list]
-        v = lambda name: "table " if name.startswith("C_") else "column"
-        j = ["var: {} {}: {} ".format(n,v(n),t) for (n,t) in l if t]
-        if len(j) > 0:
-            print('|| '.join(j))
-
     def kNN(self, ilist, k):
         cand = [[i,self.argDist(i)] for i in ilist if len(self.arg_list) == len(i.arg_list)]
         cand.sort(key = lambda t: t[1])
         return [ t[0] for t in cand[0:k] ]
 
-    # def extrapolate(self, other):
-        # return other.cnt
-    #TODO remove
-    def predictCount(self, ilist, default=None):
-        print(self.fname)
-        knn = self.kNN(ilist, 1)
-        if len(knn) > 1:
-            return self.mem_fprint
-        else:
-            return default
-
-    def approxFreeSize(self, G, pG):
-        dp = Prediction(0,0,0,0,0)
-        return sum([pG.get(a.name,dp).getMem(G)  for a in self.arg_list if a.eol==1])
+    """
+    @arg pG: dict<str,Prediction> //prediciton graph: ret var -> prediction
+    @ret int: prediction of the amount of memory that is freed after this inst.
+    """
+    def approxFreeSize(self, pG):
+        dp = Prediction(0,0,0,0,'bat[:lng]',0)
+        return sum([pG.get(a.name,dp).getMem()  for a in self.arg_list if a.eol==1])
         # return sum([Utils.approxSize(traind, G, a.name, a.atype))
 
-    def approxMemSize(self, traind, G):
-        # if self.fname == 'bind':
-            # return self.ret_args[0].size #TODO fix this
-        # elif self.fname == 'tid':
-            # return 0 #TODO fix this
-        # else:
-        return sum([r.getMem(G) for r in self.predictCount(traind, G)])
+    """
+    @arg pG: dict<str,Prediction> //prediciton graph: ret var -> prediction
+    @ret int: prediction of the amount of mem the instruction uses
+    """
+    def approxMemSize(self, pG):
+        dp = Prediction(0,0,0,0,'bat[:lng]',0)
+        return sum([pG.get(a.name,dp).getMem()  for a in self.ret_args])#EOL==1?? if a.eol==1])
+        # return sum([r.getMem() for r in self.predictCount(traind, G)])
 
     def typeof(self, rv):
         return next(iter([r.atype for r in self.ret_args if r.name == rv]))
@@ -320,16 +307,15 @@ class ProjectInstruction(DirectIntruction):
         return [e[0] for e in c[0:k]]
 
     def predictCount(self, traind, G, default=None):
-        p = self.approxArgCnt(G, default)
-        retl = self.ret_args
-        if self.fname == 'projection' and self.ret_args[0].atype == 'bat[:str]':
-            #TODO argDiv
-            # print("came")
-            kNN  = self.kNN(traind, 1, G)
-            if len(kNN)>0:
-                nn1  = kNN[0]
-                nn1r = kNN[0].ret_args[0]
-                return [Prediction(retv=retl[0].name, ins=None, cnt=nn1r.cnt, avg=nn1r.cnt, t=retl[0].atype, mem=nn1.ret_size)]
+        ac    = self.approxArgCnt(G, default)
+        retv  = self.ret_args[0]
+        rtype = retv.atype
+        if self.fname == 'projection' and rtype == 'bat[:str]':
+            kNN  = self.kNN(traind, 1, G) #TODO maybe avg 5?
+            assert len(kNN)>0
+            nn1  = kNN[0]
+            rs   = kNN[0].ret_args[0].size #return size
+            return [Prediction(retv=retv.name, ins=None, cnt=ac, avg=ac, t=rtype, mem=rs)]
 
         return super().predictCount(traind, G, default)
 
@@ -450,6 +436,7 @@ class LoadInstruction(MalInstruction):
 
 """
 @desc Join group (join, thetajoin) ret count can be bigger than input
+UNDER CONSTRUCTION
 """
 class JoinInstruction(MalInstruction):
     def __init__(self, *args):
@@ -505,6 +492,9 @@ class JoinInstruction(MalInstruction):
         retv   = self.ret_args
         return [Prediction(retv=r.name, ins=i, cnt=c, avg=avg, t=r.atype) for r in retv]
 
+"""
+@attr...
+"""
 class SelectInstruction(MalInstruction):
     def __init__(self, *def_args, jobj, stats):
         MalInstruction.__init__(self, *def_args)
@@ -519,11 +509,11 @@ class SelectInstruction(MalInstruction):
         self.lead_arg = self.arg_list[1] if nC>0 else self.arg_list[0]
 
         # print(method, op)
-        lo, hi = Utils.hi_lo(self.fname, self.op, jobj, stats.get(self.col,Stats(0,0)))
+        lo, hi = Utils.hi_lo(self.fname, self.op, jobj, stats.get(self.col,ColumnStats(0,0,0,0,0)))
         if self.ctype in ['bat[:int]','bat[:lng]','lng','bat[:hge]']:
             self.lo,self.hi    = (int(lo),int(hi))
         elif self.ctype == 'bat[:date]':
-            # print(lo,hi)
+            # print(self.col, lo,hi)
             self.lo  = datetime.strptime(lo,'%Y-%m-%d')
             self.hi  = datetime.strptime(hi,'%Y-%m-%d')
         else:

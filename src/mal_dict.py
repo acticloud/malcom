@@ -17,7 +17,7 @@ class MalDictionary:
     @arg q_tags  : list<int> //list of the unique query tags
     @arg varflow: dic<tag,dic<var,table>>
     """
-    def __init__(self, mal_dict, q_tags, varflow):
+    def __init__(self, mal_dict, q_tags, varflow, col_stats={}):
         self.mal_dict   = mal_dict
         self.query_tags = q_tags
         self.varflow    = varflow
@@ -44,7 +44,7 @@ class MalDictionary:
     @arg blacklist: list of black listed mal instructions
     """
     @staticmethod
-    def fromJsonFile(mfile, blacklist, stats):
+    def fromJsonFile(mfile, blacklist, col_stats):
         with open(mfile) as f:
             maldict    = {}
             startd     = {}
@@ -62,7 +62,7 @@ class MalDictionary:
                         startd[jobj["pc"]] = jobj["clk"]
                     elif jobj["state"] == "done":
                         assert jobj["pc"] in startd
-                        new_mals       = MalInstruction.fromJsonObj(jobj, stats)
+                        new_mals       = MalInstruction.fromJsonObj(jobj, col_stats)
                         new_mals.time  = float(jobj["clk"])-float(startd[jobj["pc"]])
                         new_mals.start = int(startd[jobj["pc"]])
                         maldict[fname] = maldict.get(fname,[]) + [new_mals]
@@ -72,7 +72,7 @@ class MalDictionary:
                         for r in jobj["ret"]: #TODO rethink
                             if "alias" in r:
                                 varflow.add(tag,r["name"],r["alias"].split('.')[-1])
-        return MalDictionary(maldict,list(query_tags),varflow)
+        return MalDictionary(maldict,list(query_tags),varflow, col_stats)
 
     """ Constructor from instruction list
     @arg ilist: List<MalInstruction>
@@ -152,14 +152,14 @@ class MalDictionary:
 
         return max_mem
 
-    def predictMaxMem(self, traind, G): #TODO fix this
+    def predictMaxMem(self, pG): #TODO fix this
         ilist = self.getInsList()
         ilist.sort(key = lambda i: i.clk)
         max_mem  = 0
         curr_mem = 0
         for i in ilist:
-            max_mem  = max(max_mem,curr_mem + i.approxMemSize(traind, G))
-            curr_mem = curr_mem + i.ret_size - i.approxFreeSize(G)
+            max_mem  = max(max_mem,curr_mem + i.approxMemSize(pG))
+            curr_mem = curr_mem + i.ret_size - i.approxFreeSize(pG)
             # print("{} {} {}".format(i.pc,max_mem,curr_mem))
 
         return max_mem

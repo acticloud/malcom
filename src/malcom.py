@@ -8,6 +8,7 @@ from pprint   import pprint
 from mal_dict import MalDictionary
 from utils    import Prediction
 from utils    import Utils
+from stats    import ColumnStats
 
 def print_usage():
     print("Usage: ./parser.py <trainset> <testset>")
@@ -192,28 +193,35 @@ def test_test():
     (G,pG) = d2.buildApproxGraph(d1)
 
 def test_qmem():
-    blacklist = Utils.init_blacklist("mal_blacklist.txt")
+    blacklist = Utils.init_blacklist("config/mal_blacklist.txt")
 
-    stats = Utils.loadStatistics('tpch10_stats.txt')
-    for i in range(1,2):#23):
+    col_stats = ColumnStats.fromFile('config/tpch_sf10_stats.txt')
+
+    for i in range(1,2):
         logging.info("Testing query {}".format(i))
         q = "{}".format(i)
         if i<10:
             q = "0{}".format(q)
 
         logging.info("loading training set...")
-        d1 = MalDictionary.fromJsonFile("traces/tpch-sf10/{}.json".format(q), blacklist, stats)
+        d1 = MalDictionary.fromJsonFile("traces/random_tpch_sf10/ran{}_200_sf10.json".format(i), blacklist, col_stats)
         logging.info("loading test set...")
-        d2 = MalDictionary.fromJsonFile("traces/tpch-sf10/{}.json".format(q), blacklist, stats)
+        d2 = MalDictionary.fromJsonFile("traces/tpch-sf10/{}.json".format(q), blacklist, col_stats)
 
         (G,pG) = d2.buildApproxGraph(d1)
-        d2.testMaxMem(d1, G, pG)
-        # print(d2.predictMaxMem(d1, G) / 1000000000, d2.getMaxMem() / 1000000000)
+        # d2.testMaxMem(d1, G, pG)
+        # for ins in d2.getInsList():
+        #     p = ins.predictCount(d1,G)
+        #     if ins.free_size != ins.approxFreeSize(pG):
+        #         print("{:10} {:20} {:10.0f} {:10.0f} t:{:10.0f} p:{:10.0f}".format(ins.ret_vars[0],ins.fname, ins.ret_size , ins.approxMemSize(pG), ins.free_size , ins.approxFreeSize(pG)))
+        print(len(d1.query_tags))
+        print(d2.predictMaxMem(pG) / 1000000000, d2.getMaxMem() / 1000000000)
 
 def sanity_test():
     blacklist = Utils.init_blacklist("mal_blacklist.txt")
 
-    stats = Utils.loadStatistics('tpch10_stats.txt')
+    # stats = Utils.loadStatistics('tpch10_stats.txt')
+    col_stats = ColumnStats.fromFile('config/tpch_sf10_stats.txt')
     i=1
     logging.info("Testing query {}".format(i))
     q = "{}".format(i)
@@ -221,9 +229,9 @@ def sanity_test():
         q = "0{}".format(q)
 
     logging.info("loading training set...")
-    d1 = MalDictionary.fromJsonFile("traces/tpch-sf10/{}.json".format(q), blacklist, stats)
+    d1 = MalDictionary.fromJsonFile("traces/tpch-sf10/{}.json".format(q), blacklist, col_stats)
     logging.info("loading test set...")
-    d2 = MalDictionary.fromJsonFile("traces/tpch-sf10/{}.json".format(q), blacklist, stats)
+    d2 = MalDictionary.fromJsonFile("traces/tpch-sf10/{}.json".format(q), blacklist, col_stats)
 
     (G,pG) = d2.buildApproxGraph(d1)
     for ins in d2.getInsList():
@@ -231,8 +239,8 @@ def sanity_test():
             p = ins.predictCount(d1,G)
             # try:
                 # print("{:10} {:20} {:10.0f} {:10.0f} ".format(ins.ret_vars[0],ins.fname, ins.ret_size / ins.approxMemSize(d1,G), ins.cnt / ins.predictCount(d1,G)[0].avg))
-            if ins.free_size != ins.approxFreeSize(G, pG):
-                print("{:10} {:20} {:10.0f} {:10.0f} t:{:10.0f} p:{:10.0f}".format(ins.ret_vars[0],ins.fname, ins.ret_size , ins.approxMemSize(d1,G), ins.free_size , ins.approxFreeSize(G, pG)))
+            if ins.free_size != ins.approxFreeSize(pG):
+                print("{:10} {:20} {:10.0f} {:10.0f} t:{:10.0f} p:{:10.0f}".format(ins.ret_vars[0],ins.fname, ins.ret_size , ins.approxMemSize(pG), ins.free_size , ins.approxFreeSize(pG)))
             # except Exception:
                 # pass
     # print(d2.predictMaxMem(d1, G) / 1000000000, d2.getMaxMem() / 1000000000)
@@ -312,5 +320,5 @@ if __name__ == '__main__':
     init_logger(args.log_level)
     # print(args.log_level)
     # test_test()
-    sanity_test()
-    # test_qmem()
+    # sanity_test()
+    test_qmem()
