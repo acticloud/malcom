@@ -197,25 +197,30 @@ def test_qmem():
 
     col_stats = ColumnStats.fromFile('config/tpch_sf10_stats.txt')
 
-    for i in range(1,2):
-        logging.info("Testing query {}".format(i))
-        q = "{}".format(i)
-        if i<10:
+    for qno in [1,3,6]:
+        logging.info("Testing query {}".format(qno))
+        q = "{}".format(qno)
+        if qno<10:
             q = "0{}".format(q)
 
         logging.info("loading training set...")
-        d1 = MalDictionary.fromJsonFile("traces/random_tpch_sf10/ran{}_200_sf10.json".format(i), blacklist, col_stats)
+        d1 = MalDictionary.fromJsonFile("traces/random_tpch_sf10/ran{}_200_sf10.json".format(qno), blacklist, col_stats)
         logging.info("loading test set...")
         d2 = MalDictionary.fromJsonFile("traces/tpch-sf10/{}.json".format(q), blacklist, col_stats)
-
-        (G,pG) = d2.buildApproxGraph(d1)
-        # d2.testMaxMem(d1, G, pG)
-        # for ins in d2.getInsList():
-        #     p = ins.predictCount(d1,G)
-        #     if ins.free_size != ins.approxFreeSize(pG):
-        #         print("{:10} {:20} {:10.0f} {:10.0f} t:{:10.0f} p:{:10.0f}".format(ins.ret_vars[0],ins.fname, ins.ret_size , ins.approxMemSize(pG), ins.free_size , ins.approxFreeSize(pG)))
-        print(len(d1.query_tags))
-        print(d2.predictMaxMem(pG) / 1000000000, d2.getMaxMem() / 1000000000)
+        train_tags = d1.query_tags
+        train_tags.sort()
+        e   = []
+        ind = []
+        for i in [1,5,10,15,20,25,30,40,50,75,100,125,150,175,200]:
+            d12 = d1.filter( lambda ins: ins.tag in train_tags[0:i])
+            print(len(d12.query_tags))
+            (G,pG) = d2.buildApproxGraph(d12)
+            pmm = d2.predictMaxMem(pG) / 1000000000
+            mm  = d2.getMaxMem() / 1000000000
+            e.append( 100* abs((pmm -mm) / mm) )
+            ind.append(i)
+        print(e)
+        Utils.plotBar(ind,e,"results/memf_error_q{}.pdf".format(qno),'nof training queries','error perc')
 
 def sanity_test():
     blacklist = Utils.init_blacklist("mal_blacklist.txt")

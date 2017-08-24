@@ -1,26 +1,24 @@
-import logging
+import sys
+import json
 import random
 import pickle
-import json
-import sys
+import logging
 from utils        import Utils
+from utils        import Prediction
 from utils        import supported_mal
 from mal_instr    import MalInstruction
 from mal_instr    import SelectInstruction
-from mal_dataflow import Dataflow
 #TODO add method find closest instruction
 
-from utils import Prediction
 class MalDictionary:
     """
     @arg mal_dict: dict<List<MalInstruction>>
     @arg q_tags  : list<int> //list of the unique query tags
     @arg varflow: dic<tag,dic<var,table>>
     """
-    def __init__(self, mal_dict, q_tags, varflow, col_stats={}):
+    def __init__(self, mal_dict, q_tags, col_stats={}):
         self.mal_dict   = mal_dict
         self.query_tags = q_tags
-        self.varflow    = varflow
 
     @staticmethod
     def loadFromFile(file_name):
@@ -35,9 +33,8 @@ class MalDictionary:
 
     def union(self, other):
         union_ilist   = self.getInsList() + other.getInsList()
-        union_varflow = self.varflow.union(other.varflow)
 
-        return MalDictionary.fromInsList(union_ilist, union_varflow)
+        return MalDictionary.fromInsList(union_ilist)
 
     """
     @arg mfile    : json file containing mal execution info (link??)
@@ -49,7 +46,7 @@ class MalDictionary:
             maldict    = {}
             startd     = {}
             query_tags = set()
-            varflow    = Dataflow()
+
             while 1: #while not EOF
                 jobj = Utils.read_json_object(f)
                 if jobj is None:
@@ -57,22 +54,18 @@ class MalDictionary:
                 fname,args ,ret  = Utils.extract_fname(jobj["short"])
 
                 if not Utils.is_blacklisted(blacklist,fname):
-
                     if jobj["state"] == "start":
                         startd[jobj["pc"]] = jobj["clk"]
                     elif jobj["state"] == "done":
                         assert jobj["pc"] in startd
                         new_mals       = MalInstruction.fromJsonObj(jobj, col_stats)
-                        new_mals.time  = float(jobj["clk"])-float(startd[jobj["pc"]])
+                        new_mals.time  = int(jobj["clk"])-int(startd[jobj["pc"]])
                         new_mals.start = int(startd[jobj["pc"]])
                         maldict[fname] = maldict.get(fname,[]) + [new_mals]
                         query_tags.add(int(jobj["tag"]))
                         tag = int(jobj["tag"])
 
-                        for r in jobj["ret"]: #TODO rethink
-                            if "alias" in r:
-                                varflow.add(tag,r["name"],r["alias"].split('.')[-1])
-        return MalDictionary(maldict,list(query_tags),varflow, col_stats)
+        return MalDictionary(maldict,list(query_tags), col_stats)
 
     """ Constructor from instruction list
     @arg ilist: List<MalInstruction>
@@ -80,18 +73,19 @@ class MalDictionary:
     @ret MalDictionary
     """
     @staticmethod
-    def fromInsList(ilist, varflow):
+    def fromInsList(ilist):
         mdict = {}
         qtags = set()
         for i in ilist:
             mdict[i.fname] = mdict.get(i.fname,[]) + [i]
             qtags.add(i.tag)
-        return MalDictionary(mdict, list(qtags), varflow)
+        return MalDictionary(mdict, list(qtags))
 
     """
     @des builds a graph that approximates the count for each variable
     @arg Maldictionary
     @ret dict<str,int> //dictionary with var name as a key,est count as val
+    #TODO rename predictionGraph
     """
     def buildApproxGraph(self, traind):
         global supported_mal
@@ -114,10 +108,10 @@ class MalDictionary:
 
 
 
-    def getFirst(self, field, N):
+    def getFirstI(self, field, N):
             ilist = self.getInsList()
             ilist.sort(key = lambda ins: getattr(ins, field) )
-            return MalDictionary.fromInsList(ilist[0:N], self.varflow)
+            return MalDictionary.fromInsList(ilist[0:N])
     """
     @arg mals: MalInstruction
     @ret: List<MalInstriction> //list of all exact matches
@@ -164,31 +158,31 @@ class MalDictionary:
 
         return max_mem
 
-    def testMaxMem(self, traind, G, pG): #TODO fix this
-        # print(self.getMaxMem() / self.predictMaxMem(traind, G))
-        ilist = self.getInsList()
-        ilist.sort(key = lambda i: i.clk)
-        max_mem  = 0
-        curr_mem = 0
-        max_mem2  = 0
-        curr_mem2 = 0
-        # print("came")
-        for i in ilist:
-            # print(i.fname)
-            max_mem  = max(max_mem,curr_mem + i.approxMemSize(traind, G))
-            curr_mem = curr_mem + i.ret_size - i.approxFreeSize(G, pG)
-
-            max_mem2  = max(max_mem2,curr_mem2 + i.mem_fprint)
-            curr_mem2 = curr_mem2 + i.ret_size - i.free_size
-            try:
-                print("{:15} {:10.0f} {:10.0f} {:10.0f} {:10.0f}".format(
-                    i.fname, max_mem , max_mem2, curr_mem , curr_mem2)
-                )
-                # print(max_mem / max_mem2, curr_mem / curr_mem2)
-            except Exception:
-                pass
-        # print(max_mem, max_mem2)
-        return max_mem
+    # def testMaxMem(self, traind, G, pG): #TODO fix this
+    #     # print(self.getMaxMem() / self.predictMaxMem(traind, G))
+    #     ilist = self.getInsList()
+    #     ilist.sort(key = lambda i: i.clk)
+    #     max_mem  = 0
+    #     curr_mem = 0
+    #     max_mem2  = 0
+    #     curr_mem2 = 0
+    #     # print("came")
+    #     for i in ilist:
+    #         # print(i.fname)
+    #         max_mem  = max(max_mem,curr_mem + i.approxMemSize(traind, G))
+    #         curr_mem = curr_mem + i.ret_size - i.approxFreeSize(G, pG)
+    #
+    #         max_mem2  = max(max_mem2,curr_mem2 + i.mem_fprint)
+    #         curr_mem2 = curr_mem2 + i.ret_size - i.free_size
+    #         try:
+    #             print("{:15} {:10.0f} {:10.0f} {:10.0f} {:10.0f}".format(
+    #                 i.fname, max_mem , max_mem2, curr_mem , curr_mem2)
+    #             )
+    #             # print(max_mem / max_mem2, curr_mem / curr_mem2)
+    #         except Exception:
+    #             pass
+    #     # print(max_mem, max_mem2)
+    #     return max_mem
 
 
     """
@@ -204,41 +198,7 @@ class MalDictionary:
         return [x for x in dic[fname] if len(x.arg_list) == nargs]
 
 
-    #deprecated???
-    def findClosestSize(self, target):
-        mlist     = self.mal_dict[target.fname]
-        dist_list = [abs(i.arg_size-tsize) for x in mlist]
-        nn_index  = dist_list.index(min(dist_list))
-        return mlist[nn_index]
 
-    #@arg
-    def kNN(self, ins, k):
-        mlist     = self.mal_dict[ins.fname]
-        l         = len(ins.arg_list)
-        dist_list = list(filter(lambda ins: len(ins.arg_list) == l, mlist))
-        dist_list.sort( key = lambda i: ins.argDist(i) )
-        return dist_list[0:k]
-
-        #@arg
-    def predictMem(self, ins, default=None):
-        try:
-            return self.predict(ins).mem_fprint
-        except:
-            return default
-
-    def predict(self, ins, default=None):
-        exact = self.findInstr(ins)
-        if len(exact) == 1:
-            return exact[0]
-        else:
-            try:
-                nn1 = self.kNN(ins,1)[0]
-            except Exception as e:
-                if default != None:
-                    nn1 =  default
-                else:
-                    raise e
-            return nn1
 
     #TODO should rename findExactOR. ...
     def predictMemExactOr(self, ins, default):
@@ -248,34 +208,6 @@ class MalDictionary:
             return exact[0].mem_fprint
         else:
             return default
-
-    def predictTimeExactOr(self, ins, default):
-        exact = self.findInstr(ins)
-        assert len(exact) <= 1
-        if len(exact) == 1:
-            return exact[0].time
-        else:
-            return default
-    #TODO too custom, needs rewritting
-    def printAll(self, method, nargs):
-        dic = self.mal_dict
-        for s in dic[method]:
-            if s.fname == method and nargs == len(s.arg_list):
-                a2val = s.arg_list[2].aval
-                a1val = s.arg_list[1].aval
-                a1_t  = s.arg_list[1].atype
-                print("mal: {}, args: {} {} {} size: {}, time: {}".format(method,a2val,a1_t, a1val,s.size,s.time))
-
-    def printShort(self, method):
-        dic = self.mal_dict
-        for s in dic[method]:
-            print(s.short)
-            # if s.fname == method and nargs == len(s.arg_list):
-            #     a2val = s.arg_list[2].aval
-            #     a1val = s.arg_list[1].aval
-            #     a1_t  = s.arg_list[1].atype
-            #     print("mal: {}, args: {} {} {} size: {}, time: {}".format(method,a2val,a1_t, a1val,s.size,s.time))
-
 
     """ @arg other: MalDictionary"""
     def printDiff(self, other):
@@ -314,7 +246,7 @@ class MalDictionary:
     def filter(self, f):
         mal_list = self.getInsList()
         new_ilist = list([i for i in mal_list if f(i) == True])
-        return MalDictionary.fromInsList(new_ilist, self.varflow)
+        return MalDictionary.fromInsList(new_ilist)
 
     """
     @desc splits the dictionary in two based on the query tags
