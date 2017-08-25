@@ -1,43 +1,19 @@
 #!/usr/bin/python3
-import argparse
-import logging
-import random
-import json
 import sys
-from pprint   import pprint
-from mal_dict import MalDictionary
-from utils    import Prediction
+import json
+import random
+import logging
+import argparse
+import experiments
 from utils    import Utils
+from pprint   import pprint
+from utils    import Prediction
 from stats    import ColumnStats
+from mal_dict import MalDictionary
 
 def print_usage():
     print("Usage: ./parser.py <trainset> <testset>")
 
-def test_sampling(train_set, test_set):
-    print("ntrain: {} ntest: {}".format(len(train_set.getInsList()),len(test_set.getInsList())))
-
-    for ins in test_set.getInsList():
-        l = train_set.findInstr(ins,True)
-        if len(l) >= 1 and ins.mem_fprint > 1000000:
-            print("{:10d} {:10d} {:10.1f}".format(l[0].mem_fprint,int(ins.mem_fprint/10),l[0].mem_fprint/ins.mem_fprint))
-
-    # llist = [ins for ins in test_set.getInsList() if ins.mem_fprint > 10000000]
-    #
-    # nhits = [ins for ins in llist if train_set.findInstr(ins,True)[0].mem_fprint*10-ins.mem_fprint < 100000]
-    #
-    # print("{:10d} {:10d}".format(len(nhits),len(llist)))
-
-def hold_out(data_set):
-    sel_i = data_set.filter(lambda ins: ins.fname in ['select', 'thetaselect'] and ins.ctype not in ['bat[:bit]','bat[:hge]'])
-    print(len(sel_i.getInsList()))
-
-    (train_set,test_set)  = sel_i.splitRandom(0.9,0.1)
-    print(train_set.query_tags)
-    print(len(train_set.getInsList()),len(test_set.getInsList()))
-
-    # print(train_set.avgAcc(test_set))
-    # train_set.printPredictions(test_set)
-    print(train_set.avgCountAcc(test_set,0.01))
 
 def hold_out2(train_set, test_set):
     sel_train = train_set.filter(lambda ins: ins.fname in ['select', 'thetaselect'] and ins.ctype not in ['bat[:bit]','bat[:hge]'])
@@ -192,35 +168,7 @@ def test_test():
 
     (G,pG) = d2.buildApproxGraph(d1)
 
-def test_qmem():
-    blacklist = Utils.init_blacklist("config/mal_blacklist.txt")
 
-    col_stats = ColumnStats.fromFile('config/tpch_sf10_stats.txt')
-
-    for qno in [1,3,6]:
-        logging.info("Testing query {}".format(qno))
-        q = "{}".format(qno)
-        if qno<10:
-            q = "0{}".format(q)
-
-        logging.info("loading training set...")
-        d1 = MalDictionary.fromJsonFile("traces/random_tpch_sf10/ran{}_200_sf10.json".format(qno), blacklist, col_stats)
-        logging.info("loading test set...")
-        d2 = MalDictionary.fromJsonFile("traces/tpch-sf10/{}.json".format(q), blacklist, col_stats)
-        train_tags = d1.query_tags
-        train_tags.sort()
-        e   = []
-        ind = []
-        for i in [1,5,10,15,20,25,30,40,50,75,100,125,150,175,200]:
-            d12 = d1.filter( lambda ins: ins.tag in train_tags[0:i])
-            print(len(d12.query_tags))
-            (G,pG) = d2.buildApproxGraph(d12)
-            pmm = d2.predictMaxMem(pG) / 1000000000
-            mm  = d2.getMaxMem() / 1000000000
-            e.append( 100* abs((pmm -mm) / mm) )
-            ind.append(i)
-        print(e)
-        Utils.plotBar(ind,e,"results/memf_error_q{}.pdf".format(qno),'nof training queries','error perc')
 
 def sanity_test():
     blacklist = Utils.init_blacklist("mal_blacklist.txt")
@@ -313,7 +261,9 @@ def init_parser():
         description    = 'Malcom: Predicting things',
         epilog         = '''Satisfied ?''',
         formatter_class=argparse.MetavarTypeHelpFormatter)
-    parser.add_argument('--log_level', type = str, help = '{INFO,DEBUG,WARN,ERROR}', default='INFO', required=False)
+    parser.add_argument('--log_level', type = str, default='INFO', required=False)
+    parser.add_argument('--db', type = str, help = 'db name', required=False)
+
     # parser.add_argument('--runs', type = int, help = 'Number of variants', default= 3)
 
 
@@ -323,7 +273,9 @@ if __name__ == '__main__':
     parser = init_parser()
     args   = parser.parse_args()
     init_logger(args.log_level)
+    experiments.plot_select_error([6])
     # print(args.log_level)
     # test_test()
     # sanity_test()
-    test_qmem()
+    # experiments.examine_select(6)
+    # experiments.plot_max_mem_error([1,3,6])

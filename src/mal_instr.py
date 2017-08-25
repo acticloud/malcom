@@ -511,7 +511,12 @@ class SelectInstruction(MalInstruction):
         # print(method, op)
         lo, hi = Utils.hi_lo(self.fname, self.op, jobj, stats.get(self.col,ColumnStats(0,0,0,0,0)))
         if self.ctype in ['bat[:int]','bat[:lng]','lng','bat[:hge]']:
-            self.lo,self.hi    = (int(lo),int(hi))
+            if self.op in ['>=','between']:
+                s    = stats[self.col]
+                step = round((int(s.maxv) - int(s.minv)) / int(s.uniq))
+                self.lo,self.hi    = (int(lo),int(hi)+step)
+            else: #TODO <=
+                self.lo,self.hi    = (int(lo),int(hi))
         elif self.ctype == 'bat[:date]':
             # print(self.col, lo,hi)
             self.lo  = datetime.strptime(lo,'%Y-%m-%d')
