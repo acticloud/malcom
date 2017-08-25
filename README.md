@@ -19,14 +19,14 @@ min value, max value, count, unique, width.
 
 #Basic Classes
 
-##MalDictionary
+## MalDictionary
 The dictionary that holds all the instructions
 
 
-##MalInstruction
+## MalInstruction
 Base class for bookkeeping all the mal instruction metadata()
 
-##MalInstruction interface
+## MalInstruction interface
 All MalInstruction sub classes must satisfy the following interface:
 
 ```
@@ -40,4 +40,4 @@ interface MalInstruction {
   def kNN(traind: MalDictionary, k, G)       -> List<MalInstruction>
 }
 ```
-##MalArgument
+## MalArgument
