@@ -20,10 +20,10 @@ def predict_query_mem(train, test):
 ```
 
 
-#Configuration files
+# Configuration files
 
 ## config/mal_blacklist.txt
-List of all the mal instruction we do not wish to consider (defile,mvc etc...)
+List of all the mal instruction we do not wish to consider (define,mvc etc...)
 
 ## config/{db}_stats.txt
 For each different db we want to use, there must be a | separated file,
@@ -32,10 +32,22 @@ that contains the following statistics for each column,
 
 min value, max value, count, unique, width.
 
-#File Structure
+# File Structure
+./src/malcom.py     : the driver programm
 
+./src/mal_dict.py   : mal dictionary stuff
 
-#Basic Classes
+./src/mal_instr.py  : mal instruction bookkeeping
+
+./src/mal_arg.py    : mal argument class
+
+./src/stats.py      : column statistics
+
+./src/experiments.py: some experiments
+
+./src/utils.py      : just utilities
+
+# Basic Classes
 
 ## MalDictionary
 The dictionary that holds all the instructions
