@@ -46,12 +46,26 @@ Malcom (Mal ALgebra Cost MOdel) is a
 \section{Instructon Grouping}
 
 \subsection{Select}
+\subsubsection{Range Selects}
+To predict the size of a range select, we used the kNN algorithm,
+using k=5, to find the 5 closest selects to the one we want to predict,
+considering the lower and higher bounds as distance metrics.
+When we are facing a one bound select ($<$,$>$ etc) we use the
+dataset statistics to fill the other bound (e.g in case of $<$ we want the column min).
+\subsubsection{Point Selects}
+TODO what do we do ?
 
-For the range selects, to predict the size of a select instruction,
-we run kNN(k=5) in our training set, considering the lower and higher bounds
-as metrics. When we are facing a one bound select (<,>...) we use the
-dataset statistics to fill the other bound (e.g in case of < we want the column min).
-TODO subsequent selects...
+\subsubsection{Like Selects}
+Future work :P
+
+\subsubsection{Subsequent Selects}
+In case of intermediate select instructions, the ranges are not adequate to
+make an accurate prediction, because the argument size may vary based on the
+previous selects. To overcomes this we incorporated the estimations of the
+previous intructions, to build a graph that relates each variable to a size
+estimation. This way we cal also use the argument estimation to predict the
+size of the select result. The code for selection prediction is shown at
+Figure\ref{sel:code}
 
 \begin{figure}[t]
 \begin{lstlisting}[frame=single]
@@ -74,13 +88,14 @@ TODO subsequent selects...
 Nothing special yet
 
 \subsection{Group}
+Not sure yet
 
 \subsection{Set instructions}
 diff,union,intersect
 
 \subsection{Calc instructions}
 Trivial to predict,
-% +,*,/,- instruction produce the same result size as the input size.
++,*,/,- instructions produce the same result size as the input size.
 
 \subsection{Many to One}
 This category includes operations like sum, avg, min, max, single, dec\_round

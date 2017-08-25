@@ -2,6 +2,24 @@
 Early Stage cost model for mal statements
 work in progress....
 
+## Example Usage: Find the memory footprint of a query
+
+```
+def predict_query_mem(train, test):
+  blacklist = Utils.init_blacklist('black_list')
+
+  cstats    = ColumnStats.fromFile('stats_file')
+
+  traind    = MalDictionary.fromJsonFile(train, blacklist, cstats)
+
+  testd     = MalDictionary.fromJsonFile(test, blacklist, cstats)
+
+  pG        = testd.buildApproxGraph(traind)
+
+  query_mem = d2.predictMaxMem(pG)
+```
+
+
 #Configuration files
 
 ## config/mal_blacklist.txt
@@ -40,4 +58,5 @@ interface MalInstruction {
   def kNN(traind: MalDictionary, k, G)       -> List<MalInstruction>
 }
 ```
+
 ## MalArgument
