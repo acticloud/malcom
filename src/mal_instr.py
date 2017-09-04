@@ -322,10 +322,7 @@ class ProjectInstruction(DirectIntruction):
 class SubCalcInstruction(DirectIntruction):
     def __init__(self, *args):
         DirectIntruction.__init__(self, *args, base_arg_i = 2)
-#
-# class BatCalcInstruction(DirectIntruction):
-#     def __init__(self,*args):
-#         DirectIntruction.__init__(self,*args, base_arg_i = bi)
+
 
 class GroupInstruction(DirectIntruction):
     def __init__(self, *args, base_arg_i, base_col):
@@ -493,7 +490,13 @@ class JoinInstruction(MalInstruction):
         return [Prediction(retv=r.name, ins=i, cnt=c, avg=avg, t=r.atype) for r in retv]
 
 """
-@attr...
+@desc
+@attr col     : str //column name (TMP if None)
+@attr ctype   : str //column type
+@attr op      : str //selectivity operator (<.>,between if range)
+@attr lo      : obj //lower bound of select
+@attr hi      : obj //upper bound
+@attr lead_arg: Arg //
 """
 class SelectInstruction(MalInstruction):
     def __init__(self, *def_args, jobj, stats):
@@ -508,7 +511,6 @@ class SelectInstruction(MalInstruction):
         nC            = len([a for a in self.arg_list if a.name.startswith("C_")])
         self.lead_arg = self.arg_list[1] if nC>0 else self.arg_list[0]
 
-        # print(method, op)
         lo, hi = Utils.hi_lo(self.fname, self.op, jobj, stats.get(self.col,ColumnStats(0,0,0,0,0)))
         if self.ctype in ['bat[:int]','bat[:lng]','lng','bat[:hge]']:
             if self.op in ['>=','between']:
@@ -518,10 +520,10 @@ class SelectInstruction(MalInstruction):
             else: #TODO <=
                 self.lo,self.hi    = (int(lo),int(hi))
         elif self.ctype == 'bat[:date]':
-            # print(self.col, lo,hi)
             self.lo  = datetime.strptime(lo,'%Y-%m-%d')
             self.hi  = datetime.strptime(hi,'%Y-%m-%d')
         else:
+            logging.error("Wtf type if this ??")
             self.hi  = hi
             self.lo  = lo
 
@@ -559,12 +561,14 @@ class SelectInstruction(MalInstruction):
     def argCnt(self):
         return self.lead_arg.cnt
 
+    """
+    @desc argument distance between self and another train instruction
+    @note ASSUMES other is a known (training) instruction (we know the cnt)
+    """
     def approxArgDist(self, other, G):
         assert G != None
         lead_arg = self.lead_arg
-        # print(G[lead_arg.name])
         ac = G[lead_arg.name] if lead_arg.name in G else 'inf'
-        # approx_count = float(G.get(self.lead_arg.name,'inf'))
         return abs(other.lead_arg.cnt-float(ac))
 
     def argDist(self, other):
@@ -578,10 +582,11 @@ class SelectInstruction(MalInstruction):
         return other.lead_arg.cnt /self.lead_arg.cnt
 
 
+    #TODO rename range dist
+    """ @desc distance between the range(hi,lo) of self, other """
     def distance(self, other):
-        # print(self.col, other.col)
         assert self.ctype == other.ctype
-        if self.includes(other) or self.isIncluded(other):
+        if self.includes(other) or self.isIncluded(other): #TODO remove this if
             if self.ctype in ['bat[:int]','bat[:lng]','lng','bat[:hge]']:
                 return float((self.lo-other.lo)**2 + (self.hi-other.hi)**2)
             elif self.ctype == 'bat[:date]':
@@ -597,34 +602,27 @@ class SelectInstruction(MalInstruction):
         cand.sort( key = lambda t: t[1] )
         return [ t[0] for t in cand[0:k] ]
 
-    #deprecated
-    def predictCount2(self, ilist, default=0):
-        knn = self.kNN(ilist, 1)
-        if len(knn) >= 1:
-            return self.extrapolate(knn[0])
-        else:
-            print("None found")
-            return default
 
-
+    """
+    @desc run kNN to find the 5 closest instructions based on the range bounds
+    range extrapolation:  (self.hi - self.lo) / (traini.hi - traini.lo)
+    arg   extrapolation:  self.arg_cnt / traini.arg_cnt
+    prediction(traini) = traini.cnt * range_extrapolation * arg_extrapolation
+    """
     def predictCount(self, traind, approxG, default=None):
         assert approxG != None
         self_list = traind.mal_dict.get(self.fname,[])
         self_list = SelectInstruction.removeDuplicates(self_list)
         nn        = self.kNN(self_list,5, approxG)
-        rt        = self.ret_args[0].atype #return type
+        rt        = self.ret_args[0].atype #return type TODO ctype ??
 
         if len(nn) == 0:
-            logger.error("0 knn len in select ?? {} {} {}", self.short, self.op, self.ctype, self.col)
-            # for i in self_list:
-                # logger(i.short, i.fname, i.op, i.ctype, i.col)
+            logging.error("0 knn len in select ?? {} {} {}", self.short, self.op, self.ctype, self.col)
 
         nn.sort( key = lambda ins: self.approxArgDist(ins, approxG))
         nn1       = nn[0]
         arg_cnt   = self.approxArgCnt(approxG)
 
-        # if (verbose == True):
-            # print("ArgumentEstimation: real: {} estimated: {}".format(test_i.argCnt(), test_i.approxArgCnt(approxG)))
 
         if arg_cnt != None:
             avg  = sum([i.extrapolate(self) * ( arg_cnt / i.argCnt()) for i in nn]) / len(nn)
@@ -654,8 +652,10 @@ class SelectInstruction(MalInstruction):
                 print("0 product", self.hi, self.lo, other.hi, other.lo)
                 return self.cnt
         elif self.ctype == 'bat[:str]':
+            logging.error("NOPE")
             return self.cnt
         elif self.ctype == 'bat[:bit]':
+            logging.error("NOPE2")
             return self.cnt
         else:
             print("weird stuff in select", self.short)

@@ -1,23 +1,11 @@
 """
-@desc Column statistics class (for now only min and max)
+@desc Column statistics class
+@attr cnt : int //number of column elements
+@attr minv: obj //minimum value of column
+@attr maxf: obj //maximum value of column
+@attr uniq: int //number of unique elements
+@attr wid : int //width of column
 """
-# class Stats:
-#     def __init__(self, minval, maxval):
-#         self.min = minval
-#         self.max = maxval
-#
-#     @staticmethod
-#     def fromStr(line):
-#         tokens = line.split("|")
-#         column = tokens[0].strip()
-#         minval = tokens[1].strip()
-#         maxval = tokens[2].strip()
-#         return (column,Stats(minval,maxval))
-#
-#     def __str__(self):
-#         return "{:8} {:8}".format(self.min,self.max)
-
-
 class ColumnStats:
     def __init__(self, width, minv, maxv, count, uniq):
         self.cnt  = int(count)
@@ -42,3 +30,17 @@ class ColumnStats:
 
     def __str__(self):
         return "{:8} {:8} {:8} {}".format(self.cnt,self.min,self.max,self.uniq)
+
+class ColumnStatsD:
+    def __init__(self, d):
+        self.statsd = d
+
+    @staticmethod
+    def fromFile(fname):
+        d = []
+        for line in open(fname).readlines():
+            d.append(ColumnStats.fromStr(line))
+        return ColumnStatsD(dict(d))
+
+    def __getitem__(self,c):
+        return self.statsd[c]

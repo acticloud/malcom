@@ -5,6 +5,8 @@ Arg class
 @attr aval : obj //arg value
 @attr size : int //argument memory size
 @attr eol  : int //end of life (if == 1 the arg is freed by the server)
+@attr col  : str //name of column (or TMP if None)
+@attr cnt  : int //number of elements
 """
 class Arg:
     def __init__(self, name, atype, val, size, eol, count, col):

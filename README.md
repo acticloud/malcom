@@ -33,7 +33,7 @@ that contains the following statistics for each column,
 min value, max value, count, unique, width.
 
 # File Structure
-./src/malcom.py     : the driver programm
+./src/malcom.py     : the driver program
 
 ./src/mal_dict.py   : mal dictionary stuff
 
