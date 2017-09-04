@@ -2,12 +2,13 @@ import logging
 from utils    import Utils
 from utils    import Prediction
 from stats    import ColumnStats
+from stats    import ColumnStatsD
 from mal_dict import MalDictionary
 
 def plot_max_mem_error(q):
     blacklist = Utils.init_blacklist("config/mal_blacklist.txt")
 
-    col_stats = ColumnStats.fromFile('config/tpch_sf10_stats.txt')
+    col_stats = ColumnStatsD.fromFile('config/tpch_sf10_stats.txt')
 
     for qno in q:
         logging.info("Testing query {}".format(qno))
@@ -26,7 +27,7 @@ def plot_max_mem_error(q):
         for i in [1,5,10,15,20,25,30,40,50,75,100,125,150,175,200]:
             d12 = d1.filter( lambda ins: ins.tag in train_tags[0:i])
             print(len(d12.query_tags))
-            (G,pG) = d2.buildApproxGraph(d12)
+            pG  = d2.buildApproxGraph(d12)
             pmm = d2.predictMaxMem(pG) / 1000000000
             mm  = d2.getMaxMem() / 1000000000
             e.append( 100* abs((pmm -mm) / mm) )
@@ -37,7 +38,7 @@ def plot_max_mem_error(q):
 def plot_select_error(q):
     blacklist = Utils.init_blacklist("config/mal_blacklist.txt")
 
-    col_stats = ColumnStats.fromFile('config/tpch_sf10_stats.txt')
+    col_stats = ColumnStatsD.fromFile('config/tpch_sf10_stats.txt')
 
     for qno in q:
         logging.info("Testing query {}".format(qno))
@@ -58,17 +59,17 @@ def plot_select_error(q):
         for i in [1,5,10,15,20,25,30,40,50,75,100,125,150,175,200]:
             d12 = d1.filter( lambda ins: ins.tag in train_tags[0:i])
             print(len(d12.query_tags))
-            (G,pG) = d2.buildApproxGraph(d12)
+            pG = d2.buildApproxGraph(d12)
             error = 0
             for ins in seli:
-                p   = ins.predictCount(d12, G)[0]
+                p   = ins.predictCount(d12, pG)[0]
                 cnt = ins.cnt
                 pc  = p.cnt
                 error += 100* abs((pc -cnt) / cnt)
             e.append( error / len(seli) )
             ind.append(i)
         print(e)
-        Utils.plotBar(ind,e,"results/select_error_q{}.pdf".format(qno),'nof training queries','Select error perc')
+        # Utils.plotBar(ind,e,"results/select_error_q{}.pdf".format(qno),'nof training queries','Select error perc')
 
 
 

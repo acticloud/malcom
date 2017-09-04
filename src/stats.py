@@ -20,13 +20,13 @@ class ColumnStats:
         column = tokens[0]
         return (column, ColumnStats(*tokens[1::]))
 
-    """@ret dict<str, ColumnStats> """
-    @staticmethod
-    def fromFile(file_name):
-        d = []
-        for line in open(file_name).readlines():
-            d.append(ColumnStats.fromStr(line))
-        return dict(d)
+    # """@ret dict<str, ColumnStats> """
+    # @staticmethod
+    # def fromFile(file_name):
+    #     d = []
+    #     for line in open(file_name).readlines():
+    #         d.append(ColumnStats.fromStr(line))
+    #     return dict(d)
 
     def __str__(self):
         return "{:8} {:8} {:8} {}".format(self.cnt,self.min,self.max,self.uniq)
@@ -40,7 +40,7 @@ class ColumnStatsD:
         d = []
         for line in open(fname).readlines():
             d.append(ColumnStats.fromStr(line))
-        return ColumnStatsD(dict(d))
+        return dict(d)
 
     def __getitem__(self,c):
         return self.statsd[c]

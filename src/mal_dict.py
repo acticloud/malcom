@@ -5,7 +5,6 @@ import pickle
 import logging
 from utils        import Utils
 from utils        import Prediction
-from utils        import supported_mal
 from mal_instr    import MalInstruction
 from mal_instr    import SelectInstruction
 #TODO add method find closest instruction
@@ -33,12 +32,12 @@ class MalDictionary:
 
     def union(self, other):
         union_ilist   = self.getInsList() + other.getInsList()
-
         return MalDictionary.fromInsList(union_ilist)
 
     """
-    @arg mfile    : json file containing mal execution info (link??)
-    @arg blacklist: list of black listed mal instructions
+    @arg mfile    : str                   //json file containing query run
+    @arg blacklist: list<str>             //list of blacklisted mal ins
+    @arg col_stats: dict<str,ColumnStats> //column statistics
     """
     @staticmethod
     def fromJsonFile(mfile, blacklist, col_stats):
@@ -48,7 +47,7 @@ class MalDictionary:
             query_tags = set()
 
             while 1: #while not EOF
-                jobj = Utils.read_json_object(f)
+                jobj = Utils.readJsonObject(f)
                 if jobj is None:
                     break
                 fname,args ,ret  = Utils.extract_fname(jobj["short"])
@@ -63,7 +62,6 @@ class MalDictionary:
                         new_mals.start = int(startd[jobj["pc"]])
                         maldict[fname] = maldict.get(fname,[]) + [new_mals]
                         query_tags.add(int(jobj["tag"]))
-                        tag = int(jobj["tag"])
 
         return MalDictionary(maldict,list(query_tags), col_stats)
 
@@ -88,23 +86,17 @@ class MalDictionary:
     #TODO rename predictionGraph
     """
     def buildApproxGraph(self, traind):
-        global supported_mal
         ilist = self.getInsList()
         ilist.sort( key = lambda ins: ins.clk )
-        g  = {}
         pg = {}
         for ins in ilist:
-            if not ins.fname in supported_mal:
-                logging.error("Unknown instruction: {}".format(ins.short))
-            # assert ins.fname in direct:
-            for p in ins.predictCount(traind, g):
-                g[p.retv]  = p.avg
+            for p in ins.predictCount(traind, pg):
                 pg[p.retv] = p
                 r          = p.retv
-                if g[r] == sys.maxsize or g[r] == None:
+                if p.avg == sys.maxsize or p.avg == None:
                     logging.error("None in the graph: {}".format(ins.short))
-                logging.debug("m: {:20} {:5} {:10.0f}".format(ins.fname,r,g[r]))
-        return (g,pg)
+                # logging.debug("m: {:20} {:5} {:10.0f}".format(ins.fname,r,pg[r]))
+        return pg
 
 
 
@@ -124,28 +116,34 @@ class MalDictionary:
             return [x for x in dic[mals.fname] if x == mals]
         else:
             return [x for x in dic[mals.fname] if x.isExact(mals,True)]
-        # if len(ret) == 0:
-            # print(mals.short)
         return ret
 
+    """ @desc returns a list of all the instructions """
     def getInsList(self):
         ilist = []
         for l in self.mal_dict.values():
             ilist.extend(l)
         return ilist
 
+    """
+    !!Assumes we know each instruction's memory footprint!!
+    @ret int //actual max bytes the query will allocate
+    """
     def getMaxMem(self):
         ilist = self.getInsList()
-        ilist.sort(key = lambda i: i.clk) #clk ???
+        ilist.sort(key = lambda i: i.clk)
         max_mem  = 0
         curr_mem = 0
         for i in ilist:
             max_mem  = max(max_mem,curr_mem + i.mem_fprint)
             curr_mem = curr_mem + i.ret_size - i.free_size
-            # print("{} {} {}".format(i.pc,max_mem,curr_mem))
 
         return max_mem
 
+    """
+    @arg pG: dict<str, Prediction> //graph that relates each var to a prediction
+    @ret int //actual max bytes the query will allocate
+    """
     def predictMaxMem(self, pG): #TODO fix this
         ilist = self.getInsList()
         ilist.sort(key = lambda i: i.clk)
@@ -154,35 +152,8 @@ class MalDictionary:
         for i in ilist:
             max_mem  = max(max_mem,curr_mem + i.approxMemSize(pG))
             curr_mem = curr_mem + i.ret_size - i.approxFreeSize(pG)
-            # print("{} {} {}".format(i.pc,max_mem,curr_mem))
 
         return max_mem
-
-    # def testMaxMem(self, traind, G, pG): #TODO fix this
-    #     # print(self.getMaxMem() / self.predictMaxMem(traind, G))
-    #     ilist = self.getInsList()
-    #     ilist.sort(key = lambda i: i.clk)
-    #     max_mem  = 0
-    #     curr_mem = 0
-    #     max_mem2  = 0
-    #     curr_mem2 = 0
-    #     # print("came")
-    #     for i in ilist:
-    #         # print(i.fname)
-    #         max_mem  = max(max_mem,curr_mem + i.approxMemSize(traind, G))
-    #         curr_mem = curr_mem + i.ret_size - i.approxFreeSize(G, pG)
-    #
-    #         max_mem2  = max(max_mem2,curr_mem2 + i.mem_fprint)
-    #         curr_mem2 = curr_mem2 + i.ret_size - i.free_size
-    #         try:
-    #             print("{:15} {:10.0f} {:10.0f} {:10.0f} {:10.0f}".format(
-    #                 i.fname, max_mem , max_mem2, curr_mem , curr_mem2)
-    #             )
-    #             # print(max_mem / max_mem2, curr_mem / curr_mem2)
-    #         except Exception:
-    #             pass
-    #     # print(max_mem, max_mem2)
-    #     return max_mem
 
 
     """
@@ -198,31 +169,6 @@ class MalDictionary:
         return [x for x in dic[fname] if len(x.arg_list) == nargs]
 
 
-
-
-    #TODO should rename findExactOR. ...
-    def predictMemExactOr(self, ins, default):
-        exact = self.findInstr(ins)
-        assert len(exact) <= 1
-        if len(exact) == 1:
-            return exact[0].mem_fprint
-        else:
-            return default
-
-    """ @arg other: MalDictionary"""
-    def printDiff(self, other):
-        for l in other.mal_dict.values():
-            for m1 in l:
-                assert len(self.findInstr(m1)) == 1
-                try:
-                    m   = self.findInstr(m1)[0]
-                    ins = m.fname
-                    td  = abs(m1.time-m.time)
-                    sd  = abs(m1.mem_fprint-m.mem_fprint)
-                    fs  = "q: {:<25s} tdiff: {:8.0f}/{:<8.0f} sdiff {:5d}/{:<5d}"
-                    print(fs.format(ins,td,m.time,sd,m.mem_fprint))
-                except IndexError:
-                    print("Index Error: {}".format(m1.short))
 
     def getAll(self, method, nargs):
         d = self.mal_dict
@@ -318,47 +264,6 @@ class MalDictionary:
             tags.add(i.tag)
         return MalDictionary(d,tags,self.varflow)
 
-    def printPredictions(self, test_dict):
-        for ins in test_dict.getInsList():
-            try:
-                knni  = self.predict(ins)
-                mpred = self.predictMem(ins)
-                # knn5  = self.predictDEBUG(ins)
-                mem   = ins.mem_fprint
-                if mem != 0:
-                    sim = knni.similarity(ins)
-                    print("method: {:20} nargs: {:2d} actual: {:10d} pred: {:10d} sim: {:10.1f} perc: {:10.0f}".format(ins.fname,ins.nargs, mem,mpred,sim,abs(100*mpred/mem)))
-                else:
-                    print("method: {:20} nargs: {:2d} actual: {:10d} pred: {:10d}".format(ins.fname, ins.nargs, mem,mpred))
-            except Exception as err:
-                print("Exception: {}".format(err))
-                print("method: {:20} nargs: {:2d}  NOT FOUND".format(ins.fname,ins.nargs))
-                pass
-
-    def printPredictionsVerbose(self, test_dict, tag2query):
-        for ins in test_dict.getInsList():
-            try:
-                ipred      = self.predict(ins)
-                mpred      = ipred.mem_fprint
-                mem        = ins.mem_fprint
-                if mem != 0  and mpred / mem > 2:
-                    # print("DEBUG: {}".format(test_dict.query_tags))
-
-                    print("INS Q: {:2d} SHORT: {:80}".format(tag2query[ins.tag],ins.short))
-                    # ins.printVarFlow(self.varflow)
-                    print("KNN Q: {:2d} SHORT: {:80}".format(tag2query[ipred.tag],ipred.short))
-                    # ipred.printVarFlow(self.varflow)
-                    print("real: {:10d} pred: {:10d}\nINS: {} \nKNN: {}\n".format(mem,mpred, ins.argListStr(), ipred.argListStr()))
-
-                    # for alt in knn:
-                    #     print("ALT Q: {:2d} SHORT: {:80}".format(tag2query[alt.tag],alt.short))
-                    #     print("ALTM: {} KNN: {}\n".format(alt.mem_fprint, alt.argListStr()))
-
-
-            except Exception as err:
-                print("Exception: {}".format(err))
-                print("method: {:20} nargs: {:2d}  NOT FOUND".format(ins.fname,ins.nargs))
-                pass
 
     def avgDeviance(self, test_dict):
         suml  = lambda x,y: x+y
@@ -392,80 +297,3 @@ class MalDictionary:
         acc = [1 for i in non_zeros if abs(i.predictCount(self_list,0)-i.cnt)/i.cnt < thres]
 
         return 100*float(sum(acc))/len(non_zeros)
-
-    def predictCount(self, test_i):
-
-        self_list = self.mal_dict.get(test_i.fname,[])# + self.mal_dict.get(alias[test_i.fname],[])
-        nn        = test_i.kNN(self_list,1)[0]
-        return nn
-
-    def predictCount2(self, test_i):
-        self_list = self.mal_dict.get(test_i.fname,[])# + self.mal_dict.get(alias[test_i.fname],[])
-        nn        = test_i.kNN(self_list,10)
-        nn.sort(key = lambda i: i.argDist(test_i))
-        nn3 = nn[0:3]
-        # print("nn3: ", nn3[0].short, nn3[0].cnt)
-        # ex = sum([nni.extrapolate(test_i)*nni.argDiv(test_i) for nni in nn3]) / len(nn3)
-        return nn3[0]
-
-    def predictCountG(self, test_i, approxG, verbose=False):
-        assert approxG != None
-        self_list = self.mal_dict.get(test_i.fname,[])# + self.mal_dict.get(alias[test_i.fname],[])
-        if test_i.fname in ['select', 'thetaselect']:
-            self_list = SelectInstruction.removeDuplicates(self_list)
-        nn        = test_i.kNN(self_list,5, approxG)
-
-        nn.sort( key = lambda ins: test_i.approxArgDist(ins, approxG))
-        nn1       = nn[0]
-        arg_cnt   = test_i.approxArgCnt(approxG)
-
-        if (verbose == True):
-            print("ArgumentEstimation: real: {} estimated: {}".format(test_i.argCnt(), test_i.approxArgCnt(approxG)))
-
-        if arg_cnt != None:
-            if test_i.fname in ['select', 'thetaselect']:
-                avg = sum([i.extrapolate(test_i) * ( arg_cnt / i.argCnt()) for i in nn]) / len(nn)
-                return Prediction(ins=nn1,cnt = nn1.extrapolate(test_i) * ( arg_cnt / nn1.argCnt()), avg = avg)
-            elif test_i.fname in ['join']:
-                avg = sum([i.extrapolate(test_i) * i.approxArgDiv2(test_i,approxG) for i in nn]) / len(nn)
-                return Prediction(ins=nn1,cnt = nn1.extrapolate(test_i) * nn1.approxArgDiv2(test_i,approxG), avg = avg)
-
-        else:
-            print("dict None arguments ???")
-            avg = sum([i.extrapolate(test_i) for i in nn]) / len(nn)
-            return Prediction(ins=nn1, cnt = nn1.extrapolate(test_i), avg = avg)
-
-    def errorCount(self, test_i):
-        nn = self.predictCount(test_i)
-        return 100 * abs(nn.extrapolate(test_i)-test_i.cnt)/test_i.cnt
-
-    def avgErrorExact(self, test_dict):
-        suml   = lambda x,y: x+y
-        test_l = test_dict.getInsList()
-        ldiff = lambda i: abs(i.mem_fprint-self.predictMemExactOr(i,0)) / i.mem_fprint if i.mem_fprint != 0 else 0.0
-        diff  = sum( map(ldiff,test_l) )
-        # print(list(map(ldiff,test_l)))
-        # print(max(list(map(ldiff,test_l))))
-        # print("dev")
-        return 100 * diff / len(test_l)
-
-    def avgAccMemExact(self, test_dict):
-        suml   = lambda x,y: x+y
-        test_l = test_dict.getInsList()
-        lacc = lambda i: abs(self.predictMemExactOr(i,0)) / i.mem_fprint if i.mem_fprint != 0 else 1.0
-        sacc  = sum( map(lacc,test_l) )
-        return 100 * sacc / len(test_l)
-
-    def avgAccTimeExact(self, test_dict):
-        suml   = lambda x,y: x+y
-        test_l = test_dict.getInsList()
-        lacc = lambda i: abs(self.predictTimeExactOr(i,0)) / i.time if i.time != 0 else 1.0
-        sacc  = sum( map(lacc,test_l) )
-        return 100 * sacc / len(test_l)
-
-    def avgAccTimeExact2(self, test_dict):
-        suml   = lambda x,y: x+y
-        test_l = test_dict.getInsList()
-        actual = sum(map(lambda i: i.time, test_dict.getInsList()))
-        pred   = sum(map(lambda i: self.predictTimeExactOr(i,0), test_dict.getInsList()))
-        return 100 * pred / actual

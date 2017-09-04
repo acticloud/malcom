@@ -1,13 +1,19 @@
-import collections
-import logging
-import numpy
 import json
-import matplotlib.pyplot as plt
-from functools import reduce
+import numpy
+import logging
+import collections
 from pylab import savefig
+from functools import reduce
+import matplotlib.pyplot as plt
 
-# Prediction  = collections.namedtuple('Prediction',['retv','ins','cnt','avg','t'])
-
+"""
+@attr retv: str            //name of the returned value
+@attr ins : MalInstruction //the closest instruction
+@attr cnt : int            //predicted number of elements
+@attr avg : int            //average element count (of 5 in case of select)
+@attr t   : str            //type??
+@attr mem : int            //predicted memory size (non trivial in case of str)
+"""
 class Prediction():
     def __init__(self,retv,ins,cnt,avg,t,mem=None):
         self.retv = retv
@@ -22,23 +28,20 @@ class Prediction():
             return self.mem
         else:
             return self.cnt * Utils.sizeof(self.t)
-# def Prediction(retv, ins, cnt, avg, t, mem=None):
-    # return Prediction(retv=retv, ins=ins, cnt=cnt, avg=avg, t=t, mem=mem)
-# ColumnStats = collections.namedtuple('ColumnStats',['cnt','minv','maxv','uniq'])
 
-supported_mal = ['join','thetajoin','tid','bind','bind_idxbat','new','append',
-'sort','select','thetaselect','likeselect','==','isnil','group','subgroup',
-'subgroupdone','groupdone','ifthenelse','hge','!=','project','substring','avg',
-'>','like','difference','and','mergecand','single','dec_round','delta','year',
-'subavg','subsum','subcount','submin','projection','projectionpath',
-'projectdelta','subsum','subslice','+','-','*','/','or','dbl','intersect',
-'<','firstn','hash','bulk_rotate_xor_hash','identity','mirror','sum','max']
+# supported_mal = ['join','thetajoin','tid','bind','bind_idxbat','new','append',
+# 'sort','select','thetaselect','likeselect','==','isnil','group','subgroup',
+# 'subgroupdone','groupdone','ifthenelse','hge','!=','project','substring','avg',
+# '>','like','difference','and','mergecand','single','dec_round','delta','year',
+# 'subavg','subsum','subcount','submin','projection','projectionpath',
+# 'projectdelta','subsum','subslice','+','-','*','/','or','dbl','intersect',
+# '<','firstn','hash','bulk_rotate_xor_hash','identity','mirror','sum','max']
 
 class Utils:
     #readline until you reach '}' or EOF
     @staticmethod
-    def read_json_object(f):
-        lines = []
+    def readJsonObject(f):
+        lines  = []
         rbrace = False
         while rbrace == False:
             line = f.readline()
@@ -97,10 +100,7 @@ class Utils:
 
     @staticmethod
     def loadStatistics(sfile):
-        d = []
-        for line in open(sfile).readlines():
-            d.append(Stats.fromStr(line))
-        return dict(d)
+        return ColumnStatsD.fromFile(sfile)
 
 
     """ @arg stmt: str // short mal statement"""
@@ -173,14 +173,13 @@ class Utils:
             else:
                 print(op)
                 raise ValueError("op??")
-        elif method in ["+","-","*"]:
-            return (stats.minv,stats.maxv)
         elif method == 'likeselect':
             v = args[2]["value"].strip('\"')
             return (v,v)
         else:
             print(jobj["short"])
             raise ValueError("ttt")
+
 
     @staticmethod
     def extract_bounds(method, jobj):

@@ -273,7 +273,7 @@ if __name__ == '__main__':
     parser = init_parser()
     args   = parser.parse_args()
     init_logger(args.log_level)
-    experiments.plot_select_error([6])
+    experiments.plot_select_error([3])
     # print(args.log_level)
     # test_test()
     # sanity_test()
