@@ -9,7 +9,6 @@ from stats    import ColumnStats
 
 """
 interface MalInstruction {
-
     def argCnt()               : List<int>
 
     def approxArgCnt(traind: MalDictionary, G: dict<str, Prediction>): List<int>
@@ -140,12 +139,6 @@ class MalInstruction:
         assert len(self.arg_list) == len(other.arg_list)
         diff = [abs(a.size-b.size) for (a,b) in zip(self.arg_list,other.arg_list)]
         return sum(diff)
-
-
-    """ @ret: string //arguments as a string"""
-    def argListStr(self):
-        slist = ["arg: {:10} ".format(int(a.size / 1000)) for a in self.arg_list if a.size>0]
-        return ' '.join(slist)
 
     """ returns only the arguments that are tmp variables """
     def getArgVars(self):
@@ -507,7 +500,7 @@ class SelectInstruction(MalInstruction):
         lo, hi = Utils.hi_lo(self.fname, self.op, jobj, stats.get(self.col,ColumnStats(0,0,0,0,0)))
 
         if self.ctype in ['bat[:int]','bat[:lng]','lng','bat[:hge]']:
-            if self.op in ['>=','between']:
+            if self.op in ['>=','between'] and self.col in stats:
                 s    = stats[self.col]
                 step = round((int(s.maxv) - int(s.minv)) / int(s.uniq))
                 self.lo,self.hi    = (int(lo),int(hi)+step)
@@ -609,7 +602,7 @@ class SelectInstruction(MalInstruction):
         rt        = self.ret_args[0].atype #return type TODO ctype ??
 
         if len(nn) == 0:
-            logging.error("0 knn len in select ?? {} {} {}", self.short, self.op, self.ctype, self.col)
+            logging.error("0 knn len in select ?? {} {} {} {}".format(self.short, self.op, self.ctype, self.col))
 
         nn.sort( key = lambda ins: self.approxArgDist(ins, approxG))
         nn1       = nn[0]

@@ -5,6 +5,51 @@ from stats    import ColumnStats
 from stats    import ColumnStatsD
 from mal_dict import MalDictionary
 
+def test_max_mem():
+    blacklist = Utils.init_blacklist("config/mal_blacklist.txt")
+
+    col_stats = ColumnStatsD.fromFile('config/tpch_sf10_stats.txt')
+
+    qno = 19
+    for qno in range(10,23):
+        logging.info("loading training set...")
+        d1 = MalDictionary.fromJsonFile("traces/random_tpch_sf10/ran_q{}_n200_tpch10.json".format(qno), blacklist, col_stats)
+        logging.info("loading test set...")
+        d2 = MalDictionary.fromJsonFile("traces/tpch-sf10/{}.json".format(qno), blacklist, col_stats)
+
+        pG  = d2.buildApproxGraph(d1)
+
+        pmm = d2.predictMaxMem(pG) / 1000000000
+        mm  = d2.getMaxMem() / 1000000000
+
+        err = 100* abs((pmm -mm) / mm)
+
+        print("query: {}, pred mem: {}, actual mem: {}, error {}".format(qno,pmm,mm,err))
+
+def analyze_max_mem():
+    blacklist = Utils.init_blacklist("config/mal_blacklist.txt")
+
+    col_stats = ColumnStatsD.fromFile('config/tpch_sf10_stats.txt')
+
+    qno = 19
+    for qno in range(19,20):
+        logging.info("loading training set...")
+        d1 = MalDictionary.fromJsonFile("traces/random_tpch_sf10/ran_q{}_n200_tpch10.json".format(qno), blacklist, col_stats)
+        logging.info("loading test set...")
+        d2 = MalDictionary.fromJsonFile("traces/tpch-sf10/{}.json".format(qno), blacklist, col_stats)
+
+        pG  = d2.buildApproxGraph(d1)
+
+        for ins in d2.getInsList():
+            pmm = ins.approxMemSize(pG)
+            mm  = ins.ret_size
+
+            if mm > 0 and mm > 10000:
+                err = 100* abs((pmm -mm) / mm)
+                print(ins.short)
+                print("query: {}, pred mem: {}, actual mem: {}, error {}".format(qno,pmm,mm,err))
+                print("")
+
 def plot_max_mem_error(q):
     blacklist = Utils.init_blacklist("config/mal_blacklist.txt")
 
