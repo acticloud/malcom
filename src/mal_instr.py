@@ -1,6 +1,7 @@
 import re
 import sys
 import logging
+import distance
 from mal_arg  import Arg
 from utils    import Utils
 from datetime import datetime
@@ -69,7 +70,7 @@ class MalInstruction:
         tag       = int(jobj["tag"])
         rv        = [rv.get("size",0) for rv in jobj["ret"]]
         ro        = jobj.get("ret",[]) #return object
-        ret_size  = sum([o.get("size",0) for o in ro])
+        ret_size  = sum([o.get("size",0) for o in ro if int(o["eol"])==0])
         arg_size  = sum([o.get("size",0) for o in jobj.get("arg",[])])
         arg_list  = [Arg.fromJsonObj(e) for e in jobj.get("arg",[])]
         ret_args  = [Arg.fromJsonObj(e) for e in ro]# if e["eol"]==0]
@@ -95,7 +96,9 @@ class MalInstruction:
         elif fname in ['join','thetajoin']:
             return JoinInstruction(*con_args)
         elif fname in ['group','subgroup','subgroupdone','groupdone']:
-            return GroupInstruction(*con_args, base_arg_i=0, base_col=arg_list[0].col)
+            a0 = arg_list[0].col.split('.')[::-1][0]
+            # print("col == ", a0)
+            return GroupInstruction(*con_args, base_arg_i=0, base_col=a0, col_stats = stats.get(a0,None))
         elif fname in ['firstn']:
             return FirstnInstruction(*con_args)
         elif fname in ['hash','bulk_rotate_xor_hash','identity','mirror','year',
@@ -159,7 +162,7 @@ class MalInstruction:
     """
     def approxMemSize(self, pG):
         dp = Prediction(0,0,0,0,'bat[:lng]',0)
-        return sum([pG.get(a.name,dp).getMem()  for a in self.ret_args])#EOL==1?? if a.eol==1])
+        return sum([pG.get(a.name,dp).getMem()  for a in self.ret_args if a.eol == 0])#EOL==1?? if a.eol==1])
         # return sum([r.getMem() for r in self.predictCount(traind, G)])
 
     def typeof(self, rv):
@@ -311,10 +314,11 @@ class SubCalcInstruction(DirectIntruction):
 
 
 class GroupInstruction(DirectIntruction):
-    def __init__(self, *args, base_arg_i, base_col):
+    def __init__(self, *args, base_arg_i, base_col, col_stats):
         MalInstruction.__init__(self, *args)
-        self.base_arg = self.arg_list[base_arg_i]
-        self.base_col = base_col
+        self.base_arg  = self.arg_list[base_arg_i]
+        self.base_col  = base_col
+        self.col_stats = col_stats
         # self.base_ret = self.ret_vars[base_ret_i]
 
     def approxArgCnt(self, G, default=None):
@@ -338,6 +342,16 @@ class GroupInstruction(DirectIntruction):
             if len(kNN)>0:
                 nn1r = kNN[0].ret_args
                 return [Prediction(retv=r.name, ins=None, cnt=nnr.cnt, avg=nnr.cnt, t=r.atype) for (r,nnr) in zip(retl,nn1r) if r.eol==0]
+        elif self.fname == 'groupdone' and self.col_stats != None:
+            stats = self.col_stats
+            r1 = retl[0]
+            p1 = Prediction(retv=r1.name, ins=None, cnt=p, avg=p, t=r1.atype)
+            r2 = retl[1]
+            p2 = Prediction(retv=r2.name, ins=None, cnt=stats.uniq, avg=stats.uniq, t=r2.atype)
+            print(self.col_stats.uniq)
+            r3 = retl[2]
+            p3 = Prediction(retv=r3.name, ins=None, cnt=stats.uniq, avg=stats.uniq, t=r3.atype)
+            return [p for (r,p) in [(r1,p1),(r2,p2),(r3,p3)] if r.eol == 0]
 
         return [Prediction(retv=r.name, ins=None, cnt=p, avg=p, t=r.atype) for r in retl if r.eol==0]
 
@@ -493,9 +507,10 @@ class SelectInstruction(MalInstruction):
         self.arg_size = [o.get("size",0) for o in jobj.get("arg",[])]
         self.op       = Utils.extract_operator(self.fname, jobj)
 
-        #is it the first select (number of C_ vars == 0)??...
-        nC            = len([a for a in self.arg_list if a.name.startswith("C_")])
-        self.lead_arg = self.arg_list[1] if nC>0 else self.arg_list[0]
+        #is it the first select (2nd arg  == NULL)??...
+        # nV            = len([a for a in self.arg_list if a.name.startswith("C_")])
+        a1 = self.arg_list[1]
+        self.lead_arg = a1 if a1.isVar() and a1.cnt > 0 else self.arg_list[0]
 
         lo, hi = Utils.hi_lo(self.fname, self.op, jobj, stats.get(self.col,ColumnStats(0,0,0,0,0)))
 
@@ -543,6 +558,7 @@ class SelectInstruction(MalInstruction):
         return None
 
     def approxArgCnt(self, G, default = None):
+        # logging.error("lead arg: {}".format(self.lead_arg.name))
         return G.get(self.lead_arg.name,default).avg
 
     def argCnt(self):
@@ -569,21 +585,30 @@ class SelectInstruction(MalInstruction):
 
     #TODO rename range dist
     """ @desc distance between the range(hi,lo) of self, other """
-    def distance(self, other):
+    def distance(self, other, G=None):
         assert self.ctype == other.ctype
-        if self.includes(other) or self.isIncluded(other): #TODO remove this if
-            if self.ctype in ['bat[:int]','bat[:lng]','lng','bat[:hge]']:
-                return float((self.lo-other.lo)**2 + (self.hi-other.hi)**2)
-            elif self.ctype == 'bat[:date]':
-                (min_lo,max_lo) = (min(self.lo,other.lo),max(self.lo,other.lo))
-                (min_hi,max_hi) = (min(self.hi,other.hi),max(self.hi,other.hi))
-                return float((max_lo-min_lo).days + (max_hi-min_hi).days)
-        else:
-            return float('inf')
-        return None
+        # if self.includes(other) or self.isIncluded(other): #TODO remove this if
+        if self.ctype in ['bat[:int]','bat[:lng]','lng','bat[:hge]']:
+            return float((self.lo-other.lo)**2 + (self.hi-other.hi)**2)
+        elif self.ctype == 'bat[:date]':
+            (min_lo,max_lo) = (min(self.lo,other.lo),max(self.lo,other.lo))
+            (min_hi,max_hi) = (min(self.hi,other.hi),max(self.hi,other.hi))
+            return float((max_lo-min_lo).days + (max_hi-min_hi).days)
+        elif self.ctype == 'bat[:str]':
+            assert self.lo == self.hi and other.lo == other.hi
+            return distance.levenshtein(self.lo, other.lo)
+        elif self.ctype == 'bat[:bit]':
+            return self.approxArgDist(other, G)
+            # return float('inf') #TODO what do we do ?
+
+            # return float((self.lo-other.lo)**2 + (self.hi-other.hi)**2) #???
+            # return
+        # else:
+        print(self.ctype)
+        assert False
 
     def kNN(self, ilist, k, G):
-        cand = [[i,self.distance(i)] for i in ilist if i.col == self.col and i.op == self.op and i.ctype == self.ctype]
+        cand = [[i,self.distance(i, G)] for i in ilist if i.col == self.col and i.op == self.op and i.ctype == self.ctype]
         cand.sort( key = lambda t: t[1] )
         return [ t[0] for t in cand[0:k] ]
 
@@ -597,9 +622,16 @@ class SelectInstruction(MalInstruction):
     def predictCount(self, traind, approxG, default=None):
         assert approxG != None
         self_list = traind.mal_dict.get(self.fname,[])
-        self_list = SelectInstruction.removeDuplicates(self_list)
-        nn        = self.kNN(self_list,5, approxG)
+        cand_list = [ins for ins in self_list if len(ins.arg_list) == len(self.arg_list)]
+        # print("len cand list", len(cand_list))
+        # self_list = SelectInstruction.removeDuplicates(self_list)
+        nn        = self.kNN(cand_list,5, approxG)
         rt        = self.ret_args[0].atype #return type TODO ctype ??
+
+        #DEBUG
+        # for ins in nn:
+            # print("DEB:", ins.cnt, ins.short)
+
 
         if len(nn) == 0:
             logging.error("0 knn len in select ?? {} {} {} {}".format(self.short, self.op, self.ctype, self.col))
@@ -610,8 +642,13 @@ class SelectInstruction(MalInstruction):
 
 
         if arg_cnt != None:
+            # print(self.short)
+            # for i in nn:
+                # print(i.short, i.lead_arg.name)
+                # assert i.argCnt() != 0
+            # assert i.argCnt() != 0
             avg  = sum([i.extrapolate(self) * ( arg_cnt / i.argCnt()) for i in nn]) / len(nn)
-            avgm = sum([i.ret_size for i in nn]) / len(nn)
+            avgm = sum([i.ret_size * arg_cnt / i.argCnt() for i in nn]) / len(nn)
             return [Prediction(retv = self.ret_vars[0], ins=nn1,cnt = nn1.extrapolate(self) * ( arg_cnt / nn1.argCnt()), avg=avg, t=rt, mem=avgm)]
         else:
             logging.error("None arguments ??? {}".format(self.lead_arg.name))

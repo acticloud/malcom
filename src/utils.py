@@ -91,6 +91,10 @@ class Utils:
             return 0
 
     @staticmethod
+    def isVar(name):
+        return name.startswith("X_") or name.startswith("C_")
+
+    @staticmethod
     def init_blacklist(blfile):
         blacklist = []
         for line in open(blfile).readlines():

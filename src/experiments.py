@@ -12,6 +12,7 @@ def test_max_mem():
 
     qno = 19
     for qno in range(10,23):
+        logging.info("Examining Query: {}".format(qno))
         logging.info("loading training set...")
         d1 = MalDictionary.fromJsonFile("traces/random_tpch_sf10/ran_q{}_n200_tpch10.json".format(qno), blacklist, col_stats)
         logging.info("loading test set...")
@@ -20,7 +21,7 @@ def test_max_mem():
         pG  = d2.buildApproxGraph(d1)
 
         pmm = d2.predictMaxMem(pG) / 1000000000
-        mm  = d2.getMaxMem() / 1000000000
+        mm  = d2.getMaxMem()      / 1000000000
 
         err = 100* abs((pmm -mm) / mm)
 
@@ -39,8 +40,11 @@ def analyze_max_mem():
         d2 = MalDictionary.fromJsonFile("traces/tpch-sf10/{}.json".format(qno), blacklist, col_stats)
 
         pG  = d2.buildApproxGraph(d1)
+        # sel2 = d2.filter(lambda ins: ins.fname in ['select','thetaselect'])
 
-        for ins in d2.getInsList():
+        testi = d2.getInsList()
+        testi.sort(key = lambda ins: ins.clk)
+        for ins in testi:
             pmm = ins.approxMemSize(pG)
             mm  = ins.ret_size
 
@@ -48,6 +52,7 @@ def analyze_max_mem():
                 err = 100* abs((pmm -mm) / mm)
                 print(ins.short)
                 print("query: {}, pred mem: {}, actual mem: {}, error {}".format(qno,pmm,mm,err))
+                print("cnt: {} pred cnt: {}".format(ins.cnt, ins.predictCount(d1, pG)[0].avg))
                 print("")
 
 def plot_max_mem_error(q):
