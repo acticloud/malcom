@@ -274,7 +274,7 @@ if __name__ == '__main__':
     args   = parser.parse_args()
     init_logger(args.log_level)
     # experiments.plot_select_error([3])
-    experiments.test_max_mem()
+    experiments.test_airtraffic()
     # experiments.analyze_max_mem()
     # print(args.log_level)
     # test_test()

@@ -629,8 +629,8 @@ class SelectInstruction(MalInstruction):
         rt        = self.ret_args[0].atype #return type TODO ctype ??
 
         #DEBUG
-        # for ins in nn:
-            # print("DEB:", ins.cnt, ins.short)
+        for ins in nn:
+            print("DEB:", ins.cnt, ins.short)
 
 
         if len(nn) == 0:

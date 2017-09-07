@@ -5,27 +5,71 @@ from stats    import ColumnStats
 from stats    import ColumnStatsD
 from mal_dict import MalDictionary
 
-def test_max_mem():
+def test_airtraffic():
+    blacklist = Utils.init_blacklist("config/mal_blacklist.txt")
+
+    col_stats = ColumnStatsD.fromFile('config/airtraffic_stats.txt2')
+
+    qno = 19
+    e   = []
+    for qno in range(4,5):
+        q = "0{}".format(qno) if qno < 10 else "{}".format(qno)
+        logging.info("Examining Query: {}".format(q))
+        logging.info("loading training set...")
+        d1 = MalDictionary.fromJsonFile("traces/random_airtraffic/ran_q{}_n1000_air.json".format(q), blacklist, col_stats)
+        logging.info("loading test set...")
+        d2 = MalDictionary.fromJsonFile("traces/airtraffic/{}.json".format(q), blacklist, col_stats)
+
+        pG  = d2.buildApproxGraph(d1)
+
+        pmm = d2.predictMaxMem(pG)  / 1000000000
+        mm  = d2.getMaxMem()       / 1000000000
+
+        err = 100* abs((pmm -mm) / mm)
+
+        print("query: {}, pred mem: {}, actual mem: {}, error {}".format(qno,pmm,mm,err))
+        # e.append(err)
+        testi = d2.getInsList()
+        testi.sort(key = lambda ins: ins.clk)
+        for ins in testi:
+            pmm = ins.approxMemSize(pG)
+            mm  = ins.ret_size
+
+            if mm > 0 and mm > 10000:
+                err = 100* abs((pmm -mm) / mm)
+                print(ins.short)
+                print("query: {}, pred mem: {}, actual mem: {}, error {}".format(qno,pmm,mm,err))
+                print("cnt: {} pred cnt: {}".format(ins.cnt, ins.predictCount(d1, pG)[0].avg))
+                print("")
+    # Utils.plotBar(range(1,23), e, "mem_error_1-23.pdf",'error perc','query no')
+
+def test_tpch10():
     blacklist = Utils.init_blacklist("config/mal_blacklist.txt")
 
     col_stats = ColumnStatsD.fromFile('config/tpch_sf10_stats.txt')
 
     qno = 19
-    for qno in range(10,23):
-        logging.info("Examining Query: {}".format(qno))
+    e   = []
+    for qno in range(1,23):
+        q = "0{}".format(qno) if qno < 10 else "{}".format(qno)
+        logging.info("Examining Query: {}".format(q))
         logging.info("loading training set...")
-        d1 = MalDictionary.fromJsonFile("traces/random_tpch_sf10/ran_q{}_n200_tpch10.json".format(qno), blacklist, col_stats)
+        d1 = MalDictionary.fromJsonFile("traces/random_tpch_sf10/ran_q{}_n200_tpch10.json".format(q), blacklist, col_stats)
         logging.info("loading test set...")
-        d2 = MalDictionary.fromJsonFile("traces/tpch-sf10/{}.json".format(qno), blacklist, col_stats)
+        d2 = MalDictionary.fromJsonFile("traces/tpch-sf10/{}.json".format(q), blacklist, col_stats)
 
         pG  = d2.buildApproxGraph(d1)
 
-        pmm = d2.predictMaxMem(pG) / 1000000000
-        mm  = d2.getMaxMem()      / 1000000000
+        pmm = d2.predictMaxMem(pG)  / 1000000000
+        mm  = d2.getMaxMem()       / 1000000000
 
         err = 100* abs((pmm -mm) / mm)
 
         print("query: {}, pred mem: {}, actual mem: {}, error {}".format(qno,pmm,mm,err))
+        e.append(err)
+
+    Utils.plotBar(range(1,23), e, "mem_error_1-23.pdf",'error perc','query no')
+
 
 def analyze_max_mem():
     blacklist = Utils.init_blacklist("config/mal_blacklist.txt")
