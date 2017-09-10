@@ -202,7 +202,7 @@ class Utils:
     @staticmethod
     def plotBar(x,y,output,ylabel,xlabel, lscale=False):
         fig, ax = plt.subplots()
-        width = 0.5
+        width = 0.1
         bar_width = 0.5
         # rects1 = ax.bar(ind-width, sp, width, color='b')
         ind = numpy.arange(len(x))+1

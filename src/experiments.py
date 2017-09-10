@@ -5,6 +5,42 @@ from stats    import ColumnStats
 from stats    import ColumnStatsD
 from mal_dict import MalDictionary
 
+def plot_select_error_airtraffic():
+    blacklist = Utils.init_blacklist("config/mal_blacklist.txt")
+
+    col_stats = ColumnStatsD.fromFile('config/airtraffic_stats.txt2')
+
+    e   = []
+    for qno in range(4,5):
+        q = "0{}".format(qno) if qno < 10 else "{}".format(qno)
+        logging.info("Examining Query: {}".format(q))
+        logging.info("loading training set...")
+        d1 = MalDictionary.fromJsonFile("traces/random_airtraffic/ran_q{}_n1000_air.json".format(q), blacklist, col_stats)
+        logging.info("loading test set...")
+        d2 = MalDictionary.fromJsonFile("traces/airtraffic/{}.json".format(q), blacklist, col_stats)
+        sel2 = d2.filter(lambda ins: ins.fname in ['select','thetaselect'])
+        seli = sel2.getInsList()
+
+        train_tags = d1.query_tags
+        train_tags.sort()
+        e   = []
+        ind = []
+        for i in [1,5,10,15,20,25,30,40,50,75,100,150,200,500,750,1000]:
+            d12 = d1.filter( lambda ins: ins.tag in train_tags[0:i])
+            print(len(d12.query_tags))
+            pG = d2.buildApproxGraph(d12)
+            error = 0
+            for ins in seli:
+                p   = ins.predictCount(d12, pG)[0]
+                cnt = ins.cnt
+                pc  = p.cnt
+                error += 100* abs((pc -cnt) / cnt)
+            e.append( error / len(seli) )
+            ind.append(i)
+
+    print(e)
+    Utils.plotBar(ind,e,'airtraffic_sel4_error.pdf','Error perc','Nof training queries')
+
 def test_airtraffic():
     blacklist = Utils.init_blacklist("config/mal_blacklist.txt")
 
