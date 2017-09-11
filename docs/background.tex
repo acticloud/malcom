@@ -1,0 +1,80 @@
+\section{Background}
+\label{Background}
+In this section we summarize the salient features of resilient intermediates
+for query processing., the leading open-source  column store and the envisioned
+system ExaNest, an exascale HPC platform for data-intensive computing.
+
+\subsection{A Column Store}
+%Recap some MonetDB stuff on how queries are compiled.
+MonetDB is a widely used column store that internally is uses resident
+intermediates to break up query processing in well identifying steps.
+The query plan is broken up into independent steps, glued together into a
+dataflow dependency graph.  The dataflow graph is greedily consumed by the
+database kernel assigning a single core to a single operation.
+The resource pressure is kept at a minimal to trim down the degree  of parallel
+processing when the main resource, RAM, is heavily used.
+The system can be instructed to produce an event record for each completed instruction.
+This provides a.o. insight into the input/output sizes and timing.
+
+\subsection{Distributed Query Optimizers}
+% summarize
+The predominant scheme to scale out database processing is to break the base
+tables into independent partitions using either a hash-key or ranges.
+The partitioning scheme can be used to orchestrate distributed processing
+in an optimal way most of the time.
+
+\section{Query Execution Model}
+In this section we describe how the MonetDB query execution engine was used
+ to develop a novel. We also illustrate the data at our disposal to predict
+
+\subsection{Architecture}
+Figure \ref{fig} illustrates the components our reference system, MonetDB,
+to execute an sql query. The SQL parser and optimizer layer deploy well-known
+rewriting rules to reduce the intermediate sizes and processing time.
+It does not rely on any cost-model or pre-computed statistics
+(aside from the whereabouts of the data partitions on separate nodes)
+
+The middle layer is a sequence of specialized optimizers that morph the logical
+plan received from the SQL compiler into a physical execution plan.
+Constant expressions are evaluated, common sub-expressions are identified,
+the dataflow graph for parallel processing is derived, etc...
+
+The bottom layer contains the implementation of the relational operators.
+Each operator takes as input the resident intermediates produces before
+or they access the persistent data on disk.
+The actual implementation is often quite complex,
+because each operator can be implemented in a multitude of ways.
+Since the operator has full knowledge on the actual parameters,
+it becomes easy to select the proper path.
+Some operators even perform a sampling step before making a choice on the
+ preferred algorithm.
+
+To illustrate consider the following simple SQL query
+The actual code executed by the MonetDB kernel is shown in Figure \ref{label}.
+%clarify what you see
+
+The details of the actual execution can be gathered using the Stethoscope.
+A single record is shown in Figure \ref{}. Of interest to this paper are
+the properties shown for the arguments and return variables.
+
+\subsection{Profiling Information}
+The MonetDB kernel can be instructed to emit profiling events.
+Every primitive function comes with an event record taken at the start and
+upon completion of the operation. The event record contains details on the
+arguments passed, their type and size. Where ever possible the arguments
+are linked with the underlying persistent column. Intermediate columns are
+nameless and we only can rely on their type/cardinality.
+Upon completion, we also know the exact size of the result and the time consumption.
+Thread affinity is also available, but for the remainder of this paper ignored.
+
+Explain a MAL instruction
+For the remainder of this paper it is necessary to have a basic knowledge of the
+MAL programming language in which all SQL queries are translated.
+The MAL language is purely designed as intermediate language to express the operations.
+
+The general format is
+\begin{verbatim}
+content...
+\end{verbatim}
+Every function belongs to a module. The arguments are either typed scalar
+values (:type) or a reference to a column (:bat[:type]).

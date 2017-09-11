@@ -1,0 +1,85 @@
+\section{Micro Models}
+With an abundance of events we can start to derive models for each of the instructions.
+A micro model is derived that can be used later for ease of simulation
+alternative execution plans. We study them based on similar properties.
+
+\subsection{Arithmetic Operations}
+The operations can be grouped by complexity to predict the outcome of a hypothetical operation.
+The first group includes the {\em batcalc} operations.
+They all obey the following structure:
+\begin{verbatim}
+  res:bat[:lng]:= batcalc.==( l:bat[:lng],r:bat[:lng])
+  res:bat[:lng]:= batcalc.==( l:bat[:lng],r::lng)
+  res:bat[:lng]:= batcalc.==( l:lng,r:bat[:lng])
+  res:bat[:lng]:= batcalc.==( l:lng,r:lng)
+
+\end{verbatim}
+The argument is either scalar or a reference to a column.
+However, in all cases the number of result tuples can be looked up from the argument events.
+The processing time depends mostly on the type's footprint and the influence of concurrent activity.
+
+\subsection{Aggregate Operations}
+This category includes operations like sum, avg, min, max, single, dec\_round
+The count of the result it obviously one.
+
+\subsection{Select Operator}
+\subsubsection{Range Selects}
+To predict the size of a range select, we used the kNN algorithm,
+using k=5, to find the 5 closest selects to the one we want to predict,
+considering the lower and higher bounds as distance metrics.
+When we are facing a one bound select ($<$,$>$ etc) we use the
+dataset statistics to fill the other bound (e.g in case of $<$ we want the column min).
+\subsubsection{Point Selects}
+Nothing special, we try to find the most similar point....
+
+\subsubsection{Like Selects}
+Future work :P
+
+\subsubsection{Subsequent Selects}
+%TODO make it more general
+In case of intermediate select instructions, the ranges are not adequate to
+make an accurate prediction, because the argument size may vary based on the
+previous selects. To overcomes this we incorporated the estimations of the
+previous intructions, to build a graph that relates each variable to a size
+estimation. This way we cal also use the argument estimation to predict the
+size of the select result. The code for selection prediction is shown at
+Figure\ref{sel:code}
+
+\begin{figure}[t]
+\begin{lstlisting}[frame=single]
+  def div(i1, i2):
+    return (i1.hi-i1.lo) / (i2.hi-i2.lo)
+
+  def extrapolate(traini, testi):
+      traini.cnt*div(testi,traini)*testi.approx_arg_cnt/traini.argcnt
+
+  def predict(testi, traind, approxG):
+    knn5 = traind.knn(testi,5)
+    return sum([i.extrapolate(testi) for i in knn5]) / len(knn5)
+\end{lstlisting}
+  \caption{Code snippet for making predictions for range selects}
+  \label{sel:code}
+\end{figure}
+
+
+\subsection{Join}
+Nothing special yet
+(Run a kNN to the previous joins that operate on the same two columns if possible,
+and find the ones closest based on the argument sizes)
+\subsection{Group}
+Not sure yet
+
+\subsection{Set instructions}
+We do not have any relevant information to do an accurate guess for the
+set instructions, so we output the worst case of the result.
+$$ intersect(A,B) ~= min(A,B)$$
+$$ merge(A,B) ~= A+B $$
+$$ diff(A,B) ~= A $$
+% diff,union,intersect
+
+\subsection{Load instructions}
+\subsubsection{bind}
+Bind instruction loads(or memory maps) a column into memory,
+thus the result size is the size of the column.
+\subsubsection{bind\_idxbat, tid}
+Tid and bind\_idxbat do not produce any memory overhead
