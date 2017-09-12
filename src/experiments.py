@@ -11,7 +11,7 @@ def plot_select_error_airtraffic():
     col_stats = ColumnStatsD.fromFile('config/airtraffic_stats.txt2')
 
     e   = []
-    for qno in range(4,5):
+    for qno in range(9,10):
         q = "0{}".format(qno) if qno < 10 else "{}".format(qno)
         logging.info("Examining Query: {}".format(q))
         logging.info("loading training set...")
@@ -25,7 +25,7 @@ def plot_select_error_airtraffic():
         train_tags.sort()
         e   = []
         ind = []
-        for i in [1,5,10,15,20,25,30,40,50,75,100,150,200,500,750,1000]:
+        for i in [1,5,10,15,20,25,50,75,100,150,200,250,375,500,675,800,1000]:
             d12 = d1.filter( lambda ins: ins.tag in train_tags[0:i])
             print(len(d12.query_tags))
             pG = d2.buildApproxGraph(d12)
@@ -39,7 +39,57 @@ def plot_select_error_airtraffic():
             ind.append(i)
 
     print(e)
-    Utils.plotBar(ind,e,'airtraffic_sel4_error.pdf','Error perc','Nof training queries')
+    Utils.plotBar(ind,e,'airtraffic_sel9_error.pdf','Error perc','Nof training queries')
+
+def plot_mem_error_airtraffic():
+    blacklist = Utils.init_blacklist("config/mal_blacklist.txt")
+
+    col_stats = ColumnStatsD.fromFile('config/airtraffic_stats.txt2')
+
+    e   = []
+    for qno in range(9,10):
+        q = "0{}".format(qno) if qno < 10 else "{}".format(qno)
+        logging.info("Examining Query: {}".format(q))
+        logging.info("loading training set...")
+        d1 = MalDictionary.fromJsonFile("traces/random_airtraffic/ran_q{}_n1000_air.json".format(q), blacklist, col_stats)
+        logging.info("loading test set...")
+        d2 = MalDictionary.fromJsonFile("traces/airtraffic/{}.json".format(q), blacklist, col_stats)
+
+        train_tags = d1.query_tags
+        train_tags.sort()
+        e   = []
+        ind = []
+        for i in [1,5,10,15,20,25,50,75,100,150,200,250,375,500,675,800,1000]:
+            d12 = d1.filter( lambda ins: ins.tag in train_tags[0:i])
+            print(len(d12.query_tags))
+            pG  = d2.buildApproxGraph(d12)
+            pmm = d2.predictMaxMem(pG)
+            mm  = d2.getMaxMem()
+            print(pmm / 1000000, mm / 1000000)
+            e.append( 100 * abs((pmm -mm) / mm) )
+            ind.append(i)
+
+    print(e)
+    Utils.plotBar(ind,e,'airtraffic_q9_memerror.pdf','Error perc','Nof training queries')
+
+def analyze_max_mem_airtraffic():
+    blacklist = Utils.init_blacklist("config/mal_blacklist.txt")
+    col_stats = ColumnStatsD.fromFile('config/airtraffic_stats.txt2')
+
+    qno = 19
+    for qno in range(9,10):
+        q = "0{}".format(qno) if qno < 10 else "{}".format(qno)
+        d2 = MalDictionary.fromJsonFile("traces/airtraffic/{}.json".format(q), blacklist, col_stats)
+
+        testi = d2.getInsList()
+        testi.sort(key = lambda ins: ins.clk)
+        for ins in testi:
+            mm  = ins.ret_size
+
+            if mm > 10000:
+                print(ins.short)
+                print("query: {}, mf {}".format(qno,mm))
+                print("")
 
 def test_airtraffic():
     blacklist = Utils.init_blacklist("config/mal_blacklist.txt")
@@ -79,19 +129,16 @@ def test_airtraffic():
                 print("")
     # Utils.plotBar(range(1,23), e, "mem_error_1-23.pdf",'error perc','query no')
 
-def test_tpch10():
+def predict_max_mem_tpch10():
     blacklist = Utils.init_blacklist("config/mal_blacklist.txt")
 
     col_stats = ColumnStatsD.fromFile('config/tpch_sf10_stats.txt')
 
-    qno = 19
     e   = []
     for qno in range(1,23):
         q = "0{}".format(qno) if qno < 10 else "{}".format(qno)
         logging.info("Examining Query: {}".format(q))
-        logging.info("loading training set...")
         d1 = MalDictionary.fromJsonFile("traces/random_tpch_sf10/ran_q{}_n200_tpch10.json".format(q), blacklist, col_stats)
-        logging.info("loading test set...")
         d2 = MalDictionary.fromJsonFile("traces/tpch-sf10/{}.json".format(q), blacklist, col_stats)
 
         pG  = d2.buildApproxGraph(d1)
@@ -103,8 +150,8 @@ def test_tpch10():
 
         print("query: {}, pred mem: {}, actual mem: {}, error {}".format(qno,pmm,mm,err))
         e.append(err)
-
-    Utils.plotBar(range(1,23), e, "mem_error_1-23.pdf",'error perc','query no')
+        print(err)
+    # Utils.plotBar(range(1,23), e, "mem_error_1-23.pdf",'error perc','query no')
 
 
 def analyze_max_mem():
