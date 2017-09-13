@@ -5,72 +5,78 @@ from stats    import ColumnStats
 from stats    import ColumnStatsD
 from mal_dict import MalDictionary
 
-def plot_select_error_airtraffic():
+def plot_select_error_airtraffic(db, qno):
+    assert db=='tpch10' or db=='airtraffic'
+    blacklist = Utils.init_blacklist("config/mal_blacklist.txt")
+
+    col_stats = ColumnStatsD.fromFile('config/{}_stats.txt'.format(db))
+
+    e   = []
+    q = "0{}".format(qno) if qno < 10 else "{}".format(qno)
+    logging.info("Examining Query: {}".format(q))
+
+    logging.info("loading training set...")
+    trainf = "traces/random_{}/ran_q{}_n1000_air.json".format(db,q)
+    traind = MalDictionary.fromJsonFile(trainf, blacklist, col_stats)
+
+    logging.info("loading test set...")
+    testf = "traces/{}/{}.json".format(db,q)
+    testd = MalDictionary.fromJsonFile(testf, blacklist, col_stats)
+
+    #filter only select instructions
+    seld  = testd.filter(lambda ins: ins.fname in ['select','thetaselect'])
+    seli  = sel2.getInsList()
+
+    train_tags = traind.query_tags
+    train_tags.sort()
+    e   = []
+    ind = []
+    for i in [1,5,10,15,20,25,50,75,100,150,200,250,375,500,675,800,1000]:
+        d12 = traind.filter( lambda ins: ins.tag in train_tags[0:i])
+        print(len(d12.query_tags))
+        pG = d2.buildApproxGraph(d12)
+        error = 0
+        for ins in seli:
+            p      = ins.predictCount(d12, pG)[0]
+            cnt    = ins.cnt
+            pc     = p.cnt
+            error += 100* abs((pc -cnt) / cnt)
+        e.append( error / len(seli) )
+        ind.append(i)
+
+    print("erorr array:",e)
+    outpdf = '{}_sel{}_error.pdf'.format(db,q)
+    Utils.plotBar(ind,e,outpdf,'Error perc','Nof training queries')
+
+def plot_mem_error_airtraffic(qno):
     blacklist = Utils.init_blacklist("config/mal_blacklist.txt")
 
     col_stats = ColumnStatsD.fromFile('config/airtraffic_stats.txt2')
 
     e   = []
-    for qno in range(9,10):
-        q = "0{}".format(qno) if qno < 10 else "{}".format(qno)
-        logging.info("Examining Query: {}".format(q))
-        logging.info("loading training set...")
-        d1 = MalDictionary.fromJsonFile("traces/random_airtraffic/ran_q{}_n1000_air.json".format(q), blacklist, col_stats)
-        logging.info("loading test set...")
-        d2 = MalDictionary.fromJsonFile("traces/airtraffic/{}.json".format(q), blacklist, col_stats)
-        sel2 = d2.filter(lambda ins: ins.fname in ['select','thetaselect'])
-        seli = sel2.getInsList()
+    q = "0{}".format(qno) if qno < 10 else "{}".format(qno)
+    logging.info("Examining Query: {}".format(q))
+    logging.info("loading training set...")
+    d1 = MalDictionary.fromJsonFile("traces/random_airtraffic/ran_q{}_n1000_air.json".format(q), blacklist, col_stats)
+    logging.info("loading test set...")
+    d2 = MalDictionary.fromJsonFile("traces/airtraffic/{}.json".format(q), blacklist, col_stats)
 
-        train_tags = d1.query_tags
-        train_tags.sort()
-        e   = []
-        ind = []
-        for i in [1,5,10,15,20,25,50,75,100,150,200,250,375,500,675,800,1000]:
-            d12 = d1.filter( lambda ins: ins.tag in train_tags[0:i])
-            print(len(d12.query_tags))
-            pG = d2.buildApproxGraph(d12)
-            error = 0
-            for ins in seli:
-                p   = ins.predictCount(d12, pG)[0]
-                cnt = ins.cnt
-                pc  = p.cnt
-                error += 100* abs((pc -cnt) / cnt)
-            e.append( error / len(seli) )
-            ind.append(i)
-
-    print(e)
-    Utils.plotBar(ind,e,'airtraffic_sel9_error.pdf','Error perc','Nof training queries')
-
-def plot_mem_error_airtraffic():
-    blacklist = Utils.init_blacklist("config/mal_blacklist.txt")
-
-    col_stats = ColumnStatsD.fromFile('config/airtraffic_stats.txt2')
-
+    train_tags = d1.query_tags
+    train_tags.sort()
     e   = []
-    for qno in range(9,10):
-        q = "0{}".format(qno) if qno < 10 else "{}".format(qno)
-        logging.info("Examining Query: {}".format(q))
-        logging.info("loading training set...")
-        d1 = MalDictionary.fromJsonFile("traces/random_airtraffic/ran_q{}_n1000_air.json".format(q), blacklist, col_stats)
-        logging.info("loading test set...")
-        d2 = MalDictionary.fromJsonFile("traces/airtraffic/{}.json".format(q), blacklist, col_stats)
-
-        train_tags = d1.query_tags
-        train_tags.sort()
-        e   = []
-        ind = []
-        for i in [1,5,10,15,20,25,50,75,100,150,200,250,375,500,675,800,1000]:
-            d12 = d1.filter( lambda ins: ins.tag in train_tags[0:i])
-            print(len(d12.query_tags))
-            pG  = d2.buildApproxGraph(d12)
-            pmm = d2.predictMaxMem(pG)
-            mm  = d2.getMaxMem()
-            print(pmm / 1000000, mm / 1000000)
-            e.append( 100 * abs((pmm -mm) / mm) )
-            ind.append(i)
+    ind = []
+    for i in [1,5,10,15,20,25,50,75,100,150,200,250,375,500,675,800,1000]:
+        d12 = d1.filter( lambda ins: ins.tag in train_tags[0:i])
+        print(len(d12.query_tags))
+        pG  = d2.buildApproxGraph(d12)
+        pmm = d2.predictMaxMem(pG)
+        mm  = d2.getMaxMem()
+        print(pmm / 1000000, mm / 1000000)
+        e.append( 100 * abs((pmm -mm) / mm) )
+        ind.append(i)
 
     print(e)
-    Utils.plotBar(ind,e,'airtraffic_q9_memerror.pdf','Error perc','Nof training queries')
+    Utils.plotBar(ind,e,'airtraffic_q{}_memerror.pdf'.format(qno),'Error perc','Nof training queries')
 
 def analyze_max_mem_airtraffic():
     blacklist = Utils.init_blacklist("config/mal_blacklist.txt")
@@ -247,36 +253,3 @@ def plot_select_error(q):
             ind.append(i)
         print(e)
         # Utils.plotBar(ind,e,"results/select_error_q{}.pdf".format(qno),'nof training queries','Select error perc')
-
-
-
-def examine_select(qno):
-    blacklist = Utils.init_blacklist("config/mal_blacklist.txt")
-
-    col_stats = ColumnStats.fromFile('config/tpch_sf10_stats.txt')
-
-    logging.info("Testing select insruction for query {}".format(qno))
-    q = "{}".format(qno)
-    if qno<10:
-        q = "0{}".format(q)
-
-    train = "traces/random_tpch_sf10/ran{}_200_discount_sf10.json".format(qno)
-    test  = "traces/tpch-sf10/{}.json".format(q)
-    logging.info("loading training set... {}".format(train))
-    d1 = MalDictionary.fromJsonFile(train, blacklist, col_stats)
-    logging.info("loading test set... {}".format(test))
-    d2 = MalDictionary.fromJsonFile(test, blacklist, col_stats)
-    train_tags = d1.query_tags
-    train_tags.sort()
-    # for i in [1,5,10,15,20,25,30,40,50,75,100,125,150,175,200]:
-    d12 = d1.filter( lambda ins: ins.tag in train_tags[0:1])
-    (G,pG) = d2.buildApproxGraph(d12)
-    sel2 = d2.filter(lambda ins: ins.fname in ['select','thetaselect'])
-    for i in sel2.getInsList():
-        print(i.short)
-        p = i.predictCount(d12, G)[0]
-        print(p.avg,i.cnt)
-        # print("{10.0f} {10.0f}".format(p.avg,i.cnt))
-        print("kNN ", p.ins.short)
-        print(p.ins.cnt)
-        print("-----------------------------------")

@@ -7,7 +7,6 @@ from utils        import Utils
 from utils        import Prediction
 from mal_instr    import MalInstruction
 from mal_instr    import SelectInstruction
-#TODO add method find closest instruction
 
 class MalDictionary:
     """
@@ -18,6 +17,7 @@ class MalDictionary:
     def __init__(self, mal_dict, q_tags, col_stats={}):
         self.mal_dict   = mal_dict
         self.query_tags = q_tags
+        self.ins_list   = Utils.dict2list(mal_dict)
 
     @staticmethod
     def loadFromFile(file_name):
@@ -95,15 +95,9 @@ class MalDictionary:
                 r          = p.retv
                 if p.avg == sys.maxsize or p.avg == None:
                     logging.error("None in the graph: {}".format(ins.short))
-                # logging.debug("m: {:20} {:5} {:10.0f}".format(ins.fname,r,pg[r]))
         return pg
 
 
-
-    def getFirstI(self, field, N):
-            ilist = self.getInsList()
-            ilist.sort(key = lambda ins: getattr(ins, field) )
-            return MalDictionary.fromInsList(ilist[0:N])
     """
     @arg mals: MalInstruction
     @ret: List<MalInstriction> //list of all exact matches
@@ -120,10 +114,7 @@ class MalDictionary:
 
     """ @desc returns a list of all the instructions """
     def getInsList(self):
-        ilist = []
-        for l in self.mal_dict.values():
-            ilist.extend(l)
-        return ilist
+        return self.ins_list
 
     """
     !!Assumes we know each instruction's memory footprint!!
@@ -168,20 +159,12 @@ class MalDictionary:
 
         return [x for x in dic[fname] if len(x.arg_list) == nargs]
 
-
-
-    def getAll(self, method, nargs):
-        d = self.mal_dict
-        return filter(
-            lambda s: s.fname == method and len(s.arg_list) == nargs, d[method]
-        )
-
     """
-    @arg f: lamdba k: MalInstruction //comparison metric
+    @arg f: lamdba k: MalInstruction -> double //comparison metric
     @ret: list of topN instuctions
     """
     def getTopN(self, f, n):
-        mal_list = Utils.flatten(self.mal_dict)
+        mal_list = self.getInsList()
         mal_list.sort(key = f)
         return mal_list[0:n]
 
@@ -194,63 +177,19 @@ class MalDictionary:
         new_ilist = list([i for i in mal_list if f(i) == True])
         return MalDictionary.fromInsList(new_ilist)
 
-    """
-    @desc splits the dictionary in two based on the query tags
-    @arg: list<int>
-    """
-    def splitTag(self, train_tags, test_tags):
-        s1,s2 = {},{}
-
-        for (k,l) in self.mal_dict.items():
-            for mali in l:
-                if mali.tag in train_tags:
-                    s1[k] = s1.get(k,[]) + [mali]
-                if mali.tag in test_tags:
-                    # assert not mali.tag in train_tags
-                    s2[k] = s2.get(k,[]) + [mali]
-
-        return (MalDictionary(s1,train_tags,self.varflow), MalDictionary(s2,test_tags,self.varflow))
 
     """
-    @desc splits the dictionary in two based on the query id
-    @arg: list<int>
-    @arg tag2query: dict<int,int>
+    @desc splits the dictionary in two randomly
+    @arg: p: double //should be between 0,1
     """
-    def splitQuery(self, train_q, test_q, tag2query):
-        s1,s2 = {},{}
-        s1_tags, s2_tags = set(), set()
-
-        for (k,l) in self.mal_dict.items():
-            for mali in l:
-                if tag2query[mali.tag] in train_q:
-                    s1[k] = s1.get(k,[]) + [mali]
-                    s1_tags.add(mali.tag)
-                if tag2query[mali.tag] in test_q:
-                    s2[k] = s2.get(k,[]) + [mali]
-                    s2_tags.add(mali.tag)
-
-        return (MalDictionary(s1,list(s1_tags),self.varflow), MalDictionary(s2,list(s2_tags),self.varflow))
-
-    """
-    @desc splits the dictionary in two based on the query tags
-    @arg: list<int>
-    """
-    def splitRandom(self, trainp):
-        # assert trainp + testp == 1.0
-        s1,s2 = {}, {}
-        s1_tags, s2_tags = set(), set()
-
-        for (k,l) in self.mal_dict.items():
-            for mali in l:
-                r = random.random()
-                if r < trainp:
-                    s1[k] = s1.get(k,[]) + [mali]
-                    s1_tags.add(mali.tag)
-                else:
-                    # assert r + testp >= 1
-                    s2[k] = s2.get(k,[]) + [mali]
-                    s2_tags.add(mali.tag)
-        return (MalDictionary(s1,list(s1_tags),self.varflow), MalDictionary(s2,list(s2_tags),self.varflow))
+    def splitRandom(self, p):
+        assert p>=0 and p<=1
+        il = self.getInsList()
+        random.shuffle(il)
+        n1 = int(len(il)*p)
+        l1 = MalDictionary.fromInsList(il[0:n1])
+        l2 = MalDictionary.fromInsList(il[n1::])
+        return (l1,l2)
 
         """ selects sth"""
     def select(self, fun, perc):
@@ -264,7 +203,7 @@ class MalDictionary:
             tags.add(i.tag)
         return MalDictionary(d,tags,self.varflow)
 
-
+#!!USELESS STUFF
     def avgDeviance(self, test_dict):
         suml  = lambda x,y: x+y
         diff  = sum( map(lambda ins: abs(ins.mem_fprint-self.predictMem(ins,0)),test_dict.getInsList()) )

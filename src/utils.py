@@ -3,7 +3,6 @@ import numpy
 import logging
 import collections
 from pylab import savefig
-from functools import reduce
 import matplotlib.pyplot as plt
 
 """
@@ -35,7 +34,7 @@ class Prediction():
 # '>','like','difference','and','mergecand','single','dec_round','delta','year',
 # 'subavg','subsum','subcount','submin','projection','projectionpath',
 # 'projectdelta','subsum','subslice','+','-','*','/','or','dbl','intersect',
-# '<','firstn','hash','bulk_rotate_xor_hash','identity','mirror','sum','max']
+# '<','firstn','hash','bulk_rotate_xor_hash','identity','mirror','sum','max','min']
 
 class Utils:
     #readline until you reach '}' or EOF
@@ -61,7 +60,7 @@ class Utils:
         return l
 
     @staticmethod
-    def list_diff(list1,list2):
+    def listDiff(list1,list2):
         return list(set(list1)-set(list2))
 
     @staticmethod
@@ -73,11 +72,17 @@ class Utils:
             return reduce(land, [e1==e2 for (e1,e2) in zip(l1,l2)], True)
 
     @staticmethod
+    def dict2list(d):
+        ilist = []
+        for l in d.values():
+            ilist.extend(l)
+        return ilist
+
+    @staticmethod
     def is_blacklisted(blacklist,instr):
         for mali in blacklist:
             if mali in instr:
                 return True
-        # print(line.strip())
         return False
 
     @staticmethod

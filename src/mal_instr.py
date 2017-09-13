@@ -136,7 +136,7 @@ class MalInstruction:
         elif fname in ['append']:
             return DirectIntruction(*con_args, base_arg_i=0, fun=lambda v:v+1)
         #Aggregate Instructions (result = 1)
-        elif fname in ['sum','avg','single','dec_round','max']:
+        elif fname in ['sum','avg','single','dec_round','max','min']:
             return ReduceInstruction(*con_args)
         elif fname in ['new']:
             return NullInstruction(*con_args)
