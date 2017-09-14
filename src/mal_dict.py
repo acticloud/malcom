@@ -178,6 +178,21 @@ class MalDictionary:
         return MalDictionary.fromInsList(new_ilist)
 
 
+    """@experimental"""
+    def linkSelectInstructions(self):
+        sel_ins = [i for i in self.getInsList() if i.fname in ['select','thetaselect']]
+        for testi in sel_ins:
+            if testi.lead_arg_i == 0:
+                testi.prev_i = None
+            else:
+                prev = [i for i in sel_ins if i.ret_vars[0] == testi.lead_arg.name and testi.tag==i.tag]
+                if len(prev)==0:
+                    testi.prev_i = None
+                else:
+                    assert len(prev)==1
+                    # logging.debug("Linked {} -> {}".format(testi.short, prev[0].short))
+                    testi.prev_i = prev[0]
+                    prev[0].next_i = testi
     """
     @desc splits the dictionary in two randomly
     @arg: p: double //should be between 0,1

@@ -135,8 +135,14 @@ class MalInstruction:
                 return ReduceInstruction(*con_args)
         elif fname in ['append']:
             return DirectIntruction(*con_args, base_arg_i=0, fun=lambda v:v+1)
+        elif fname in ['max','min']:
+            if len(arg_list)==1:
+                return ReduceInstruction(*con_args)
+            else:
+                assert len(arg_list)==2
+                return DirectIntruction(*con_args, base_arg_i=0)
         #Aggregate Instructions (result = 1)
-        elif fname in ['sum','avg','single','dec_round','max','min']:
+        elif fname in ['sum','avg','single','dec_round']:
             return ReduceInstruction(*con_args)
         elif fname in ['new']:
             return NullInstruction(*con_args)
@@ -189,16 +195,16 @@ class MalInstruction:
             other_sub = re.sub(r'\[\d+\]','',other.short)
             return self_sub == other_sub
 
-    """" two instructions are equal whey they have the same method name and
-        exactly the same arguments"""
-    def __eq__(self, o):
-        if(self.fname == o.fname and Utils.cmp_arg_list(self.arg_list,o.arg_list)):
-            return True
-        else:
-            return False
-
-    def __ne__(self, other):
-        return self.__ne__(other)
+    # """" two instructions are equal whey they have the same method name and
+    #     exactly the same arguments"""
+    # def __eq__(self, o):
+    #     if(self.fname == o.fname and Utils.cmp_arg_list(self.arg_list,o.arg_list)):
+    #         return True
+    #     else:
+    #         return False
+    #
+    # def __ne__(self, other):
+    #     return self.__ne__(other)
 
 
 """
@@ -447,15 +453,17 @@ class SelectInstruction(MalInstruction):
     def __init__(self, *def_args, jobj, stats):
         MalInstruction.__init__(self, *def_args)
         self.ctype    = jobj["arg"][0].get("type","UNKNOWN")#TODO fix
-        alias_list    = [o["alias"] for o in jobj["arg"] if "alias" in o]
-        self.col      = next(iter(alias_list),"TMP").split('.')[-1]
+        alias_iter    = iter([o["alias"] for o in jobj["arg"] if "alias" in o])
+        self.col      = next(alias_iter,"TMP").split('.')[-1]
+        self.proj_col = next(alias_iter,"TMP").split('.')[-1]
         self.arg_size = [o.get("size",0) for o in jobj.get("arg",[])]
         self.op       = Utils.extract_operator(self.fname, jobj)
 
         #is it the first select (2nd arg  == NULL)??...
         # nV            = len([a for a in self.arg_list if a.name.startswith("C_")])
-        a1 = self.arg_list[1]
-        self.lead_arg = a1 if a1.isVar() and a1.cnt > 0 else self.arg_list[0]
+        a1              = self.arg_list[1]
+        self.lead_arg_i = 1 if a1.isVar() and a1.cnt > 0 else 0
+        self.lead_arg   = self.arg_list[self.lead_arg_i]
 
         lo, hi = Utils.hi_lo(self.fname, self.op, jobj, stats.get(self.col,ColumnStats(0,0,0,0,0)))
 
@@ -567,19 +575,49 @@ class SelectInstruction(MalInstruction):
     def predictCount(self, traind, approxG, default=None):
         assert approxG != None
         self_list = traind.mal_dict.get(self.fname,[])
-        cand_list = [ins for ins in self_list if len(ins.arg_list) == len(self.arg_list)]
+        # prev_list = []
+        #
+        # tmp = self
+        # while(tmp.prev_i != None):
+        #     prev_list.append(tmp.prev_i)
+        #     tmp = tmp.prev_i
+
+        # prev_list.reverse()
+        # curr_nn = self_list
+        # maxk = 5 * (2 ** len(prev_list))
+        # for node in prev_list:
+        #     k = int(maxk / 2)
+        #     curr_level  = [ins for ins in curr_nn if node.col == ins.col]
+        #     curr_nn     = node.kNN(curr_level,k, approxG)
+        #     maxk = maxk / 2
+        # if self.proj_col != 'TMP' and self.prev_i != None:
+        #     level1  = [ins for ins in self_list if self.proj_col == ins.col]
+        #     logging.error("len level1: {}".format(len(level1)))
+        #     logging.error("testing {}".format(self.short))
+        #     prev_nn = self.prev_i.kNN(level1,100, approxG)
+        #     cand_list = list([ins.next_i for ins in prev_nn])
+        # else:
+        #     cand_list = self_list
+
+        cand_list = [ins for ins in self_list if self.col == ins.col and self.proj_col == ins.proj_col and len(ins.arg_list) == len(self.arg_list)]
         # print("len cand list", len(cand_list))
         # self_list = SelectInstruction.removeDuplicates(self_list)
+        # argnn     = self.ArgDkNN(cand_list,25,approxG)
         nn        = self.kNN(cand_list,5, approxG)
         rt        = self.ret_args[0].atype #return type TODO ctype ??
 
         #DEBUG
-        # for ins in nn:
-            # print("DEB:", ins.cnt, ins.short)
+        if self.fname == 'select':
+            for ins in nn:
+                logging.debug("NN: {} {}".format(ins.cnt, ins.short))
 
 
         if len(nn) == 0:
             logging.error("0 knn len in select ?? {} {} {} {}".format(self.short, self.op, self.ctype, self.col))
+            logging.error("Cand len {}".format(len(prev_nn)))
+            logging.error("self col: {} proj col {}".format(self.col, self.proj_col))
+            # for di in [ins for ins in self_list if self.col == ins.col]:
+                # logging.error("cand: {} {} {}".format(di.short, di.col, di.proj_col))
 
         nn.sort( key = lambda ins: self.approxArgDist(ins, approxG))
         nn1       = nn[0]

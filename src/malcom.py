@@ -49,5 +49,6 @@ if __name__ == '__main__':
     args   = parser.parse_args()
     init_logger(args.log_level)
     # experiments.predict_max_mem_tpch10()
-    experiments.plot_mem_error_airtraffic('airtraffic'9)
-    experiments.plot_select_error_airtraffic('airtraffic',9)
+    # experiments.plot_mem_error_air('airtraffic',10)
+    experiments.plot_select_error_air('airtraffic',9)
+    # experiments.analyze_select_error_air('airtraffic',9)
