@@ -1,7 +1,7 @@
 \documentclass{article}
 \usepackage{graphicx}
 \usepackage{listings}
-\usepackage{subfigure}
+\usepackage{subcaption}
 \usepackage{caption}
 
 \lstset{
@@ -27,12 +27,19 @@
 \begin{document}
 
 % \author{Pavlos Katsogridakis}
-\title{Malcom Docs}
+\title{Incremental Memory Cost Model for MonetDB}
 
 \maketitle
 
 \begin{abstract}
-Malcom (Mal ALgebra Cost MOdel) is a
+Estimating the memory footprint of a query is an important
+feature for a database system. It can answer the question whether
+a query will fit in memory, and also gives the compiler the opportunity
+to perform a lot of optimizations.
+In this document we present Malcom (Mal ALgebra COst Model), a memory footprint
+estimator, that incrementally builds a memory cost model for MAL instructions,
+based on previous query executions. We evaluated our system using the tpch
+benchmark suite, and a real world air traffic dataset.
 \end{abstract}
 
 \input{intro.tex}
