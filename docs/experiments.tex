@@ -1,20 +1,52 @@
 \section{Experiments}
 \subsection{Tpch SF10}
-\subsubsection{Memory footpring error}
-\begin{figure}[ht]
+% To evaluate our memory footpring estimator mechanism we kept each
+As a training set for each query, we randomized every selection point and range,
+and produced 200 random versions of the query. As a test set we used the original
+query.
+
+In query 19 we observe a misprediction of 70\%. The reason this happens, is that
+the MAL algebra of this specific query consists of a lot of merge instructions,
+for which we output the sum of the two arguments, which in case of merging similar
+variables can lead to an almost 2$\times$ overestimation.
+This is the basic reason for the large error observed.
+\begin{verbatim}
+culprit:
+C_187 := algebra.thetaselect(X_178, "DELIVER IN PERSON", "==");                                                                                                                                                                                                                    |
+X_191 := bat.mergecand(C_187, C_187);                                                                                                                                                                                                                                              |
+X_194 := bat.mergecand(X_191, C_187);
+\end{verbatim}
+
+The second most deviant query is 16. The dominant reason why there is an 20\%
+error is the misprediction of the join instruction(our approach is kNN based).
+
+\begin{figure}[!htb]
   \centering
   \includegraphics[scale=0.7]{figs/tpch10/mem_error_1-23.pdf}
   \caption{Queries 1-22 memory footprint error}
   \label{fig:tpch10m}
 \end{figure}
 
-% \subsection{Select Error for tpch-sf-10}
-%
-% \subsection{Whole query evaluation}
-%
-
 \subsection{Airtraffic Queries}
+%TODO some info about airtraffic...
+As a training set for each query, we used 1000 versions of the
+same query, randomized on the selection values. As a test set we used the original
+query.
 \subsubsection{Q04}
+Query 4 (Figure \ref{sel:sql4}) selects all flights that have a departure delay greater than 15 minutes.
+The training queries are randomized based on the DepDelay bound.
+From the prediction perspective, this selection is interesting because
+departure delay does not follow a uniform distribution(more like a normal),
+thus is more challenging to accurately predict.
+Figures  \ref{fig:sel04}, \ref{fig:mem04} show the error percentage for the
+selection, and the whole query respectively. The x axis is the number of queries
+used as a training set, and the y axis the error \%. The initial selection error
+for is 500\%, but as we insert more instructions to the dictionary we get closer
+to the initial range, and we are able to make an accurate prediction. After the
+first 400 instructions, the error drops to (...)\%.
+The per query memory error follows a similar pattern,
+but the error is smaller because select instructions represent a relatively
+small proportion of the overall query memory usage.
 
 \begin{figure}[t]
 \begin{lstlisting}
@@ -27,61 +59,115 @@ ORDER BY "DayOfWeek";
   \caption{Query 4}
   \label{sel:sql4}
 \end{figure}
-Randomization point: DepDelay
 
-\begin{figure}[t!]
+
+\begin{figure}[!htb]
   \begin{subfigure}[t]{0.5\textwidth}
     \includegraphics[scale=0.4]{figs/airtraffic/airtraffic_sel04_error.pdf}
     \caption{Query 04 select error}
-    \label{fig:sel19}
+    \label{fig:sel04}
   \end{subfigure}
   \begin{subfigure}[t]{0.5\textwidth}
     \includegraphics[scale=0.4]{figs/airtraffic/airtraffic_q04_memerror.pdf}
     \caption{Query 04 memory footprint}
-    \label{fig:sel19}
+    \label{fig:mem04}
    \end{subfigure}
 \end{figure}
 
 \subsubsection{Q09}
 
-\begin{figure}[t]
+Query 9(Figure \ref{sel:sql09}) selects all flights on a specific date
+for which the departure and the arrival delay are greater than 15 minutes.
+The memory error(Figure \ref{fig:sel09}) is very small,
+due to the very high selectivity of the query,
+whereas the selection error(Figure \ref{fig:mem09}) seems to fluctuate a lot
+betwwn 20 and 40\%. The reason we believe this is happening is that all three columns
+(depdelay, arrdelay, date) are strongly correlated, making it very hard
+for the prediction algorithm to converge.
+
+\begin{figure}[!htb]
 \begin{lstlisting}[frame=single]
 WITH t1 AS (
-    SELECT "Origin", "CRSDepTime", "DepDelay", "Dest", "ArrDelay", "CRSArrTime"
+    SELECT "Origin","CRSDepTime","DepDelay","Dest","ArrDelay","CRSArrTime"
     FROM ontime
     WHERE "DepDelay" > 15 AND "ArrDelay" > 15
       AND "Month" = 3 AND "DayofMonth" = 24 AND "Year" = 2013
 )
 SELECT t1."Origin" AS "Airport1",
-       CAST(AVG(t1."DepDelay") AS DECIMAL(8,2)) AS "AVGDepDelay",
-       CAST(AVG(t1."ArrDelay") AS DECIMAL(8,2)) AS "AVGArrDelay", t2."Origin" AS "Airport2",
-       CAST(AVG(t2."DepDelay") AS DECIMAL(8,2)) AS "AVGDepDelay2",
-       CAST(AVG(t2."ArrDelay") AS DECIMAL(8,2)) AS "AVGArrDelay2", t2."Dest" AS "Airport3"
+  CAST(AVG(t1."DepDelay") AS DECIMAL(8,2)) AS "AVGDepDelay",
+  CAST(AVG(t1."ArrDelay") AS DECIMAL(8,2)) AS "AVGArrDelay", t2."Origin" AS "Airport2",
+  CAST(AVG(t2."DepDelay") AS DECIMAL(8,2)) AS "AVGDepDelay2",
+  CAST(AVG(t2."ArrDelay") AS DECIMAL(8,2)) AS "AVGArrDelay2", t2."Dest" AS "Airport3"
 FROM t1, t1 AS t2
 WHERE t1."Dest" = t2."Origin" AND t1."CRSArrTime" < t2."CRSDepTime"
 GROUP BY t1."Origin", t2."Origin", t2."Dest"
-ORDER BY "AVGDepDelay" DESC, "AVGArrDelay" DESC, "AVGDepDelay2" DESC, "AVGArrDelay2" DESC
+ORDER BY "AVGDepDelay" DESC,"AVGArrDelay" DESC,"AVGDepDelay2" DESC,"AVGArrDelay2" DESC
 \end{lstlisting}
   \caption{Query 09}
   \label{sel:sql09}
 \end{figure}
 
-\begin{figure}[t!]
+\begin{figure}[!htb]
   \begin{subfigure}[t]{0.5\textwidth}
     \includegraphics[scale=0.4]{figs/airtraffic/airtraffic_sel09_error.pdf}
     \caption{Query 09 select error}
-    \label{fig:sel19}
+    \label{fig:sel09}
   \end{subfigure}
   \begin{subfigure}[t]{0.5\textwidth}
     \includegraphics[scale=0.4]{figs/airtraffic/airtraffic_q09_memerror.pdf}
     \caption{Query 09 memory footprint}
-    \label{fig:sel19}
+    \label{fig:mem09}
    \end{subfigure}
 \end{figure}
 
+\subsubsection{Q10}
+
+Query 10(Figure \ref{sel:sql10}) contains two point selections,
+regarding the origin and the destination of the flight.
+
+
+\begin{figure}[htb!]
+\begin{lstlisting}[frame=single]
+ITH t1 AS ( -- flights to ORD
+    SELECT "Origin" AS ap, COUNT(*) AS cnt_in
+    FROM ontime
+    WHERE "Dest" = 'ORD'
+    GROUP BY "Origin"
+),
+t2 AS ( -- flights from ORD
+    SELECT "Dest" AS ap, COUNT(*) AS cnt_out
+    FROM ontime
+    WHERE "Origin" = 'ORD'
+    GROUP BY "Dest"
+),
+t3 AS ( -- merge t1, t2 into one table
+    SELECT t1.ap AS ap1, t1.cnt_in, t2.ap AS ap2, t2.cnt_out
+    FROM t1 FULL OUTER JOIN t2 ON (t1.ap = t2.ap))
+SELECT CASE WHEN ap1 IS NULL THEN ap2 ELSE ap1 END AS "Airport",
+       cnt_in AS "InboundFlights", cnt_out AS "OutboundFlights"
+FROM t3;
+\end{lstlisting}
+  \caption{Query 10}
+  \label{sel:sql10}
+\end{figure}
+
+\begin{figure}[htb!]
+  \begin{subfigure}[t]{0.5\textwidth}
+    \includegraphics[scale=0.4]{figs/airtraffic/airtraffic_sel10_error.pdf}
+    \caption{Query 10 select error}
+    \label{fig:sel10}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.5\textwidth}
+    \includegraphics[scale=0.4]{figs/airtraffic/airtraffic_q10_memerror.pdf}
+    \caption{Query 10 memory footprint}
+    \label{fig:mem10}
+   \end{subfigure}
+\end{figure}
+
+
 \subsubsection{Q11}
 
-\begin{figure}[t]
+\begin{figure}[htb!]
 \begin{lstlisting}[frame=single]
 WITH t1 AS ( -- #flights per route before 9/11
     SELECT SQL_MIN("Origin", "Dest") || ' <-> ' ||
@@ -111,7 +197,7 @@ FROM t3;
   \label{sel:sql11}
 \end{figure}
 
-\begin{figure}[t!]
+\begin{figure}[htb!]
  \begin{subfigure}[t]{0.5\textwidth}
    \includegraphics[scale=0.4]{figs/airtraffic/airtraffic_sel11_error.pdf}
    \caption{Query 11 select error}
@@ -129,13 +215,13 @@ FROM t3;
 
 \subsubsection{Q15}
 
-\begin{figure}[t]
+\begin{figure}[htb!]
 \begin{lstlisting}[frame=single]
 WITH t1 AS (
     SELECT "Carrier", CAST (FLOOR("CRSDepTime"%2400/100) AS INT) AS "Hour",
            CAST(AVG("ArrDelay") AS DECIMAL(8,2)) AS "PredictedArrDelay"
     FROM ontime
-    WHERE "Year" = 2007 AND "Month" = 10 AND "DayofMonth" = 24
+    WHERE Carrier = 'EA'
     GROUP BY "Carrier", "Hour"
 ),
 t2 AS (
@@ -152,7 +238,7 @@ ORDER BY "Carrier", "Hour";
 \end{figure}
 
 
-\begin{figure}[t!]
+\begin{figure}[htb!]
   \begin{subfigure}[t]{0.5\textwidth}
     \includegraphics[scale=0.4]{figs/airtraffic/airtraffic_sel15_1_error.pdf}
     \caption{Query 15 select error}
@@ -168,12 +254,13 @@ ORDER BY "Carrier", "Hour";
 
 \subsubsection{Q19}
 
-\begin{figure}[t]
+\begin{figure}[htb!]
 \begin{lstlisting}[frame=single]
 SELECT CAST (FLOOR("CRSDepTime"%2400/100) AS INT) AS "Hour",
        "Origin", "Dest", "Carrier",
        CAST(SUM("DepDel15") AS DOUBLE)/COUNT(*) >= 0.5 AS "PossibleLongDelay"
 FROM ontime
+WHERE Carrier = 'EV'
 GROUP BY "Origin", "Dest", "Carrier", "Hour"
 ORDER BY "PossibleLongDelay", "Hour", "Origin", "Dest", "Carrier";
 \end{lstlisting}
