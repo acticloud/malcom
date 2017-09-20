@@ -30,7 +30,7 @@ class Arg:
         return Arg(name,atype,aval,size,eol,count,col)
 
     def isVar(self):
-        return self.name.startswith("X_") or self.name.startswith("C_")
+        return (self.name.startswith("X_") or self.name.startswith("C_")) and self.aval == None
 
     def __eq__(self, other):
         if (self.name  == other.name  and

@@ -26,7 +26,7 @@ class Prediction():
         if self.mem != None:
             return self.mem
         else:
-            return self.cnt * Utils.sizeof(self.t)
+            return self.avg * Utils.sizeof(self.t)
 
 # supported_mal = ['join','thetajoin','tid','bind','bind_idxbat','new','append',
 # 'sort','select','thetaselect','likeselect','==','isnil','group','subgroup',

@@ -142,7 +142,7 @@ class MalDictionary:
         curr_mem = 0
         for i in ilist:
             max_mem  = max(max_mem,curr_mem + i.approxMemSize(pG))
-            curr_mem = curr_mem + i.ret_size - i.approxFreeSize(pG)
+            curr_mem = curr_mem + i.approxMemSize(pG) - i.approxFreeSize(pG)
 
         return max_mem
 

@@ -1,13 +1,14 @@
 import re
 import sys
+import random
 import logging
 import distance
 from mal_arg  import Arg
 from utils    import Utils
+from functools import reduce
 from datetime import datetime
 from utils    import Prediction
 from stats    import ColumnStats
-
 """
 interface MalInstruction {
     def argCnt()               : List<int>
@@ -87,27 +88,35 @@ class MalInstruction:
         if fname in ['select','thetaselect','likeselect']:
             return SelectInstruction(*con_args,jobj=jobj, stats=stats) #TODO replace jobj
         #Projections
-        elif fname in ['projection','projectionpath','projectdelta']:
+        elif fname in ['projectionpath']:
+            return DirectIntruction(*con_args, base_arg_i=0)
+        elif fname in ['projection','projectdelta']:
             return ProjectInstruction(*con_args)
         #Joins
-        elif fname in ['join','thetajoin']:
+        elif fname in ['join','thetajoin','crossproduct']:
             return JoinInstruction(*con_args)
         #Group Instructions
         elif fname in ['group','subgroup','subgroupdone','groupdone']:
             a0 = arg_list[0].col.split('.')[::-1][0]
             return GroupInstruction(*con_args, base_arg_i=0, base_col=a0, col_stats = stats.get(a0,None))
         #Set Instructions
-        elif fname in ['intersect','<','>']:
+        elif fname in ['intersect']:
             return SetInstruction(*con_args, i1=0, i2=1,fun=lambda a,b: min(a,b))
         elif fname in ['mergecand']:
             return SetInstruction(*con_args, i1=0, i2=1,fun=lambda a,b: a+b)
         elif fname in ['difference']:
             return SetInstruction(*con_args, i1=0, i2=1,fun=lambda a,b: a)
+        elif fname in['<','>','>=','<=']:
+            if arg_list[1].isVar():
+                return SetInstruction(*con_args, i1=0, i2=1,fun=lambda a,b: min(a,b))
+            else:
+                return DirectIntruction(*con_args, base_arg_i=0)
         #Direct Intructions
-        elif fname in ['+','-','*','/','or','dbl','and']:
-            bi = 0 if fname in ['+','*','/'] else 1 #TODO fix this
-            if arg_list[bi].isVar():
-                return DirectIntruction(*con_args, base_arg_i=bi)
+        elif fname in ['+','-','*','/','or','dbl','and','lng','%']:
+            if arg_list[0].isVar():
+                return DirectIntruction(*con_args, base_arg_i=0)
+            elif arg_list[1].isVar():
+                return DirectIntruction(*con_args, base_arg_i=1)
             else:
                 return ReduceInstruction(*con_args)
         elif fname in ['==','isnil','!=','like']:
@@ -124,7 +133,7 @@ class MalInstruction:
             n = int(arg_list[3].aval) if argl == 6 else int(arg_list[1].aval)
             return DirectIntruction(*con_args, base_arg_i=0, fun=lambda v:min(n,v))
         elif fname in ['hash','bulk_rotate_xor_hash','identity','mirror','year',
-                       'ifthenelse','delta','substring','project','int']:
+                       'ifthenelse','delta','substring','project','int','floor']:
             return DirectIntruction(*con_args, base_arg_i = 0)
         elif fname in ['dbl']:
             return DirectIntruction(*con_args, base_arg_i = 1)
@@ -251,8 +260,8 @@ class SetInstruction(MalInstruction):
         self.cntf = fun
 
     def approxArgCnt(self, pG):
-        assert self.arg1.name in pG
-        assert self.arg2.name in pG
+        # assert self.arg1.name in pG
+        # assert self.arg2.name in pG
         return [pG[self.arg1.name].avg,pG[self.arg2.name].avg]
 
     def argCnt(self):
@@ -431,12 +440,17 @@ class JoinInstruction(MalInstruction):
         return [ t[0] for t in cand[0:k] ]
 
     def predictCount(self, traind, g):
-        cand_l = traind.mal_dict[self.fname]
-        knn5   = self.kNN(cand_l, 5, g)
-        avg    = sum([ins.cnt for ins in knn5]) / len(knn5) #TODO add argdiv
-        (i,c)  = (knn5[0].short,knn5[0].cnt)
-        retv   = self.ret_args
-        return [Prediction(retv=r.name, ins=i, cnt=c, avg=avg, t=r.atype) for r in retv]
+        if self.fname == 'crossproduct':
+            p = reduce(lambda x,y: x*y, self.approxArgCnt(g))
+            retv   = self.ret_args
+            return [Prediction(retv=r.name, ins=None, cnt=p, avg=p, t=r.atype) for r in retv]
+        else:
+            cand_l = traind.mal_dict[self.fname]
+            knn5   = self.kNN(cand_l, 5, g)
+            avg    = sum([ins.cnt for ins in knn5]) / len(knn5) #TODO add argdiv
+            (i,c)  = (knn5[0].short,knn5[0].cnt)
+            retv   = self.ret_args
+            return [Prediction(retv=r.name, ins=i, cnt=c, avg=avg, t=r.atype) for r in retv]
 
 number_types = ['bat[:int]','bat[:lng]','lng','bat[:hge]','bat[:bte]','bat[:sht]']
 
@@ -598,16 +612,13 @@ class SelectInstruction(MalInstruction):
         #     cand_list = list([ins.next_i for ins in prev_nn])
         # else:
         #     cand_list = self_list
-
         cand_list = [ins for ins in self_list if self.col == ins.col and self.proj_col == ins.proj_col and len(ins.arg_list) == len(self.arg_list)]
-        # print("len cand list", len(cand_list))
-        # self_list = SelectInstruction.removeDuplicates(self_list)
-        # argnn     = self.ArgDkNN(cand_list,25,approxG)
+        # random.shuffle(cand_list)
         nn        = self.kNN(cand_list,5, approxG)
         rt        = self.ret_args[0].atype #return type TODO ctype ??
 
         #DEBUG
-        if self.fname == 'select':
+        if self.fname == 'thetaselect' and self.op=='>':
             for ins in nn:
                 logging.debug("NN: {} {}".format(ins.cnt, ins.short))
 
@@ -626,7 +637,12 @@ class SelectInstruction(MalInstruction):
 
         if arg_cnt != None:
             avg  = sum([i.extrapolate(self) * ( arg_cnt / i.argCnt()) for i in nn if i.argCnt()>0]) / len(nn)
-            avgm = sum([i.ret_size * arg_cnt / i.argCnt() for i in nn if i.argCnt()>0]) / len(nn)
+            # avgm = sum([i.ret_size * arg_cnt / i.argCnt() for i in nn if i.argCnt()>0]) / len(nn)
+            avgm = avg * Utils.sizeof(rt)
+            # if self.fname == 'select':
+            #     for i in nn:
+            #         print("2: ",i.short)
+            #     print("avgm",avgm,avg,arg_cnt)
             cnt1 = nn1.extrapolate(self) * arg_cnt / nn1.argCnt() if nn1.argCnt() >0 else nn1.extrapolate(self)
             return [Prediction(retv = self.ret_vars[0], ins=nn1,cnt = cnt1, avg=avg, t=rt, mem=avgm)]
         else:
