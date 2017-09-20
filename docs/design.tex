@@ -20,7 +20,10 @@ The processing time depends mostly on the type's footprint and the influence of 
 
 
 \subsection{Limit Operations}
-\subsection{group,orderby Operations}
+Limit and sample operators(firstn, and sample? in MAL) are also trivial,
+we just output the minimum of the argumens size and the limit size.
+
+
 \subsection{Aggregate Operations}
 This category includes operations like sum, avg, min, max, single, dec\_round
 The count of the result is obviously one.
@@ -46,7 +49,9 @@ previous selects. To overcomes this we incorporated the estimations of the
 previous intructions, to build a graph that relates each variable to a size
 estimation. This way we cal also use the argument estimation to predict the
 size of the select result. The code for selection prediction is shown at
-Figure\ref{sel:code}
+Figure\ref{sel:code}. In real life it is very common to find correlated columns,
+in which the first selection may affect non-linearly the second.
+In our design we do not handle such cases(Future work).
 
 \begin{figure}[t]
 \begin{lstlisting}[frame=single]
@@ -69,8 +74,26 @@ Figure\ref{sel:code}
 Nothing special yet
 (Run a kNN to the previous joins that operate on the same two columns if possible,
 and find the ones closest based on the argument sizes)
-\subsection{Group}
-Not sure yet
+
+\subsection{Grouping Operations}
+The groupby signature is:
+\begin{verbatim}
+  (bat[:oid], bat[:oid], bat[:X]) := group.groupdone(bat[:X]);
+\end{verbatim}
+The first return value is the ids of the grouped column, the second is
+the ids of the discinct values of the column(the third what ??). To predict
+the size of the return variables, we use the ground statistics of the column
+(size, count, discinct values).
+
+Subgroupdone has a similar signature to groupdone, but it operates on intermmediate
+variables, where we do not have the column information. In this case, we run a
+kNN based on the argument sizes.
+
+Orderby is translated into sort in MAL.
+\begin{verbatim}
+(bat[:X],bat[:oid],bat[:oid]) := algebra.sort(bat[:X], bat[:oid], bat[:oid], bit, bit)
+\end{verbatim}
+The size of each return value is exactly the same as the corresponding argument size.
 
 \subsection{Set instructions}
 We do not have any relevant information to do an accurate guess for the
