@@ -638,13 +638,14 @@ class SelectInstruction(MalInstruction):
         if arg_cnt != None:
             avg  = sum([i.extrapolate(self) * ( arg_cnt / i.argCnt()) for i in nn if i.argCnt()>0]) / len(nn)
             # avgm = sum([i.ret_size * arg_cnt / i.argCnt() for i in nn if i.argCnt()>0]) / len(nn)
-            avgm = avg * Utils.sizeof(rt)
+            cal_avg = min(avg,arg_cnt)
+            avgm = cal_avg * Utils.sizeof(rt)
             # if self.fname == 'select':
             #     for i in nn:
             #         print("2: ",i.short)
             #     print("avgm",avgm,avg,arg_cnt)
             cnt1 = nn1.extrapolate(self) * arg_cnt / nn1.argCnt() if nn1.argCnt() >0 else nn1.extrapolate(self)
-            return [Prediction(retv = self.ret_vars[0], ins=nn1,cnt = cnt1, avg=avg, t=rt, mem=avgm)]
+            return [Prediction(retv = self.ret_vars[0], ins=nn1,cnt = cnt1, avg=cal_avg, t=rt, mem=avgm)]
         else:
             logging.error("None arguments ??? {}".format(self.lead_arg.name))
             avg = sum([i.extrapolate(self) for i in nn]) / len(nn)

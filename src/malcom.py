@@ -51,6 +51,18 @@ def plot_tpch10_select_error():
     for i in set(range(10,23))-set([13]):
         experiments.plot_select_error_air('tpch10','{}'.format(i),ntrain=200,path="./docs/figs/tpch10/", output = "./docs/figs/tpch10/tpch10_sel{}_error.pdf".format(i))
 
+def plot_airtraffic_select_error():
+    for q in ['04','09','10','11','15.1','19.1']:
+        testq = q
+        out   = "./docs/figs/airtraffic/airtraffic_sel{}_error.pdf".format(q.replace('.','_'))
+        experiments.plot_select_error_air('airtraffic',testq,trainq=q,output=out)
+
+def plot_airtraffic_mem_error():
+    for q in ['04','09','10','11','15.1','19.1']:
+        testq = q
+        out   = "./docs/figs/airtraffic/airtraffic_q{}_memerror.pdf".format(q.replace('.','_'))
+        experiments.plot_mem_error_air('airtraffic',testq,trainq=q,output=out)
+
 if __name__ == '__main__':
     parser = init_parser()
     args   = parser.parse_args()
@@ -64,5 +76,7 @@ if __name__ == '__main__':
     # experiments.analyze_mem_error_air("airtraffic",'09',ntrain=1000, step=500)
     # experiments.plot_memerror_tpch10(path="./docs/figs/tpch10/")
     # experiments.analyze_select_error_air('tpch10',17, ntrain=200, step=100)
-    experiments.analyze_select_error_air('tpch10',"18", ntrain=200, step=100)
+    # experiments.analyze_select_error_air('tpch10',"18", ntrain=200, step=100)
     # plot_tpch10_select_error()
+    # plot_airtraffic_select_error()
+    plot_airtraffic_mem_error()

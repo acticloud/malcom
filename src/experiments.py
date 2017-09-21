@@ -5,17 +5,20 @@ from stats    import ColumnStats
 from stats    import ColumnStatsD
 from mal_dict import MalDictionary
 
-def plot_select_error_air(db, q, path="", ntrain=1000, step=25, output=None):
+def plot_select_error_air(db, q, trainq=None, path="", ntrain=1000, step=25, output=None):
     assert db=='tpch10' or db=='airtraffic'
     blacklist = Utils.init_blacklist("config/mal_blacklist.txt")
 
     col_stats = ColumnStatsD.fromFile('config/{}_stats.txt'.format(db))
 
+    if trainq == None:
+        trainq = q
+
     e   = []
     logging.info("Examining Query: {}".format(q))
 
     logging.info("loading training set...")
-    trainf = "traces/random_{db}/ran_q{q}_n{n}_{db}.json".format(db=db,q=q,n=ntrain)
+    trainf = "traces/random_{db}/ran_q{q}_n{n}_{db}.json".format(db=db,q=trainq,n=ntrain)
     traind = MalDictionary.fromJsonFile(trainf, blacklist, col_stats)
 
     logging.info("loading test set...")
@@ -30,7 +33,7 @@ def plot_select_error_air(db, q, path="", ntrain=1000, step=25, output=None):
     train_tags.sort()
     e   = []
     ind = []
-    for i in range(1,ntrain,step):
+    for i in range(1,ntrain+2,step):
         d12 = traind.filter( lambda ins: ins.tag in train_tags[0:i])
         print(len(d12.query_tags))
         pG = testd.buildApproxGraph(d12)
@@ -49,16 +52,19 @@ def plot_select_error_air(db, q, path="", ntrain=1000, step=25, output=None):
     outpdf = path+'{}_sel{}_error.pdf'.format(db,q) if output==None else output
     Utils.plotLine(ind,e,outpdf,'Error perc','Nof training queries')
 
-def plot_mem_error_air(db,q, path="", output = None, ntrain=1000, step = 25):
+def plot_mem_error_air(db, q, trainq=None, path="", output = None, ntrain=1000, step = 25):
     blacklist = Utils.init_blacklist("config/mal_blacklist.txt")
 
     col_stats = ColumnStatsD.fromFile('config/{}_stats.txt'.format(db))
+
+    if trainq == None:
+        trainq = q
 
     e   = []
     logging.info("Examining Query: {}".format(q))
 
     logging.info("loading training set...")
-    trainf = "traces/random_{db}/ran_q{q}_n{n}_{db}.json".format(db=db,q=q,n=ntrain)
+    trainf = "traces/random_{db}/ran_q{q}_n{n}_{db}.json".format(db=db,q=trainq,n=ntrain)
     traind = MalDictionary.fromJsonFile(trainf, blacklist, col_stats)
 
     logging.info("loading test set...")
@@ -129,12 +135,10 @@ def analyze_select_error_air(db, q, ntrain=1000, step=25):
     logging.info("loading training set...")
     trainf = "traces/random_{db}/ran_q{q}_n{n}_{db}.json".format(db=db,q=q,n=ntrain)
     traind = MalDictionary.fromJsonFile(trainf, blacklist, col_stats)
-    # traind.linkSelectInstructions()
 
     logging.info("loading test set...")
     testf = "traces/{}/{}.json".format(db,q)
     testd = MalDictionary.fromJsonFile(testf, blacklist, col_stats)
-    # testd.linkSelectInstructions()
 
     #filter only select instructions
     seld  = testd.filter(lambda ins: ins.fname in ['select','thetaselect'])
@@ -147,27 +151,21 @@ def analyze_select_error_air(db, q, ntrain=1000, step=25):
     f = "{:120} realm: {:10.1f} predm: {:10.1f}, argc: {:10.0f} pr_argc {:10.0f}\n"
 
     for i in range(1,ntrain,step):
-    # for i in [1,5,10,15,20,25,50,75,100,150,200,250,375,500,675,800,1000]:
         d12 = traind.filter( lambda ins: ins.tag in train_tags[0:i+1])
         print(len(d12.query_tags))
         pG = testd.buildApproxGraph(d12)
         error = 0
         for ins in seli:
-            p      = ins.predictCount(d12, pG)[0]
+            p     = ins.predictCount(d12, pG)[0]
             rs    = ins.ret_size
-            pm     = p.getMem()
-            # print("TESTi: ",ins.short)
+            pm    = p.getMem()
             rs_mb = rs / 1000000
             pm_mb = p.getMem()  / 1000000
             print(f.format(ins.short,rs_mb,pm_mb,ins.argCnt(),ins.approxArgCnt(pG)))
             print("NNi ",p.ins.short)
-            # print(p.avg,p.getMem())
-            # print("arg cnt:",ins.argCnt(), "arg approx: ",ins.approxArgCnt(pG))
-            # print(rs/1000000 , pm/1000000)
             error += 100*abs((pm -rs)/rs)
             print("local error == ",100*abs((pm -rs)/rs))
         print("select error == ", error / len(seli) )
-        # ind.append(i)
 
 def plot_memerror_tpch10(path=""):
     blacklist = Utils.init_blacklist("config/mal_blacklist.txt")
