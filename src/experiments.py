@@ -75,7 +75,7 @@ def plot_mem_error_air(db, q, trainq=None, path="", output = None, ntrain=1000, 
     train_tags.sort()
     e   = []
     ind = []
-    for i in range(1,ntrain,step):
+    for i in range(1,ntrain+2,step):
         d12 = traind.filter( lambda ins: ins.tag in train_tags[0:i])
         print(len(d12.query_tags))
         pG  = testd.buildApproxGraph(d12)
@@ -121,7 +121,6 @@ def analyze_mem_error_air(db, q, ntrain=1000, step=25):
             actual_size_mb = ins.ret_size / 1000000
             predic_size_mb = p.getMem()  / 1000000
             print("{:120} actual: {:10.1f} pred: {:10.1f}\n".format(ins.short,actual_size_mb,predic_size_mb))
-            # print("{:100} {:10.0f} {10.0f}".format(ins.short,actual_size_mb))
 
 def analyze_select_error_air(db, q, ntrain=1000, step=25):
     assert db=='tpch10' or db=='airtraffic'
@@ -167,7 +166,9 @@ def analyze_select_error_air(db, q, ntrain=1000, step=25):
             print("local error == ",100*abs((pm -rs)/rs))
         print("select error == ", error / len(seli) )
 
-def plot_memerror_tpch10(path=""):
+
+
+def plot_allmem_tpch10(path=""):
     blacklist = Utils.init_blacklist("config/mal_blacklist.txt")
 
     col_stats = ColumnStatsD.fromFile('config/tpch_sf10_stats.txt')
@@ -192,7 +193,9 @@ def plot_memerror_tpch10(path=""):
         outf = path+"mem_error_1-23.pdf"
     Utils.plotBar(range(1,23), e, outf,'error perc','query no')
 
-
+####################################################################################
+########################## DEPRECATED SCRIPTS....
+####################################################################################
 def analyze_max_mem():
     blacklist = Utils.init_blacklist("config/mal_blacklist.txt")
 

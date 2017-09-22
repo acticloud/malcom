@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 @attr avg : int            //average element count (of 5 in case of select)
 @attr t   : str            //type??
 @attr mem : int            //predicted memory size (non trivial in case of str)
+TODO: add min,max ....
 """
 class Prediction():
     def __init__(self,retv,ins,cnt,avg,t,mem=None):
@@ -27,14 +28,6 @@ class Prediction():
             return self.mem
         else:
             return self.avg * Utils.sizeof(self.t)
-
-# supported_mal = ['join','thetajoin','tid','bind','bind_idxbat','new','append',
-# 'sort','select','thetaselect','likeselect','==','isnil','group','subgroup',
-# 'subgroupdone','groupdone','ifthenelse','hge','!=','project','substring','avg',
-# '>','like','difference','and','mergecand','single','dec_round','delta','year',
-# 'subavg','subsum','subcount','submin','projection','projectionpath',
-# 'projectdelta','subsum','subslice','+','-','*','/','or','dbl','intersect',
-# '<','firstn','hash','bulk_rotate_xor_hash','identity','mirror','sum','max','min']
 
 class Utils:
     #readline until you reach '}' or EOF
@@ -85,6 +78,7 @@ class Utils:
                 return True
         return False
 
+    #deprecated??
     @staticmethod
     def approxSize(g,name, typ):
         if name in g:
@@ -95,6 +89,7 @@ class Utils:
             # logging.debug("000")
             return 0
 
+    #deprecated??
     @staticmethod
     def isVar(name):
         return name.startswith("X_") or name.startswith("C_")
@@ -207,7 +202,7 @@ class Utils:
     @staticmethod
     def plotBar(x,y,output,ylabel,xlabel, lscale=False):
         fig, ax = plt.subplots()
-        width = 0.1
+        width = 0.25
         bar_width = 0.5
         # rects1 = ax.bar(ind-width, sp, width, color='b')
         ind = numpy.arange(len(x))+1

@@ -92,7 +92,6 @@ class MalDictionary:
         for ins in ilist:
             for p in ins.predictCount(traind, pg):
                 pg[p.retv] = p
-                r          = p.retv
                 if p.avg == sys.maxsize or p.avg == None:
                     logging.error("None in the graph: {}".format(ins.short))
         return pg
@@ -217,37 +216,3 @@ class MalDictionary:
             d[i.fname] = d.get(i.fname,[]) + [i]
             tags.add(i.tag)
         return MalDictionary(d,tags,self.varflow)
-
-#!!USELESS STUFF
-    def avgDeviance(self, test_dict):
-        suml  = lambda x,y: x+y
-        diff  = sum( map(lambda ins: abs(ins.mem_fprint-self.predictMem(ins,0)),test_dict.getInsList()) )
-        total = sum( map(lambda ins: ins.mem_fprint,test_dict.getInsList()) )
-        # print("dev")
-        return 100 * diff / total
-
-    def avgError(self, test_dict):
-        suml   = lambda x,y: x+y
-        test_l = test_dict.getInsList()
-        ldiff = lambda i: abs(i.mem_fprint-self.predictMem(i,0)) / i.mem_fprint if i.mem_fprint != 0 else 0.0
-        diff  = sum( map(ldiff,test_l) )
-        # print(list(map(ldiff,test_l)))
-        # print(max(list(map(ldiff,test_l))))
-        # print("dev")
-        return 100 * diff / len(test_l)
-
-    def avgMemAcc(self, test_set, thres):
-        self_list = self.getInsList()
-        test_list = test_set.getInsList()
-        non_zeros = [i for i in test_list if i.mem_fprint > 0]
-        acc = [1 for i in non_zeros if abs(self.predictMem(i,0)-i.mem_fprint)/i.mem_fprint < thres]
-
-        return 100*float(sum(acc))/len(non_zeros)
-
-    def avgCountAcc(self, test_set, thres):
-        self_list = self.getInsList()
-        test_list = test_set.getInsList()
-        non_zeros = [i for i in test_list if i.cnt > 0]
-        acc = [1 for i in non_zeros if abs(i.predictCount(self_list,0)-i.cnt)/i.cnt < thres]
-
-        return 100*float(sum(acc))/len(non_zeros)

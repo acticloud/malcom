@@ -122,7 +122,7 @@ class MalInstruction:
         elif fname in ['==','isnil','!=','like']:
             return DirectIntruction(*con_args, base_arg_i = 0)
         elif fname in ['sort']:
-            return DirectIntruction(*con_args, base_arg_i = 0, base_ret_i = 1)#TODO fix this (multiple ret??)
+            return DirectIntruction(*con_args, base_arg_i = 0, base_ret_i = 1)
         elif fname in ['subsum','subavg','subcount','submin']:
             return DirectIntruction(*con_args, base_arg_i = 2)
         elif fname in ['subslice']:
@@ -260,8 +260,6 @@ class SetInstruction(MalInstruction):
         self.cntf = fun
 
     def approxArgCnt(self, pG):
-        # assert self.arg1.name in pG
-        # assert self.arg2.name in pG
         return [pG[self.arg1.name].avg,pG[self.arg2.name].avg]
 
     def argCnt(self):
@@ -385,9 +383,6 @@ class LoadInstruction(MalInstruction):
         t = self.ret_args[0].atype
         return [Prediction(retv=self.ret_vars[0],ins= None, cnt=self.cnt, avg=self.cnt, t=t, mem=self.ret_size)]
 
-        # if self.ret_vars[0] == 'X_54':
-            # print("came")
-
 
 """
 @desc Join group (join, thetajoin) ret count can be bigger than input
@@ -473,8 +468,6 @@ class SelectInstruction(MalInstruction):
         self.arg_size = [o.get("size",0) for o in jobj.get("arg",[])]
         self.op       = Utils.extract_operator(self.fname, jobj)
 
-        #is it the first select (2nd arg  == NULL)??...
-        # nV            = len([a for a in self.arg_list if a.name.startswith("C_")])
         a1              = self.arg_list[1]
         self.lead_arg_i = 1 if a1.isVar() and a1.cnt > 0 else 0
         self.lead_arg   = self.arg_list[self.lead_arg_i]
@@ -640,10 +633,6 @@ class SelectInstruction(MalInstruction):
             # avgm = sum([i.ret_size * arg_cnt / i.argCnt() for i in nn if i.argCnt()>0]) / len(nn)
             cal_avg = min(avg,arg_cnt)
             avgm = cal_avg * Utils.sizeof(rt)
-            # if self.fname == 'select':
-            #     for i in nn:
-            #         print("2: ",i.short)
-            #     print("avgm",avgm,avg,arg_cnt)
             cnt1 = nn1.extrapolate(self) * arg_cnt / nn1.argCnt() if nn1.argCnt() >0 else nn1.extrapolate(self)
             return [Prediction(retv = self.ret_vars[0], ins=nn1,cnt = cnt1, avg=cal_avg, t=rt, mem=avgm)]
         else:

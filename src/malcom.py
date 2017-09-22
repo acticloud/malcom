@@ -45,22 +45,32 @@ def init_parser():
     return parser
 
 def plot_tpch10_select_error():
-    for i in range(1,9):
-        experiments.plot_select_error_air('tpch10','0{}'.format(i),ntrain=200,path="./docs/figs/tpch10/", output = "./docs/figs/tpch10/tpch10_sel0{}_error.pdf".format(i))
+    pth = "./docs/figs/tpch10/"
+    d   = 'tpch10'
+    for i in set(range(1,23))-set([10,13]):
+        q = "0{}".format(i) if i < 10 else str(i)
+        o = "./docs/figs/tpch10/tpch10_sel{}_error.pdf".format(q)
+        experiments.plot_select_error_air(d,q,ntrain=200, path=pth, output=o)
 
-    for i in set(range(10,23))-set([13]):
-        experiments.plot_select_error_air('tpch10','{}'.format(i),ntrain=200,path="./docs/figs/tpch10/", output = "./docs/figs/tpch10/tpch10_sel{}_error.pdf".format(i))
+def plot_tpch10_mem_error():
+    pth = "./docs/figs/tpch10/"
+    d   = 'tpch10'
+    for i in set(range(1,23))-set([10,13]):
+        q = "0{}".format(i) if i < 10 else str(i)
+        o = "./docs/figs/tpch10/tpch10_q{}_memerror.pdf".format(q)
+        experiments.plot_mem_error_air(d,q,ntrain=200,path=pth,output=o)
 
 def plot_airtraffic_select_error():
+    f = "./docs/figs/airtraffic/airtraffic_sel{}_error.pdf"
     for q in ['04','09','10','11','15.1','19.1']:
-        testq = q
-        out   = "./docs/figs/airtraffic/airtraffic_sel{}_error.pdf".format(q.replace('.','_'))
-        experiments.plot_select_error_air('airtraffic',testq,trainq=q,output=out)
+        o = f.format(q.replace('.','_'))
+        experiments.plot_select_error_air('airtraffic',q,trainq=q,output=o)
 
 def plot_airtraffic_mem_error():
+    f = "./docs/figs/airtraffic/airtraffic_q{}_memerror.pdf"
     for q in ['04','09','10','11','15.1','19.1']:
         testq = q
-        out   = "./docs/figs/airtraffic/airtraffic_q{}_memerror.pdf".format(q.replace('.','_'))
+        out   = f.format(q.replace('.','_'))
         experiments.plot_mem_error_air('airtraffic',testq,trainq=q,output=out)
 
 if __name__ == '__main__':
@@ -79,4 +89,6 @@ if __name__ == '__main__':
     # experiments.analyze_select_error_air('tpch10',"18", ntrain=200, step=100)
     # plot_tpch10_select_error()
     # plot_airtraffic_select_error()
-    plot_airtraffic_mem_error()
+    # plot_airtraffic_mem_error()
+    # plot_tpch10_mem_error()
+    experiments.plot_allmem_tpch10()
