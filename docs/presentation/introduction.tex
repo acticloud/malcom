@@ -1,0 +1,100 @@
+\begin{frame}[fragile]
+\frametitle{What is memory footprint ??}
+\begin{lstlisting}
+max_mem  = 0
+curr_mem = 0
+for i in ilist:
+		max_mem  = max(max_mem,curr_mem + i.mem_fprint)
+		curr_mem = curr_mem + i.mem_fprint-i.free_size
+
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{MAL Instruction Grouping}
+\begin{itemize}
+\item Arithmetic (+,-,...)
+\item Aggregate (avg, sum, ...)
+\item Limit
+\item Grouping (groupdone)
+\item Selection
+\item Join
+\item Set (intersect, merge, diff)
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\begin{block}{Arithmetic Operators}
+Output = Input
+\end{block}
+\begin{block}{Aggregate Operators}
+Output = 1
+\end{block}
+\begin{block}{Limit Operators}
+Output = min(arg size,N)
+\end{block}
+\end{frame}
+
+\begin{frame}
+\frametitle{Set Operators}
+\begin{block}{Merge(A,B)}
+Output = size(A)+size(B)
+\end{block}
+\begin{block}{Intersect(A,B)}
+Output = min(size(A),size(B))
+\end{block}
+\begin{block}{Diff(A,B)}
+Output = size(A)
+\end{block}
+\end{frame}
+
+\begin{frame}
+\frametitle{Select Operators}
+\begin{block}{Range Select}
+\begin{itemize}
+\item Keep a dictionary of all the previous selections
+\item Find all the instructions having the same column, op
+\item Run a kNN to find the 5 nearest based on the range
+\item Extrapolate based on the selectivity and arg size
+\end{itemize}
+\end{block}
+\end{frame}
+
+\begin{frame}
+\frametitle{Join Operators}
+\begin{itemize}
+\item Find all the instructions on the same columns
+\item Run a kNN to find the 5 nearest based on the arg size
+\item Extrapolate based on the arg size
+\end{itemize}
+\end{frame}
+
+
+% \begin{frame}
+% \frametitle{Grouping Operators}
+% \begin{lstlisting}
+% % (bat[:oid], bat[:oid]) := group.groupdone(bat[:X]);
+% \end{lstlisting}
+%
+% Use column statistics to find the distinct values
+% \end{frame}
+%
+% % \begin{block}{Intersect(A,B)}
+% % Output = min(size(A),size(B))
+% % \end{block}
+% % \begin{block}{Diff(A,B)}
+% % Output = size(A)
+% % \end{block}
+% \end{frame}
+
+
+% \begin{frame}[fragile]
+% 	\frametitle{RDD DAG}
+%   \begin{figure}[t]
+%     \centering
+%     \includegraphics[width=0.35\textwidth]{figs/rdd_dag.pdf}
+%     \caption{The dependency graph for the word count example}
+%   \end{figure}
+% \end{frame}
+% %
+% %

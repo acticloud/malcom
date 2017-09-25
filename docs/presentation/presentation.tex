@@ -1,0 +1,107 @@
+\documentclass[]{beamer}
+\usepackage{etex}
+\usepackage{beamerthemesplit}
+\usepackage{pgfpages}
+\usepackage{appendixnumberbeamer} %backup slides
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+% \usepackage{algorithmic}
+% \usepackage{algorithm}
+\usepackage{listings}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{setspace}
+\usepackage{verbatim}
+\usepackage{xspace}
+\usepackage{subfigure}
+\usepackage[numbers]{natbib}
+% \usepackage[greek,english]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage{hyperref}
+\usepackage{beamerthemesplit}
+\usepackage{slantsc}
+\usepackage[T1]{fontenc}
+\usepackage{color}
+\usepackage{wrapfig}
+\usepackage{multirow}
+\usepackage{times}
+\usepackage{cancel}
+\usepackage{rotfloat}
+
+\lstset{
+    language=Scala,%
+    xleftmargin=4mm,%
+    aboveskip=3mm,%
+    belowskip=3mm,%
+    fontadjust=true,%
+    columns=[c]fixed,%
+    keepspaces=true,%
+    basewidth={0.58em, 0.53em},%
+    tabsize=2,%
+    basicstyle=\renewcommand{\baselinestretch}{0.95}\ttfamily,%
+    commentstyle=\itshape,%
+    keywordstyle=\bfseries,%
+    mathescape=true,%
+    escapechar=¤,%
+    captionpos=b,%
+    framerule=0.3pt,%
+    firstnumber=0,%
+    numbersep=1.5mm,%
+    numberstyle=\tiny,%
+    numbers=left,%
+    firstnumber=1,%
+}
+% \usepackage{tikz}
+% \usercolortheme{Dresden}
+% \usecolortheme{pres}
+% \beamertemplatenavigationsymbolsempty
+% \setbeamertemplate{footline}
+% {
+% 	\leavevmode%
+% 	\hbox{%
+% 		\begin{beamercolorbox}[wd=.20\paperwidth,ht=6.25ex,dp=1ex,center]{fortlogo}
+% 			\includegraphics[scale=0.045]{./figs/UoC_logo.png}\hfill{}
+% 			\includegraphics[scale=0.15]{./figs/carv-logo.png}
+% 		\end{beamercolorbox}%
+% 		% \begin{beamercolorbox}[wd=.70\paperwidth,ht=5.25ex,dp=1ex,center]{author in head/foot}%
+% 		% 	\color[RGB]{65,105,225}\insertshorttitle
+% 		% \end{beamercolorbox}%
+% 		\begin{beamercolorbox}[wd=.10\paperwidth,ht=5.25ex,dp=1ex,center]{number}
+% 			{\color[RGB]{65,105,225}\insertframenumber{} / \inserttotalframenumber{}}
+% 		\end{beamercolorbox}
+% 	 }
+% 	\vskip0pt%
+% }
+
+\title{Incremental Memory Model for MonetDB}
+% \author{\Large{\textcolor{red}{Pavlos Katsogridakis}, Sofia Papagiannaki, Polyvios Pratikakis} \\
+	% \footnotesize{Europar 2017}}
+% }
+ % \date{August 31, 2017}
+
+% \Large{ Europar 2017 }
+
+
+\begin{document}
+
+\begin{frame}[plain]
+	\titlepage
+\end{frame}
+
+\input{introduction}
+\input{experiments}
+% \input{nesting}
+% \input{scheduling}
+% \input{evaluation}
+
+% \begin{frame}[allowframebreaks]%in case more than 1 slide needed
+% Europar 2017 \cite{europar:2017}
+%   {\footnotesize
+%     \bibliographystyle{acm}
+%     \bibliography{test}
+%   }
+% \end{frame}
+
+% \input{backup}
+\end{document}
