@@ -1,12 +1,55 @@
+\begin{frame}
+\frametitle{Malcom}
+\begin{block}{Overview}
+\begin{itemize}
+	\item MAL level query memory estimator
+	\item Groups the MAL instructions into categories
+	\item Uses previous query traces, and base column statistics
+\end{itemize}
+\end{block}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{MAL example}
+	\begin{lstlisting}[basicstyle=\ttfamily\footnotesize, language=SQL]
+select
+	sum(l_extendedprice * l_discount) as revenue
+from
+	lineitem
+where
+	l_shipdate >= date '1994-01-01'
+	and l_shipdate < date '1994-01-01'+interval '1' year
+	and l_discount between 0.06 - 0.01 and 0.06 + 0.01
+	and l_quantity < 24;
+	\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{MAL example}
+	\begin{lstlisting}
+	X_16:= bind("sys","lineitem","l_quantity")
+	X_33:= bind("sys","lineitem","l_discount")
+	X_40:= bind("sys","lineitem","l_shipdate")
+	C_13:= tid("sys","lineitem")
+	C_51:= select(X_40,C_13,1994-01-01,1995-01-01)
+	C_65:= select(X_33,C_51,5,7)
+	C_68:= thetaselect(X_16,C_65,2400,"<")
+	X_26:= bind("sys","lineitem","l_extendedprice")
+	X_71:= projection(C_68,X_26)
+	X_72:= projection(C_68,X_33)
+	X_78:= *(X_71,X_72)
+	X_80:= sum(X_78)
+	\end{lstlisting}
+\end{frame}
+
 \begin{frame}[fragile]
 \frametitle{What is memory footprint ??}
 \begin{lstlisting}
 max_mem  = 0
 curr_mem = 0
 for i in ilist:
-		max_mem  = max(max_mem,curr_mem + i.mem_fprint)
-		curr_mem = curr_mem + i.mem_fprint-i.free_size
-
+	max_mem  = max(max_mem,curr_mem + i.mem_fprint)
+	curr_mem = curr_mem + i.mem_fprint-i.free_size
 \end{lstlisting}
 \end{frame}
 
@@ -15,9 +58,9 @@ for i in ilist:
 \begin{itemize}
 \item Arithmetic (+,-,...)
 \item Aggregate (avg, sum, ...)
-\item Limit
+\item Limit (firstn, sample)
 \item Grouping (groupdone)
-\item Selection
+\item Selection (select, thetaselect)
 \item Join
 \item Set (intersect, merge, diff)
 \end{itemize}
@@ -58,6 +101,13 @@ Output = size(A)
 \item Extrapolate based on the selectivity and arg size
 \end{itemize}
 \end{block}
+\begin{block}{Point Select}
+\begin{itemize}
+\item Find all the instructions having the same column, op
+\item Run a kNN to find the 5 nearest selects
+\item Extrapolate based on the arg size
+\end{itemize}
+\end{block}
 \end{frame}
 
 \begin{frame}
@@ -68,33 +118,3 @@ Output = size(A)
 \item Extrapolate based on the arg size
 \end{itemize}
 \end{frame}
-
-
-% \begin{frame}
-% \frametitle{Grouping Operators}
-% \begin{lstlisting}
-% % (bat[:oid], bat[:oid]) := group.groupdone(bat[:X]);
-% \end{lstlisting}
-%
-% Use column statistics to find the distinct values
-% \end{frame}
-%
-% % \begin{block}{Intersect(A,B)}
-% % Output = min(size(A),size(B))
-% % \end{block}
-% % \begin{block}{Diff(A,B)}
-% % Output = size(A)
-% % \end{block}
-% \end{frame}
-
-
-% \begin{frame}[fragile]
-% 	\frametitle{RDD DAG}
-%   \begin{figure}[t]
-%     \centering
-%     \includegraphics[width=0.35\textwidth]{figs/rdd_dag.pdf}
-%     \caption{The dependency graph for the word count example}
-%   \end{figure}
-% \end{frame}
-% %
-% %
