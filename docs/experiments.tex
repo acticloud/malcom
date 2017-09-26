@@ -27,15 +27,31 @@ error is the misprediction of the join instruction(our approach is kNN based).
   \label{fig:tpch10m}
 \end{figure}
 
-\subsection{Selection Error }
+\subsection{Selection Error Explanation}
 
 \subsubsection{Q07}
 The selection prediction fails because of a misprediction in the selection
 argument count, due to a misprediction in a projectionpath instruction(unknown column)
+\subsubsection{Q09}
+Join misprediction
+\subsubsection{Q11}
+Join misprediction
+\subsubsection{Q14}
+Join misprediction
+\subsubsection{Q15}
+groupdone on intermediate data
+\subsubsection{Q13}
+Join misprediction
+\subsubsection{Q16}
+mirror instruction zero memory footprint...
 \subsubsection{Q17}
 Argument count misprediction due to a groupdone in an unknown column
 \subsubsection{Q18}
 The select randomization is weird (having sum > ...)
+\subsubsection{Q20}
+Mirror instruction zero memory footprint...
+\subsection{Q22}
+Substring error (easily fixed)
 
 \begin{figure}[!htb]
 

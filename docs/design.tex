@@ -109,3 +109,14 @@ Bind instruction loads(or memory maps) a column into memory,
 thus the result size is the size of the column.
 \subsubsection{bind\_idxbat, tid}
 Tid and bind\_idxbat do not produce any memory overhead
+
+\subsection{Special cases}
+\subsubsection{String sililarity}
+In predicting a selection of a string column,
+we used the levenshtein distance as a metric...
+\subsubsection{Projection returning str}
+In some weird cases, the projection instruction
+returns str(copies from heap) instead of ids,
+which makes hard to predict. In this case, we run a kNN
+based on the type and argument distance, to find a similar
+instruction use this to find the output size.
