@@ -29,20 +29,16 @@
 
 \begin{frame}[fragile]
 \frametitle{Airtraffic benchmark suite}
-\begin{lstlisting}[basicstyle=\ttfamily\footnotesize, language=SQL,escapechar=!]
+\begin{lstlisting}[basicstyle=\ttfamily\tiny, language=SQL,escapechar=!]
 SELECT SQL_MIN("Origin", "Dest"),
        SQL_MAX("Origin", "Dest") AS route,
-       COUNT(*) AS cnt_before
-FROM ontime
+       COUNT(*) FROM ontime
 !\colorbox{yellow}{WHERE 2010-09-11<FlightDate AND FlightDate<2011-09-11}!
 GROUP BY route;
 \end{lstlisting}
 	\begin{figure}[!htb]
-	  \begin{subfigure}[t]{0.5\textwidth}
-	    \includegraphics[scale=0.4]{../figs/airtraffic/airtraffic_sel11_error.pdf}
-	    \caption{Q11 select error}
-	    \label{fig:sel04}
-	  \end{subfigure}
+	    \includegraphics[scale=0.45]{../figs/airtraffic/airtraffic_sel11_error.pdf}
+	    % \caption{Q11 select error}
 	  % \begin{subfigure}[t]{0.4\textwidth}
 	  %   \includegraphics[scale=0.3]{../figs/airtraffic/airtraffic_q11_memerror.pdf}
 	  %   \caption{Q11 memory error}
@@ -52,15 +48,15 @@ GROUP BY route;
 \end{frame}
 
 \begin{frame}[fragile]
-\frametitle{Airtraffic benchmark suite}
+% \frametitle{Airtraffic benchmark suite}
 \begin{lstlisting}[basicstyle=\ttfamily\footnotesize, language=SQL,escapechar=!]
---Query 4
 SELECT "DayOfWeek", COUNT(*) AS "Flights"
 FROM ontime
 !\colorbox{yellow}{WHERE "DepDelay" > 15}!
 GROUP BY "DayOfWeek"
 ORDER BY "DayOfWeek";
 \end{lstlisting}
+
 	\begin{figure}[!htb]
 	  % \begin{subfigure}[t]{0.4\textwidth}
 	  %   \includegraphics[scale=0.3]{../figs/airtraffic/airtraffic_sel04_error.pdf}
@@ -69,7 +65,7 @@ ORDER BY "DayOfWeek";
 	  % \end{subfigure}
 	  % \begin{subfigure}[t]{0.4\textwidth}
 		\centering
-	  \includegraphics[scale=0.4]{../figs/airtraffic/airtraffic_q04_memerror.pdf}
+	  \includegraphics[scale=0.45]{../figs/airtraffic/airtraffic_q04_memerror.pdf}
 	  \caption{Q04 memory error}
 	    \label{fig:mem04}
 	  %  \end{subfigure}
@@ -78,7 +74,7 @@ ORDER BY "DayOfWeek";
 
 
 \begin{frame}[fragile]
-\frametitle{Airtraffic benchmark suite}
+% \frametitle{Airtraffic benchmark suite}
 \begin{lstlisting}[basicstyle=\ttfamily\footnotesize, language=SQL, escapechar=!]
 SELECT "Origin" AS ap, COUNT(*) AS cnt_in
 FROM ontime
@@ -86,11 +82,14 @@ FROM ontime
 GROUP BY "Origin"
 \end{lstlisting}
 	\begin{figure}[!htb]
-	  \begin{subfigure}[t]{0.5\textwidth}
-	    \includegraphics[scale=0.4]{../figs/airtraffic/airtraffic_sel10_error.pdf}
-	    \caption{Q10 select error}
-	    \label{fig:sel04}
-	  \end{subfigure}
+		\centering
+		\includegraphics[scale=0.45]{../figs/airtraffic/airtraffic_sel10_error.pdf}
+		\caption{Q10 select error}
+	  % \begin{subfigure}[t]{0.5\textwidth}
+	  %   \includegraphics[scale=0.5]{../figs/airtraffic/airtraffic_sel10_error.pdf}
+	  %   % \caption{Q10 select error}
+	  %   \label{fig:sel04}
+	  % \end{subfigure}
 	  % \begin{subfigure}[t]{0.4\textwidth}
 	  %   \includegraphics[scale=0.3]{../figs/airtraffic/airtraffic_q10_memerror.pdf}
 	  %   \caption{Q10 memory error}
@@ -100,7 +99,7 @@ GROUP BY "Origin"
 \end{frame}
 
 \begin{frame}[fragile]
-\frametitle{Airtraffic benchmark suite}
+% \frametitle{Airtraffic benchmark suite}
 \begin{lstlisting}[basicstyle=\ttfamily\footnotesize, language=SQL, escapechar=!]
 SELECT *
 FROM ontime
@@ -108,11 +107,8 @@ FROM ontime
 !\colorbox{yellow}{AND "Month" = 3 AND "DayofMonth" = 24 AND "Year" = 2013}!
 \end{lstlisting}
 	\begin{figure}[!htb]
-	  \begin{subfigure}[t]{0.5\textwidth}
-	    \includegraphics[scale=0.4]{../figs/airtraffic/airtraffic_sel09_error.pdf}
+	    \includegraphics[scale=0.45]{../figs/airtraffic/airtraffic_sel09_error.pdf}
 	    \caption{Q09 select error}
-	    \label{fig:sel04}
-	  \end{subfigure}
 	  % \begin{subfigure}[t]{0.4\textwidth}
 	  %   \includegraphics[scale=0.3]{../figs/airtraffic/airtraffic_q09_memerror.pdf}
 	  %   \caption{Q09 memory error}
@@ -128,6 +124,7 @@ FROM ontime
 \begin{itemize}
 \item Provide min,avg,max policies
 \item Consider parallel executions
+\item Handle correlated columns on selections
 \item Also use histograms
 \end{itemize}
 \end{block}

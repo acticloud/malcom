@@ -3,6 +3,13 @@ With an abundance of events we can start to derive models for each of the instru
 A micro model is derived that can be used later for ease of simulation
 alternative execution plans. We study them based on similar properties.
 
+\subsection{Argument size}
+When we try to predict an instruction, unless it is the first one,
+we do not know exactly the argument size. So starting from the beginning,
+we build a tree associating each variable to a prediction of the instruction it was produced,
+so that we can use the predicted return size as input to the next instruction
+we want to predict.
+
 \subsection{Arithmetic Operations}
 The operations can be grouped by complexity to predict the outcome of a hypothetical operation.
 The first group includes the {\em batcalc} operations.
@@ -36,7 +43,8 @@ considering the lower and higher bounds as distance metrics.
 When we are facing a one bound select ($<$,$>$ etc) we use the
 dataset statistics to fill the other bound (e.g in case of $<$ we want the column min).
 \subsubsection{Point Selects}
-Nothing special, we try to find the most similar point....
+Again we use the kNN to find the 5 closest points,
+and extrapolate based on the argument size.
 
 \subsubsection{Like Selects}
 Future work :P
@@ -71,9 +79,9 @@ In our design we do not handle such cases(Future work).
 
 
 \subsection{Join}
-Nothing special yet
-(Run a kNN to the previous joins that operate on the same two columns if possible,
-and find the ones closest based on the argument sizes)
+(Run a kNN(k=5) on the joins we have in our dictionary,
+that operate on the same two columns if possible,
+and find the ones closest based on the argument sizes).
 
 \subsection{Grouping Operations}
 The groupby signature is:
@@ -111,8 +119,8 @@ thus the result size is the size of the column.
 Tid and bind\_idxbat do not produce any memory overhead
 
 \subsection{Special cases}
-\subsubsection{String sililarity}
-In predicting a selection of a string column,
+\subsubsection{String similarity}
+To predict a selection of a string column,
 we used the levenshtein distance as a metric...
 \subsubsection{Projection returning str}
 In some weird cases, the projection instruction

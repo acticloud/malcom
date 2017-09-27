@@ -45,7 +45,7 @@ where
 \begin{frame}[fragile]
 \frametitle{What is memory footprint ?}
 \begin{block}{Definition}
-The maximum memory usage in the query timeline
+The maximum memory usage in the query execution timeline
 \end{block}
 \begin{lstlisting}
 max_mem  = 0
@@ -61,7 +61,7 @@ for i in ilist:
 Take the MAL instruction plan and
 give an estimation of the memory footprint
 \begin{itemize}
-\item Use only traces from previous executions
+\item Use only traces from previous executions and basic column statistics
 \end{itemize}
 \end{block}
 \end{frame}
@@ -113,7 +113,7 @@ Output = size(A)
 \item Find all the instructions having the same column, op
 \item Run a kNN to find the 5 nearest based on the range
 \item Extrapolate based on the selectivity and arg size
-\item extrap(testi, traini) = $i.count * \frac{testi.estim\_arg\_cnt}{traini.arg\_cnt} *  \frac{testi.range}{traini.range}$
+\item extrap(testi, traini) = $traini.count * \frac{testi.estim\_arg\_cnt}{traini.arg\_cnt} *  \frac{testi.range}{traini.range}$
 \end{itemize}
 \end{block}
 \begin{block}{Point Select}
