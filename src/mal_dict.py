@@ -93,7 +93,7 @@ class MalDictionary:
         ilist.sort( key = lambda ins: ins.clk )
         pg = {}
         for ins in ilist:
-            for p in ins.predictCount(traind, pg):
+            for p in ins.predict(traind, pg):
                 pg[p.retv] = p
                 if p.avg == sys.maxsize or p.avg == None:
                     logging.error("None in the graph: {}".format(ins.short))

@@ -15,7 +15,6 @@ interface MalInstruction {
 
     def approxArgCnt(traind: MalDictionary, G: dict<str, Prediction>): List<int>
 
-    #TODO rename predict
     def predict(traind: MalDictionary, G: dict<str,Prediction>): List<Prediction>
 
     def kNN(traind: MalDictionary, k: int, G) -> List<MalInstruction>
@@ -240,7 +239,7 @@ class DirectIntruction(MalInstruction):
     def argCnt(self):
         return self.base_arg.cnt
 
-    def predictCount(self, traind, G, default=None):
+    def predict(self, traind, G, default=None):
         p = self.cntf( self.approxArgCnt(G, default) )
         t = self.rtype
         return [Prediction(retv=self.base_ret, ins=None, cnt=p, avg=p, t=t)]
@@ -265,7 +264,7 @@ class SetInstruction(MalInstruction):
     def argCnt(self):
         return [self.arg1.cnt,self.arg2.cnt]
 
-    def predictCount(self, traind, pG, default=None):
+    def predict(self, traind, pG, default=None):
         ac = self.cntf(*self.approxArgCnt(pG))
         t  = self.ret_args[0].atype
         return [Prediction(retv=self.ret_vars[0],ins=None, cnt=ac, avg=ac, t=t)]
@@ -281,7 +280,7 @@ class ProjectInstruction(DirectIntruction):
         c.sort( key = lambda t: t[1] )
         return [e[0] for e in c[0:k]]
 
-    def predictCount(self, traind, G, default=None):
+    def predict(self, traind, G, default=None):
         ac    = self.approxArgCnt(G, default)
         retv  = self.ret_args[0]
         rtype = retv.atype
@@ -292,7 +291,7 @@ class ProjectInstruction(DirectIntruction):
             rs   = kNN[0].ret_args[0].size #return size
             return [Prediction(retv=retv.name, ins=None, cnt=ac, avg=ac, t=rtype, mem=rs)]
 
-        return super().predictCount(traind, G, default)
+        return super().predict(traind, G, default)
 
 
 class GroupInstruction(DirectIntruction):
@@ -315,7 +314,7 @@ class GroupInstruction(DirectIntruction):
         c.sort( key = lambda t: t[1] )
         return [e[0] for e in c[0:k]]
 
-    def predictCount(self, traind, G, default=None):
+    def predict(self, traind, G, default=None):
         p = self.approxArgCnt(G, default)
         retl = self.ret_args
         if self.fname == 'subgroupdone':
@@ -352,7 +351,7 @@ class ReduceInstruction(MalInstruction):
     def approxArgCnt(self, G, default = None):
         return G.get(self.base_arg.name,default).avg
 
-    def predictCount(self, traind, G, default = None):
+    def predict(self, traind, G, default = None):
         t = self.ret_args[0].atype
         return [Prediction(retv=self.ret_vars[0], ins=None, cnt=1, avg=1, t=t)]
 
@@ -363,7 +362,7 @@ class NullInstruction(MalInstruction):
     def __init__(self, *args):
         MalInstruction.__init__(self,*args)
 
-    def predictCount(self, traind, G, default = None):
+    def predict(self, traind, G, default = None):
         return [Prediction(retv=self.ret_vars[0],ins= None, cnt = 0, avg = 0, t=None)]
 
 """
@@ -373,7 +372,7 @@ class LoadInstruction(MalInstruction):
     def __init__(self, *args):
         MalInstruction.__init__(self,*args)
 
-    def predictCount(self, traind, G, default = None):
+    def predict(self, traind, G, default = None):
         # if self.fname in ['tid','bind_idxbat']:
             # m=0
         # else:
@@ -434,7 +433,7 @@ class JoinInstruction(MalInstruction):
         cand.sort( key = lambda t: t[1] )
         return [ t[0] for t in cand[0:k] ]
 
-    def predictCount(self, traind, g):
+    def predict(self, traind, g):
         if self.fname == 'crossproduct':
             p = reduce(lambda x,y: x*y, self.approxArgCnt(g))
             retv   = self.ret_args
@@ -579,7 +578,7 @@ class SelectInstruction(MalInstruction):
     arg   extrapolation:  self.arg_cnt / traini.arg_cnt
     prediction(traini) = traini.cnt * range_extrapolation * arg_extrapolation
     """
-    def predictCount(self, traind, approxG, default=None):
+    def predict(self, traind, approxG, default=None):
         assert approxG != None
         self_list = traind.mal_dict.get(self.fname,[])
         # prev_list = []

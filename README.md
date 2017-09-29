@@ -73,7 +73,7 @@ interface MalInstruction {
 
   def approxArgCnt(traind: MalDictionary, G) -> List<int>
 
-  def predictCount(traind: MalDictionary, G) -> List<Prediction>
+  def predict(traind: MalDictionary, G) -> List<Prediction>
 
   def kNN(traind: MalDictionary, k, G)       -> List<MalInstruction>
 }

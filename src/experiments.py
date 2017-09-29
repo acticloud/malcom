@@ -39,7 +39,7 @@ def plot_select_error_air(db, q, trainq=None, path="", ntrain=1000, step=25, out
         pG = testd.buildApproxGraph(d12)
         error = 0
         for ins in seli:
-            p      = ins.predictCount(d12, pG)[0]
+            p      = ins.predict(d12, pG)[0]
             cnt    = ins.ret_size
             pc     = p.getMem()
             #we use abs so that the errors do not cancel out
@@ -117,7 +117,7 @@ def analyze_mem_error_air(db, q, ntrain=1000, step=25):
         insl = testd.getInsList()
         insl.sort(key = lambda inst: inst.clk)
         for ins in insl:
-            p = ins.predictCount(d12, pG)[0]
+            p = ins.predict(d12, pG)[0]
             actual_size_mb = ins.ret_size / 1000000
             predic_size_mb = p.getMem()  / 1000000
             print("{:120} actual: {:10.1f} pred: {:10.1f}\n".format(ins.short,actual_size_mb,predic_size_mb))
@@ -155,7 +155,7 @@ def analyze_select_error_air(db, q, ntrain=1000, step=25):
         pG = testd.buildApproxGraph(d12)
         error = 0
         for ins in seli:
-            p     = ins.predictCount(d12, pG)[0]
+            p     = ins.predict(d12, pG)[0]
             rs    = ins.ret_size
             pm    = p.getMem()
             rs_mb = rs / 1000000
@@ -221,7 +221,7 @@ def analyze_max_mem():
                 err = 100* abs((pmm -mm) / mm)
                 print(ins.short)
                 print("query: {}, pred mem: {}, actual mem: {}, error {}".format(qno,pmm,mm,err))
-                print("cnt: {} pred cnt: {}".format(ins.cnt, ins.predictCount(d1, pG)[0].avg))
+                print("cnt: {} pred cnt: {}".format(ins.cnt, ins.predict(d1, pG)[0].avg))
                 print("")
 
 def plot_max_mem_error(q):
@@ -281,7 +281,7 @@ def plot_select_error(q):
             pG = d2.buildApproxGraph(d12)
             error = 0
             for ins in seli:
-                p   = ins.predictCount(d12, pG)[0]
+                p   = ins.predict(d12, pG)[0]
                 cnt = ins.cnt
                 pc  = p.cnt
                 error += 100* abs((pc -cnt) / cnt)
