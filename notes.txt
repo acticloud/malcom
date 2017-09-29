@@ -1,3 +1,7 @@
+## MAL operators and their arguments (not 100% complete)
+## C or X are the prefix of the MAL variables
+## For the complete list, see mal_instr.py
+
 operator        args
 projection      C   X
 projection      X   C
