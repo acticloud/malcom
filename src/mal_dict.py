@@ -29,12 +29,14 @@ class MalDictionary:
         with open(file_name,'wb') as f:
             pickle.dump(self, f)
 
-
+    # add info. from another dictionary into this one, just a simple append, no
+    #   duplication elemination
     def union(self, other):
         union_ilist   = self.getInsList() + other.getInsList()
         return MalDictionary.fromInsList(union_ilist)
 
     """
+    @des Construct a MalDictionary object from a JSON file
     @arg mfile    : str                   //json file containing query run
     @arg blacklist: list<str>             //list of blacklisted mal ins
     @arg col_stats: dict<str,ColumnStats> //column statistics
@@ -81,7 +83,8 @@ class MalDictionary:
 
     """
     @des builds a graph that approximates the count for each variable
-    @arg Maldictionary
+    @arg self MalDictionary to be predicted
+    @arg traind MalDictionary training information
     @ret dict<str,int> //dictionary with var name as a key,est count as val
     #TODO rename predictionGraph
     """
@@ -98,8 +101,11 @@ class MalDictionary:
 
 
     """
+    @arg self: MalDictionary
     @arg mals: MalInstruction
-    @ret: List<MalInstriction> //list of all exact matches
+    @arg ignoreScale should the matching ignore the argument sizes or not (for
+            different benchmark scales)
+    @ret: List<MalInstriction> //list of all exact matches of 'mals' in 'self'
     """
     def findInstr(self, mals,ignoreScale=False):
         dic = self.mal_dict
@@ -117,6 +123,7 @@ class MalDictionary:
 
     """
     !!Assumes we know each instruction's memory footprint!!
+    This is to find the real max. memory usage of a query
     @ret int //actual max bytes the query will allocate
     """
     def getMaxMem(self):
@@ -131,7 +138,9 @@ class MalDictionary:
         return max_mem
 
     """
-    @arg pG: dict<str, Prediction> //graph that relates each var to a prediction
+    This is to predict the max. memory usage of a query
+    @arg pG: dict<str, Prediction> //graph that relates each var to a
+              prediction, build by buildApproxGraph
     @ret int //actual max bytes the query will allocate
     """
     def predictMaxMem(self, pG): #TODO fix this
@@ -147,6 +156,7 @@ class MalDictionary:
 
 
     """
+    E.g. if you want to find all the SELECT instructions
     @arg mals: string //method name
     @arg nags: int    //nof arguments
     @ret: list<MalInstruction>
@@ -159,6 +169,8 @@ class MalDictionary:
         return [x for x in dic[fname] if len(x.arg_list) == nargs]
 
     """
+    @des returning the topN depending on the given function, e.g. topN of
+          memory usage or topN of exec. time
     @arg f: lamdba k: MalInstruction -> double //comparison metric
     @ret: list of topN instuctions
     """
@@ -168,6 +180,8 @@ class MalDictionary:
         return mal_list[0:n]
 
     """
+    @des returns a new MalDictionary containing only the MAL instructions
+         selected by the given filter function
     @arg f: lambda i: MalInstruction -> boolean
     retain only the mal instructions that satisfy the given function
     """
@@ -177,7 +191,12 @@ class MalDictionary:
         return MalDictionary.fromInsList(new_ilist)
 
 
-    """@experimental"""
+    """
+    Not used yet
+    An attempt to do SELECT prediction taking into account the correlation of
+      two data columns
+    @experimental
+    """
     def linkSelectInstructions(self):
         sel_ins = [i for i in self.getInsList() if i.fname in ['select','thetaselect']]
         for testi in sel_ins:
@@ -194,7 +213,7 @@ class MalDictionary:
                     prev[0].next_i = testi
     """
     @desc splits the dictionary in two randomly
-    @arg: p: double //should be between 0,1
+    @arg: p: double //should be between 0,1, determines the sizes of l1 and l2
     """
     def splitRandom(self, p):
         assert p>=0 and p<=1
@@ -205,7 +224,10 @@ class MalDictionary:
         l2 = MalDictionary.fromInsList(il[n1::])
         return (l1,l2)
 
-        """ selects sth"""
+    """
+    selects s-th.  very similar to the getTopN function, but returns a
+      dictionary instead
+    """
     def select(self, fun, perc):
         ilist = self.getInsList()
         ilist.sort(key = fun)#bda ins: -ins.mem_fprint)
