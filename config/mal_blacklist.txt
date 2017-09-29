@@ -8,3 +8,4 @@ exportOperation
 addmonths
 resultSet
 date_sub_msec_interval
+date_add_msec_interval

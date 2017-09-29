@@ -19,6 +19,11 @@ def predict_query_mem(train, test):
   query_mem = d2.predictMaxMem(pG)
 ```
 
+##TODO
+1. projection instructions (take the min of arguments instead of 2nd arg...)
+2. fix mirror instruction memory footprint (is 0....)
+3. fix substring memory error
+
 
 # Configuration files
 
