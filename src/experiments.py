@@ -89,7 +89,9 @@ def plot_mem_error_air(db, q, trainq=None, path="", output = None, ntrain=1000, 
     outf = path+'{}_q{}_memerror.pdf'.format(db,q) if output==None else output
     Utils.plotLine(ind,e,outf,'Error perc','Nof training queries')
 
-
+"""
+Useful for analyse prediction results
+"""
 def analyze_mem_error_air(db, q, ntrain=1000, step=25):
     blacklist = Utils.init_blacklist("config/mal_blacklist.txt")
 

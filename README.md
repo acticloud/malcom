@@ -45,7 +45,7 @@ matters):
 min value, max value, count, unique, width.
 
 # File Structure
-./src/malcom.py     : the driver program
+./src/malcom.py     : the main program
 
 ./src/mal_dict.py   : mal dictionary stuff
 
