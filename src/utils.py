@@ -30,6 +30,7 @@ class Prediction():
             return self.avg * Utils.sizeof(self.t)
 
 class Utils:
+    # This function helps us reading the MonetDB JSON traces
     #readline until you reach '}' or EOF
     @staticmethod
     def readJsonObject(f):
@@ -45,6 +46,7 @@ class Utils:
 
         return json.loads(''.join(lines))
 
+    # flatten a dictionary into a list
     @staticmethod
     def flatten(mdict):
         l = []
@@ -56,6 +58,8 @@ class Utils:
     def listDiff(list1,list2):
         return list(set(list1)-set(list2))
 
+    # checks if the two given lists are equal (could also have been implemented
+    #   with a FOR loop :))
     @staticmethod
     def cmp_arg_list(l1, l2):
         if(len(l1) != len(l2)):
@@ -78,22 +82,6 @@ class Utils:
                 return True
         return False
 
-    #deprecated??
-    @staticmethod
-    def approxSize(g,name, typ):
-        if name in g:
-            c = g.get(name)
-            return c*Utils.sizeof(typ)
-        else:
-            # logging.error("{}".format(name))
-            # logging.debug("000")
-            return 0
-
-    #deprecated??
-    @staticmethod
-    def isVar(name):
-        return name.startswith("X_") or name.startswith("C_")
-
     @staticmethod
     def init_blacklist(blfile):
         blacklist = []
@@ -108,13 +96,15 @@ class Utils:
 
 
     """ @arg stmt: str // short mal statement"""
+    # extract the MAL function name, args and its ret from a line of MAL
+    #   statement. currently args and ret are not used
     @staticmethod
-    def extract_fname(stmt): #TODO change name
+    def extract_fname(stmt):
         args = []
         ret  = None
         if ":=" in stmt:
             fname = stmt.split(':=')[1].split("(")[0]
-            args  = stmt.split(':=')[1].split("(")[1].split(")")[0].strip().split(",") #TODO remove
+            args  = stmt.split(':=')[1].split("(")[1].split(")")[0].strip().split(",")
             ret   = stmt.split(':=')[0].split("[")[0].replace("(","")
         elif "(" in stmt:
             fname = stmt.split("(")[0]
@@ -124,6 +114,8 @@ class Utils:
 
         return (fname.strip(),args,ret)
 
+    # find the exact operator associated with certain MAL instructions, because
+    #   the position of the operator depends on the MAL instruction
     @staticmethod
     def extract_operator(method, jobj):
         args  = jobj["arg"]
@@ -145,6 +137,10 @@ class Utils:
         else:
             raise ValueError("e??")
 
+    # Because we have e.g. SELECT operators with different number of
+    # parameters, we neeed to find the hi/lo value depending on how many
+    # parameters this operator has
+    # WARNING: if the MAL signature changes, this may break
     @staticmethod
     def hi_lo(method, op, jobj, stats):
         args = jobj["arg"]
@@ -249,6 +245,3 @@ class Utils:
             print(type_str == 'bat[:date]')
             raise TypeError("Unsupported type")
 
-    @staticmethod
-    def isVar(name):
-        return name.startswith("X_") or name.startswith("C_")
