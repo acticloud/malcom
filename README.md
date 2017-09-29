@@ -21,7 +21,12 @@ def predict_query_mem(train, test):
 ```
 
 ##TODO
-1. projection instructions (take the min of arguments instead of 2nd arg...)
+1. Possible performance optimisation of the Malcom code: MalDictionary
+   currently store all MAL instructions. This is necessary for the test query,
+   but not for the training queries, because we don't need to keep the MAL
+   instructions, e.g. bat.calc, sort, firstn,  which we can do direct
+   prediction. Basically, we only need to keep the variable MAL instructions,
+   such as SELECTs and JOINs.
 2. fix mirror instruction memory footprint (is 0....)
 3. fix substring memory error
 

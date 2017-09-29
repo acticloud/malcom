@@ -23,6 +23,7 @@ interface MalInstruction {
 
 
 """ MalInstruction Class:
+    stores all information of a MAL instruction
 @attr pc        : int        //mal programm counter
 @attr fname     : str        //function name
 @attr time      : int        //instruction duration(microseconds)
@@ -60,6 +61,7 @@ class MalInstruction:
         self.ret_vars   = ret_vars
         self.cnt        = cnt
 
+    # jobj was built in mal_dict.py, in fromJsonFile
     @staticmethod
     def fromJsonObj(jobj, stats):
         size      = int(jobj["size"])
@@ -98,7 +100,8 @@ class MalInstruction:
         elif fname in ['group','subgroup','subgroupdone','groupdone']:
             a0 = arg_list[0].col.split('.')[::-1][0]
             return GroupInstruction(*con_args, base_arg_i=0, base_col=a0, col_stats = stats.get(a0,None))
-        #Set Instructions
+        #Set Instructions: the last parameter determines how to compute the
+        #     prediction for this MAL instruction
         elif fname in ['intersect']:
             return SetInstruction(*con_args, i1=0, i2=1,fun=lambda a,b: min(a,b))
         elif fname in ['mergecand']:
@@ -167,6 +170,7 @@ class MalInstruction:
         return [arg for arg in self.arg_list if arg.isVar()]
 
     """
+    size of all instructions whose has reached its end-of-life (a.eol == 1)
     @arg pG: dict<str,Prediction> //prediciton graph: ret var -> prediction
     @ret int: prediction of the amount of memory that is freed after this inst.
     """
@@ -176,6 +180,7 @@ class MalInstruction:
         # return sum([Utils.approxSize(traind, G, a.name, a.atype))
 
     """
+    all instructions who will still be alive (a.eol == 0)
     @arg pG: dict<str,Prediction> //prediciton graph: ret_var -> prediction
     @ret int: prediction of the amount of mem the instruction uses
     """
@@ -183,6 +188,7 @@ class MalInstruction:
         dp = Prediction(0,0,0,0,'bat[:lng]',0) #default case
         return sum([pG.get(a.name,dp).getMem()  for a in self.ret_args if a.eol == 0])
 
+    """ search for the type of a variable """
     def typeof(self, rv):
         return next(iter([r.atype for r in self.ret_args if r.name == rv]))
 
@@ -194,6 +200,10 @@ class MalInstruction:
         fmt = "Instr: {} nargs: {} time: {} mem_fprint: {}"
         print(fmt.format(self.short,self.nargs, self.time, self.mem_fprint))
 
+    """
+    if two instructions are the same or not, with/without ignoring the scale of
+        the data
+    """
     def isExact(self,other,ignoreScale=False):
         if ignoreScale == False:
             return self.short == other.short
@@ -249,7 +259,7 @@ class DirectIntruction(MalInstruction):
 @desc covers the intersect, mergecand, difference, <, > insructions
 @arg i1: int //argument 1 index
 @arg i2: int //argument 2 index
-@arg fun: lambda (a,b) -> int
+@arg fun: lambda (a,b) -> int // used to do the prediction
 """
 class SetInstruction(MalInstruction):
     def __init__(self, *args, i1, i2, fun):
@@ -269,6 +279,11 @@ class SetInstruction(MalInstruction):
         t  = self.ret_args[0].atype
         return [Prediction(retv=self.ret_vars[0],ins=None, cnt=ac, avg=ac, t=t)]
 
+"""
+@desc similar to DirectIntruction, except the case that we have a "projection"
+        that returns a BAT of strings.
+      For strings, a kNN is done to find similar ones
+"""
 class ProjectInstruction(DirectIntruction):
     def __init__(self, *args):
         DirectIntruction.__init__(self, *args, base_arg_i = 0)
@@ -292,7 +307,6 @@ class ProjectInstruction(DirectIntruction):
             return [Prediction(retv=retv.name, ins=None, cnt=ac, avg=ac, t=rtype, mem=rs)]
 
         return super().predict(traind, G, default)
-
 
 class GroupInstruction(DirectIntruction):
     def __init__(self, *args, base_arg_i, base_col, col_stats):
@@ -318,22 +332,24 @@ class GroupInstruction(DirectIntruction):
         p = self.approxArgCnt(G, default)
         retl = self.ret_args
         if self.fname == 'subgroupdone':
-            #TODO argDiv
+            #TODO taking argDiv into account later
+            #TODO might need a better implementation than using kNN later
             kNN  = self.kNN(traind, 1, G)
             if len(kNN)>0:
                 nn1r = kNN[0].ret_args
                 return [Prediction(retv=r.name, ins=None, cnt=nnr.cnt, avg=nnr.cnt, t=r.atype) for (r,nnr) in zip(retl,nn1r) if r.eol==0]
         elif self.fname == 'groupdone' and self.col_stats != None:
+            # for groupdone three things are returned, so we need to compute 3 Predictions
             stats = self.col_stats
             r1 = retl[0]
             p1 = Prediction(retv=r1.name, ins=None, cnt=p, avg=p, t=r1.atype)
             r2 = retl[1]
             p2 = Prediction(retv=r2.name, ins=None, cnt=stats.uniq, avg=stats.uniq, t=r2.atype)
-            print(self.col_stats.uniq)
             r3 = retl[2]
             p3 = Prediction(retv=r3.name, ins=None, cnt=stats.uniq, avg=stats.uniq, t=r3.atype)
             return [p for (r,p) in [(r1,p1),(r2,p2),(r3,p3)] if r.eol == 0]
 
+        # If we have a groupdone but no column statistics, then for each variable, just return the input size, which gives an overestimation
         return [Prediction(retv=r.name, ins=None, cnt=p, avg=p, t=r.atype) for r in retl if r.eol==0]
 
 
@@ -376,7 +392,10 @@ class LoadInstruction(MalInstruction):
         # if self.fname in ['tid','bind_idxbat']:
             # m=0
         # else:
-            #TODO column statistics
+            #TODO replace the self.cnt information with column statistics,
+            #  because the current implementation is a little bit cheating,
+            #  since in reality, we won't have the information of self.cnt, but
+            #  we can easily get that from the column statistics.
             # l = traind.mal_dict[self.fname] if i.arg_list[0].col==self.arg_list[0].col][0]
             # m = [i.ret_size for i in
         t = self.ret_args[0].atype
@@ -434,6 +453,8 @@ class JoinInstruction(MalInstruction):
         return [ t[0] for t in cand[0:k] ]
 
     def predict(self, traind, g):
+        # for crossproduct, the predicted size is siz-of(x) * size-of(y)
+        # for other joins, use kNN for the prediction
         if self.fname == 'crossproduct':
             p = reduce(lambda x,y: x*y, self.approxArgCnt(g))
             retv   = self.ret_args
@@ -460,9 +481,12 @@ number_types = ['bat[:int]','bat[:lng]','lng','bat[:hge]','bat[:bte]','bat[:sht]
 class SelectInstruction(MalInstruction):
     def __init__(self, *def_args, jobj, stats):
         MalInstruction.__init__(self, *def_args)
-        self.ctype    = jobj["arg"][0].get("type","UNKNOWN")#TODO fix
+        # this is the column type
+        self.ctype    = jobj["arg"][0].get("type","UNKNOWN")
         alias_iter    = iter([o["alias"] for o in jobj["arg"] if "alias" in o])
+        # this is the initial column
         self.col      = next(alias_iter,"TMP").split('.')[-1]
+        # if we have a projection argument, this is the projection column
         self.proj_col = next(alias_iter,"TMP").split('.')[-1]
         self.arg_size = [o.get("size",0) for o in jobj.get("arg",[])]
         self.op       = Utils.extract_operator(self.fname, jobj)
@@ -500,6 +524,7 @@ class SelectInstruction(MalInstruction):
 
         return uniqs
 
+    # for the range instructions
     def isIncluded(self,other):
         assert self.ctype == other.ctype
         t = self.ctype
@@ -507,7 +532,8 @@ class SelectInstruction(MalInstruction):
             return self.lo >= other.lo and self.hi <= other.hi
 
         return None
-    #
+
+    # for the range instructions
     def includes(self, other):
         assert self.ctype == other.ctype
         t = self.ctype
@@ -548,15 +574,16 @@ class SelectInstruction(MalInstruction):
         assert self.ctype == other.ctype
         # if self.includes(other) or self.isIncluded(other): #TODO remove this if
         if self.ctype in ['bat[:int]','bat[:lng]','lng','bat[:hge]','bat[:bte]','bat[:sht]']:
+            # for numerical values, return square distance
             return float((self.lo-other.lo)**2 + (self.hi-other.hi)**2)
-        elif self.ctype == 'bat[:date]':
+        elif self.ctype == 'bat[:date]': #TODO implement timestamp
             (min_lo,max_lo) = (min(self.lo,other.lo),max(self.lo,other.lo))
             (min_hi,max_hi) = (min(self.hi,other.hi),max(self.hi,other.hi))
             return float((max_lo-min_lo).days + (max_hi-min_hi).days)
         elif self.ctype == 'bat[:str]':
             assert self.lo == self.hi and other.lo == other.hi
             return distance.levenshtein(self.lo, other.lo)
-        elif self.ctype == 'bat[:bit]':
+        elif self.ctype == 'bat[:bit]': # just try to find something close to the argument size
             return self.approxArgDist(other, G)
 
         logging.error("What type is this {}".format(self.ctype))
@@ -580,7 +607,9 @@ class SelectInstruction(MalInstruction):
     """
     def predict(self, traind, approxG, default=None):
         assert approxG != None
+        # First get candidate list by searching for instructions with the same name
         self_list = traind.mal_dict.get(self.fname,[])
+
         # prev_list = []
         #
         # tmp = self
@@ -604,10 +633,12 @@ class SelectInstruction(MalInstruction):
         #     cand_list = list([ins.next_i for ins in prev_nn])
         # else:
         #     cand_list = self_list
+
+        # Second: filter candidate list by columns, projection columns and length of arguments
         cand_list = [ins for ins in self_list if self.col == ins.col and self.proj_col == ins.proj_col and len(ins.arg_list) == len(self.arg_list)]
         # random.shuffle(cand_list)
         nn        = self.kNN(cand_list,5, approxG)
-        rt        = self.ret_args[0].atype #return type TODO ctype ??
+        rt        = self.ret_args[0].atype #return type
 
         #DEBUG
         if self.fname == 'thetaselect' and self.op=='>':
@@ -622,15 +653,15 @@ class SelectInstruction(MalInstruction):
             # for di in [ins for ins in self_list if self.col == ins.col]:
                 # logging.error("cand: {} {} {}".format(di.short, di.col, di.proj_col))
 
+        # still just for debugging: keep only one instruction, iso 5 instructions
         nn.sort( key = lambda ins: self.approxArgDist(ins, approxG))
         nn1       = nn[0]
         arg_cnt   = self.approxArgCnt(approxG)
 
-
         if arg_cnt != None:
+            # do the proper scale up/down according to the proportion
             avg  = sum([i.extrapolate(self) * ( arg_cnt / i.argCnt()) for i in nn if i.argCnt()>0]) / len(nn)
-            # avgm = sum([i.ret_size * arg_cnt / i.argCnt() for i in nn if i.argCnt()>0]) / len(nn)
-            cal_avg = min(avg,arg_cnt)
+            cal_avg = min(avg,arg_cnt) # calibration
             avgm = cal_avg * Utils.sizeof(rt)
             cnt1 = nn1.extrapolate(self) * arg_cnt / nn1.argCnt() if nn1.argCnt() >0 else nn1.extrapolate(self)
             return [Prediction(retv = self.ret_vars[0], ins=nn1,cnt = cnt1, avg=cal_avg, t=rt, mem=avgm)]
@@ -649,7 +680,7 @@ class SelectInstruction(MalInstruction):
                 return self.cnt*other_dist/self_dist
             else:
                 return self.cnt
-        elif self.ctype == 'bat[:date]':
+        elif self.ctype == 'bat[:date]': # TODO: implement time stamp
             diff1 = (other.hi-other.lo)
             diff2 = (self.hi-self.lo)
 
