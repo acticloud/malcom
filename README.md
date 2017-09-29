@@ -2,7 +2,8 @@
 Early Stage cost model for mal statements
 work in progress....
 
-## Example Usage: Find the memory footprint of a query
+## Example Usage: use the following sequence of functions to find the memory
+##   footprint of a query
 
 ```
 def predict_query_mem(train, test):
@@ -16,7 +17,7 @@ def predict_query_mem(train, test):
 
   pG        = testd.buildApproxGraph(traind)
 
-  query_mem = d2.predictMaxMem(pG)
+  query_mem = testd.predictMaxMem(pG)
 ```
 
 ##TODO
@@ -33,7 +34,8 @@ List of all the mal instruction we do not wish to consider (define,mvc etc...)
 ## config/{db}_stats.txt
 For each different db we want to use, there must be a | separated file,
 
-that contains the following statistics for each column,
+that contains the following statistics for each column (the order here
+matters):
 
 min value, max value, count, unique, width.
 
@@ -59,7 +61,8 @@ The dictionary that holds all the instructions
 
 
 ## MalInstruction
-Base class for bookkeeping all the mal instruction metadata()
+Base class for bookkeeping information for the different types of MAL
+ instructions metadata
 
 ## MalInstruction interface
 All MalInstruction sub classes must satisfy the following interface:
@@ -77,3 +80,6 @@ interface MalInstruction {
 ```
 
 ## MalArgument
+Containts structure to denote a MAL variable (i.e. those starting with a 'C' or an 'X')
+Used by mal_instr.py
+
