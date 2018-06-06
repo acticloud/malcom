@@ -55,8 +55,7 @@ The approach taken differs from traditional Cost-Based Optimizers (CBO), which g
 Malcom harvests this information to predict future operations of similar nature.
 The rational stems from the common knowledge that many database application
 environments have a limited number of ``business transactions'' or ``BI templates'' where only some parameters are changed with each call.
-This knowledge has been used in the past to, for instance, drive development of DBA wizards \cite{microsoft} for index selection and self-tuning optimizers
-\cite{IBM} to avoid expensive join paths.
+This knowledge has been used in the past to, for instance, drive development of DBA wizards\footnote{E.g. MicroSoft AutoAdmin: \url{https://www.microsoft.com/en-us/research/project/autoadmin/}} for index selection and self-tuning optimizers \footnote{E.g. IBM DatArces Optimizer: \url{https://www.ibm.com/us-en/marketplace/datarcs-optimizer}} to avoid expensive join paths.
 
 Outline of paper. Section \ref{Background} provides a short introduction
 to the MonetDB architecture and the projects involved.

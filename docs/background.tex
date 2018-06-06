@@ -1,17 +1,17 @@
 \section{Background}
 \label{Background}
 In this section we summarize the salient features of resilient intermediates
-for query processing., the leading open-source  column store and the envisioned
+for query processing., the leading open-source column store and the envisioned
 system ExaNest, an exascale HPC platform for data-intensive computing.
 
 \subsection{A Column Store}
 %Recap some MonetDB stuff on how queries are compiled.
-MonetDB is a widely used column store that internally is uses resident
-intermediates to break up query processing in well identifying steps.
+MonetDB is a widely used column store that internally uses resident
+intermediates to break up query processing in well identified steps.
 The query plan is broken up into independent steps, glued together into a
-dataflow dependency graph.  The dataflow graph is greedily consumed by the
+dataflow dependency graph. The dataflow graph is greedily consumed by the
 database kernel assigning a single core to a single operation.
-The resource pressure is kept at a minimal to trim down the degree  of parallel
+The resource pressure is kept at a minimal to trim down the degree of parallel
 processing when the main resource, RAM, is heavily used.
 The system can be instructed to produce an event record for each completed instruction.
 This provides a.o. insight into the input/output sizes and timing.
@@ -23,13 +23,11 @@ tables into independent partitions using either a hash-key or ranges.
 The partitioning scheme can be used to orchestrate distributed processing
 in an optimal way most of the time.
 
+Apache Spark CBO\footnote{\url{https://databricks.com/blog/2017/08/31/cost-based-optimizer-in-apache-spark-2-2.html}}: add some description
+
 \section{Query Execution Model}
 In this section we describe how the MonetDB query execution engine was used
- to develop a novel. We also illustrate the data at our disposal to predict
-
-\section{Apache Spark CBO}
-\href{https://databricks.com/blog/2017/08/31/cost-based-optimizer-in-apache-spark-2-2.html}{https://databricks.com/blog/2017/08/31/cost-based-optimizer-in-apache-spark-2-2.html}
-add some description
+ to develop a novel .... We also illustrate the data at our disposal to predict
 
 \subsection{Architecture}
 Figure \ref{fig} illustrates the components our reference system, MonetDB,
