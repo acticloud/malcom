@@ -5,18 +5,18 @@ distributed processing platforms. Cluster-based products are readily available \
 but are often limited to a few tens of compute nodes and call for a strong engineering
 to avoid hardware bottlenecks, such as in Exadata \cite{}, SQL PWD \cite{}, IBM Blu \cite{} and ....
 
-A plethora of research activities have shows that in all but the simplest cases,
-achieving a good performance is at least very hard. Especially when the query
-involves joins spread over multiple compute nodes and require an expensive data exchange.
+A plethora of research activities have showen that in all but the simplest cases,
+achieving a good performance is at least very hard. Especially when a query
+involves joins spread over multiple compute nodes and requires expensive data exchanges.
 
 The predominant way out, taken in NoSQL systems  \cite{Casandra,Impala}
 is to address part of the problem space by focusing on select-aggregate queries.
 This focus on part of the problem space for distributed query processing has
-been shown pivotal to support big-data analytics in many real-world circumstances,
-as shown by the widespread use of Spark \cite{},
+been pivotal to support big-data analytics in many real-world circumstances,
+as shown by the rapidly growing popularity of Spark \cite{},
 which is widely used nowadays to encode distributed applications.
 The basic abstraction in Spark is a Resilient Distributed Dataset (RDD),
-which represents an immutable, partitioned collection of elements that can be
+which represents an immutable partitioned collection of elements that can be
 operated on in parallel using operators, such as map, filter, persist and aggregates.
 Moreover, the RDD is the basic component to exchange between
 operators, threads, cores and machines.
@@ -31,15 +31,15 @@ Although in most cases, it is easier to scale-up for improved response time,
 partitioning a database to benefit from the low price tag, better use of parallel IO,
 or resource limitations of smaller machines is still worth considering.
 Distributed database management systems have followed the same route \cite{distributed DB}.
-However, the major hurdle that has blocked progress for decades is the insurmountable task
+However, the major hurdle that has blocked the progress for decades is the insurmountable task
 to create an optimizer to derived an optimal plan \cite{}.
 
 In this paper we take a fresh look at optimizing query processing in the context
 of where intermediates in a query plan are fully materialized before passing on
 towards the next operator. This model fits the Spark programming model,
 but also the query execution model underlying MonetDB.
-Resilient intermediates provides new avenue for query optimization and
-scheduling as it underlying computation model is based on
+Resilient intermediates provides new avenues for query optimization and
+scheduling as its underlying computation model is based on
 materialization of all intermediate steps.
 
 The main contributions of this paper are
@@ -51,15 +51,11 @@ The main contributions of this paper are
 	\item ...
 \end{itemize}
 
-The approach taken differs from traditional cost-based optimizers by sampling
-the state of actual execution of primitive operations.
-For, after each query step we have precise knowledge of the resources claimed.
-This information can be harvested and to predict future operations of similar nature.
-The rational stems from the common knowledge that any database application
-environment has a limited number of 'business transactions' or 'BI templates'
-where only some parameters are changed with each call.
-This knowledge has been used in the past to drive development of DBA
-wizards \cite{microsoft} for index selection and self-tuning optimizers
+The approach taken differs from traditional Cost-Based Optimizers (CBO), which generally sample the state of actual execution of primitive operations, e.g. Oracle CBO\footnote{\url{https://docs.oracle.com/cd/B10500_01/server.920/a96533/optimops.htm}} and HIVE CBO\footnote{\url{https://hortonworks.com/blog/hive-0-14-cost-based-optimizer-cbo-technical-overview/}}, because after each query step we have precise knowledge of the resources claimed.
+Malcom harvests this information to predict future operations of similar nature.
+The rational stems from the common knowledge that many database application
+environments have a limited number of ``business transactions'' or ``BI templates'' where only some parameters are changed with each call.
+This knowledge has been used in the past to, for instance, drive development of DBA wizards \cite{microsoft} for index selection and self-tuning optimizers
 \cite{IBM} to avoid expensive join paths.
 
 Outline of paper. Section \ref{Background} provides a short introduction
