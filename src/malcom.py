@@ -1,18 +1,11 @@
 #!/usr/bin/python3
-import sys
-import json
-import random
 import logging
 import argparse
 import experiments
-from utils    import Utils
-from pprint   import pprint
-from utils    import Prediction
-from stats    import ColumnStats
-from mal_dict import MalDictionary
+
 
 def init_logger(log_level_str):
-    if log_level_str   == 'INFO':
+    if log_level_str == 'INFO':
         log_level = logging.INFO
     elif log_level_str == 'DEBUG':
         log_level = logging.DEBUG
@@ -34,48 +27,54 @@ def init_logger(log_level_str):
     # add ch to logger
     logger.addHandler(ch)
 
+
 def init_parser():
     parser = argparse.ArgumentParser(
-        description    = 'Malcom: Predicting things',
-        epilog         = '''Satisfied ?''',
+        description='Malcom: Predicting things',
+        epilog='''Satisfied ?''',
         formatter_class=argparse.MetavarTypeHelpFormatter
     )
     parser.add_argument('--log_level', type=str, default='INFO', required=False)
-    parser.add_argument('--db', type = str, help = 'db name', required=False)
+    parser.add_argument('--db', type=str, help='db name', required=False)
     return parser
+
 
 def plot_tpch10_select_error():
     pth = "./docs/figs/tpch10/"
-    d   = 'tpch10'
-    for i in set(range(1,23))-set([10,13]):
+    d = 'tpch10'
+    for i in set(range(1, 23)) - set([10, 13]):
         q = "0{}".format(i) if i < 10 else str(i)
         o = "./docs/figs/tpch10/tpch10_sel{}_error.pdf".format(q)
-        experiments.plot_select_error_air(d,q,ntrain=200, path=pth, output=o)
+        experiments.plot_select_error_air(d, q, ntrain=200, path=pth, output=o)
+
 
 def plot_tpch10_mem_error():
     pth = "./docs/figs/tpch10/"
-    d   = 'tpch10'
-    for i in set(range(1,23))-set([10,13]):
+    d = 'tpch10'
+    for i in set(range(1, 23)) - set([10, 13]):
         q = "0{}".format(i) if i < 10 else str(i)
         o = "./docs/figs/tpch10/tpch10_q{}_memerror.pdf".format(q)
-        experiments.plot_mem_error_air(d,q,ntrain=200,path=pth,output=o)
+        experiments.plot_mem_error_air(d, q, ntrain=200, path=pth, output=o)
+
 
 def plot_airtraffic_select_error():
     f = "./docs/figs/airtraffic/airtraffic_sel{}_error.pdf"
-    for q in ['04','09','10','11','15.1','19.1']:
-        o = f.format(q.replace('.','_'))
-        experiments.plot_select_error_air('airtraffic',q,trainq=q,output=o)
+    for q in ['04', '09', '10', '11', '15.1', '19.1']:
+        o = f.format(q.replace('.', '_'))
+        experiments.plot_select_error_air('airtraffic', q, trainq=q, output=o)
+
 
 def plot_airtraffic_mem_error():
     f = "./docs/figs/airtraffic/airtraffic_q{}_memerror.pdf"
-    for q in ['04','09','10','11','15.1','19.1']:
+    for q in ['04', '09', '10', '11', '15.1', '19.1']:
         testq = q
-        out   = f.format(q.replace('.','_'))
-        experiments.plot_mem_error_air('airtraffic',testq,trainq=q,output=out)
+        out = f.format(q.replace('.', '_'))
+        experiments.plot_mem_error_air('airtraffic', testq, trainq=q, output=out)
+
 
 if __name__ == '__main__':
     parser = init_parser()
-    args   = parser.parse_args()
+    args = parser.parse_args()
     init_logger(args.log_level)
     # experiments.predict_max_mem_tpch10()
     # experiments.plot_mem_error_air('airtraffic','11',path="./")

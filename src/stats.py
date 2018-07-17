@@ -6,13 +6,15 @@
 @attr uniq: int //number of unique elements
 @attr wid : int //width of column
 """
+
+
 class ColumnStats:
     def __init__(self, width, minv, maxv, count, uniq):
-        self.cnt  = int(count)
+        self.cnt = int(count)
         self.minv = minv
         self.maxv = maxv
         self.uniq = int(uniq)
-        self.wid  = int(width)
+        self.wid = int(width)
 
     @staticmethod
     def fromStr(line):
@@ -29,7 +31,8 @@ class ColumnStats:
     #     return dict(d)
 
     def __str__(self):
-        return "{:8} {:8} {:8} {}".format(self.cnt,self.min,self.max,self.uniq)
+        return "{:8} {:8} {:8} {}".format(self.cnt, self.minv, self.maxv, self.uniq)
+
 
 class ColumnStatsD:
     def __init__(self, d):
@@ -42,5 +45,5 @@ class ColumnStatsD:
             d.append(ColumnStats.fromStr(line))
         return dict(d)
 
-    def __getitem__(self,c):
+    def __getitem__(self, c):
         return self.statsd[c]
