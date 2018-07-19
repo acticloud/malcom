@@ -13,12 +13,12 @@ import re
 import sys
 import logging
 import Levenshtein
-from mal_arg  import Arg
-from utils    import Utils
+from mal_arg import Arg
+from utils import Utils
 from functools import reduce
 from datetime import datetime
-from utils    import Prediction
-from stats    import ColumnStats
+from utils import Prediction
+from stats import ColumnStats
 
 
 class MalInstruction:

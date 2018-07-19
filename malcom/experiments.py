@@ -1,9 +1,15 @@
 import logging
 # import os
-from utils    import Utils
-from stats    import ColumnStatsD
+from utils import Utils
+from stats import ColumnStatsD
 from mal_dict import MalDictionary
 
+
+def parse_experiment_definition(filename):
+    pass
+
+
+# EVERYTHING BELOW THIS LINE IS DEPRECATED
 
 def plot_select_error_air(db, q, trainq=None, path="", ntrain=1000, step=25, output=None):
     assert db == 'tpch10' or db == 'airtraffic'
@@ -165,8 +171,8 @@ def analyze_select_error_air(db, q, ntrain=1000, step=25):
             p = ins.predict(d12, pG)[0]
             rs = ins.ret_size
             pm = p.getMem()
-            rs_mb = rs / 1000000
-            pm_mb = p.getMem() / 1000000
+            rs_mb = rs / 1_000_000
+            pm_mb = p.getMem() / 1_000_000
             print(f.format(ins.short, rs_mb, pm_mb, ins.argCnt(), ins.approxArgCnt(pG)))
             print("NNi ", p.ins.short)
             error += 100 * abs((pm - rs) / rs)

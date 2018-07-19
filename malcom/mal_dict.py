@@ -2,8 +2,8 @@ import sys
 import random
 import pickle
 import logging
-from utils        import Utils
-from mal_instr    import MalInstruction
+from utils import Utils
+from mal_instr import MalInstruction
 
 
 class MalDictionary:

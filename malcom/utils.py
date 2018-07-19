@@ -4,7 +4,6 @@ import logging
 import matplotlib.pyplot as plt
 
 
-
 class Prediction():
     """
     @attr retv: str            //name of the returned value
@@ -35,7 +34,7 @@ class Utils:
     # readline until you reach '}' or EOF
     @staticmethod
     def readJsonObject(f):
-        lines  = []
+        lines = []
         rbrace = False
         while not rbrace:
             line = f.readline()
@@ -95,20 +94,20 @@ class Utils:
     def loadStatistics(sfile):
         return ColumnStatsD.fromFile(sfile)
 
-    """ @arg stmt: str // short mal statement"""
     # extract the MAL function name, args and its ret from a line of MAL
     #   statement. currently args and ret are not used
     @staticmethod
     def extract_fname(stmt):
+        """ @arg stmt: str // short mal statement"""
         args = []
-        ret  = None
+        ret = None
         if ":=" in stmt:
             fname = stmt.split(':=')[1].split("(")[0]
-            args  = stmt.split(':=')[1].split("(")[1].split(")")[0].strip().split(",")
-            ret   = stmt.split(':=')[0].split("[")[0].replace("(", "")
+            args = stmt.split(':=')[1].split("(")[1].split(")")[0].strip().split(",")
+            ret = stmt.split(':=')[0].split("[")[0].replace("(", "")
         elif "(" in stmt:
             fname = stmt.split("(")[0]
-            args  = stmt.split("(")[1].split(")")[0].strip().split(" ")
+            args = stmt.split("(")[1].split(")")[0].strip().split(" ")
         else:
             fname = stmt
 
@@ -118,7 +117,7 @@ class Utils:
     # the position of the operator depends on the MAL instruction
     @staticmethod
     def extract_operator(method, jobj):
-        args  = jobj["arg"]
+        args = jobj["arg"]
         nargs = len(args)
         if method == "thetaselect":
             if nargs == 3:
@@ -182,7 +181,7 @@ class Utils:
 
     @staticmethod
     def extract_bounds(method, jobj):
-        args  = jobj["args"]
+        args = jobj["args"]
         # nargs = len(args)
         if method == "select":
             if args == 3:
