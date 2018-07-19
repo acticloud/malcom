@@ -1,14 +1,12 @@
-"""
-@desc Column statistics class
-@attr cnt : int //number of column elements
-@attr minv: obj //minimum value of column
-@attr maxf: obj //maximum value of column
-@attr uniq: int //number of unique elements
-@attr wid : int //width of column
-"""
-
-
 class ColumnStats:
+    """
+    @desc Column statistics class
+    @attr cnt : int //number of column elements
+    @attr minv: obj //minimum value of column
+    @attr maxf: obj //maximum value of column
+    @attr uniq: int //number of unique elements
+    @attr wid : int //width of column
+    """
     def __init__(self, width, minv, maxv, count, uniq):
         self.cnt = int(count)
         self.minv = minv
