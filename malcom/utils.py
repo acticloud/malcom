@@ -1,28 +1,27 @@
 import json
 import numpy
 import logging
-from pylab import savefig
 import matplotlib.pyplot as plt
 
-"""
-@attr retv: str            //name of the returned value
-@attr ins : MalInstruction //the closest instruction
-@attr cnt : int            //predicted number of elements
-@attr avg : int            //average element count (of 5 in case of select)
-@attr t   : str            //type??
-@attr mem : int            //predicted memory size (non trivial in case of str)
-TODO: add min,max ....
-"""
 
 
 class Prediction():
+    """
+    @attr retv: str            //name of the returned value
+    @attr ins : MalInstruction //the closest instruction
+    @attr cnt : int            //predicted number of elements
+    @attr avg : int            //average element count (of 5 in case of select)
+    @attr t   : str            //type??
+    @attr mem : int            //predicted memory size (non trivial in case of str)
+    TODO: add min,max ....
+    """
     def __init__(self, retv, ins, cnt, avg, t, mem=None):
         self.retv = retv
-        self.ins  = ins
-        self.cnt  = cnt
-        self.avg  = avg
-        self.t    = t
-        self.mem  = mem
+        self.ins = ins
+        self.cnt = cnt
+        self.avg = avg
+        self.t = t
+        self.mem = mem
 
     def getMem(self):
         if self.mem is not None:
@@ -202,24 +201,26 @@ class Utils:
         # bar_width = 0.5
         # rects1 = ax.bar(ind-width, sp, width, color='b')
         ind = numpy.arange(len(x)) + 1
-        rects1 = ax.bar(ind, y, width, color='b', log=lscale)
+        ax.bar(ind, y, width, color='b', log=lscale)
         ax.set_ylabel(ylabel)
         ax.set_title(xlabel)
         ax.set_xticks(ind + width)
         ax.set_xticklabels(x)
 
-        savefig(output)#.format(sys.argv[1].split('.')[0]))
+        fig.savefig(output)  # .format(sys.argv[1].split('.')[0]))
+        fig.clf()
 
     @staticmethod
     def plotLine(x, y, output, ylabel, xlabel, lscale=False):
-        plt.xlabel(xlabel)
-        plt.ylabel(ylabel)
+        fig, ax = plt.subplots()
+        ax.xlabel(xlabel)
+        ax.ylabel(ylabel)
         # plt.xticks(x, ind)
 
-        plot1 = plt.plot(x, y, marker='o', color='b')
+        ax.plot(x, y, marker='o', color='b')
 
-        savefig(output)  # .format(sys.argv[1].split('.')[0]))
-        plt.clf()
+        fig.savefig(output)  # .format(sys.argv[1].split('.')[0]))
+        fig.clf()
 
     @staticmethod
     def sizeof(type_str):
