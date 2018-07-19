@@ -31,11 +31,12 @@ def init_logger(log_level_str):
 def init_parser():
     parser = argparse.ArgumentParser(
         description='Malcom: Predicting things',
-        epilog='''Satisfied ?''',
         formatter_class=argparse.MetavarTypeHelpFormatter
     )
-    parser.add_argument('--log_level', type=str, default='INFO', required=False)
-    parser.add_argument('--db', type=str, help='db name', required=False)
+    parser.add_argument('--log_level', '-l', type=str, default='INFO', required=False)
+    parser.add_argument('--experiment', '-e', type=str,
+                        help='experiment configuration file', required=True)
+    # parser.add_argument('--db', type=str, help='db name', required=False)
     return parser
 
 
@@ -76,6 +77,7 @@ if __name__ == '__main__':
     parser = init_parser()
     args = parser.parse_args()
     init_logger(args.log_level)
+
     # experiments.predict_max_mem_tpch10()
     # experiments.plot_mem_error_air('airtraffic','11',path="./")
     # experiments.analyze_mem_error_air('airtraffic',11)
