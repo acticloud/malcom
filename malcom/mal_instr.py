@@ -12,7 +12,7 @@ interface MalInstruction {
 import re
 import sys
 import logging
-import distance
+import Levenshtein
 from mal_arg  import Arg
 from utils    import Utils
 from functools import reduce
@@ -550,11 +550,11 @@ class SelectInstruction(MalInstruction):
     def argCnt(self):
         return self.lead_arg.cnt
 
-    """
-    @desc argument distance between self and another train instruction
-    !!ASSUMES other is a known (training) instruction (we know the cnt)!!
-    """
     def approxArgDist(self, other, G):
+        """
+        @desc argument distance between self and another train instruction
+        !!ASSUMES other is a known (training) instruction (we know the cnt)!!
+        """
         assert G is not None
         lead_arg = self.lead_arg
         ac = G[lead_arg.name].avg if lead_arg.name in G else 'inf'
@@ -566,12 +566,12 @@ class SelectInstruction(MalInstruction):
         return sum(diff)
 
     def argDiv(self, other):
-        return other.lead_arg.cnt /self.lead_arg.cnt
+        return other.lead_arg.cnt / self.lead_arg.cnt
 
 
-    #TODO rename range dist
-    """ @desc distance between the range(hi,lo) of self, other """
+    # TODO rename range dist
     def distance(self, other, G=None):
+        """ @desc distance between the range(hi,lo) of self, other """
         assert self.ctype == other.ctype
         # if self.includes(other) or self.isIncluded(other): #TODO remove this if
         if self.ctype in ['bat[:int]', 'bat[:lng]', 'lng', 'bat[:hge]', 'bat[:bte]', 'bat[:sht]']:
@@ -583,15 +583,15 @@ class SelectInstruction(MalInstruction):
             return float((max_lo - min_lo).days + (max_hi - min_hi).days)
         elif self.ctype == 'bat[:str]':
             assert self.lo == self.hi and other.lo == other.hi
-            return distance.levenshtein(self.lo, other.lo)
+            return Levenshtein.levenshtein(self.lo, other.lo)
         elif self.ctype == 'bat[:bit]':  # just try to find something close to the argument size
             return self.approxArgDist(other, G)
 
         logging.error("What type is this {}".format(self.ctype))
         assert False
 
-    """checks if the two instructions have the same column,type,operator"""
     def isSameType(self, ins):
+        """checks if the two instructions have the same column,type,operator"""
         return self.col == ins.col and self.op == ins.op and self.ctype == ins.ctype
 
     def kNN(self, ilist, k, G):
@@ -669,8 +669,8 @@ class SelectInstruction(MalInstruction):
             avg = sum([i.extrapolate(self) for i in nn]) / len(nn)
             return [Prediction(retv=self.ret_vars[0], ins=nn1, cnt=nn1.extrapolate(self), avg=avg, t=rt)]
 
-    """ assumes self is training instruction!!! """
     def extrapolate(self, other):
+        """ assumes self is training instruction!!! """
         if self.ctype in ['bat[:int]', 'bat[:lng]', 'lng', 'bat[:hge]', 'bat[:bte]', 'bat[:sht]']:
             self_dist = self.hi - self.lo
             other_dist = other.hi - other.lo
