@@ -206,6 +206,7 @@ class MalDictionary:
                     # logging.debug("Linked {} -> {}".format(testi.short, prev[0].short))
                     testi.prev_i = prev[0]
                     prev[0].next_i = testi
+
     def splitRandom(self, p):
         """
         @desc splits the dictionary in two randomly

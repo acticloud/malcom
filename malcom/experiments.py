@@ -130,8 +130,8 @@ def analyze_mem_error_air(db, q, ntrain=1000, step=25):
         insl.sort(key=lambda inst: inst.clk)
         for ins in insl:
             p = ins.predict(d12, pG)[0]
-            actual_size_mb = ins.ret_size / 1000000
-            predic_size_mb = p.getMem() / 1000000
+            actual_size_mb = ins.ret_size / 1_000_000
+            predic_size_mb = p.getMem() / 1_000_000
             print("{:120} actual: {:10.1f} pred: {:10.1f}\n".format(ins.short, actual_size_mb, predic_size_mb))
 
 
