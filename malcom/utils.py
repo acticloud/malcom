@@ -34,6 +34,11 @@ class Utils:
     # readline until you reach '}' or EOF
     @staticmethod
     def readJsonObject(f):
+        # Check to see if the object is all in one line
+        line = f.readline()
+        if line.endswith('}\n'):
+            return line
+
         lines = []
         rbrace = False
         while not rbrace:
