@@ -162,10 +162,6 @@ class MalInstruction:
             logging.error("What instruction is this ?? {}".format(fname))
             return MalInstruction(*con_args)
 
-    def getArgVars(self):
-        """ returns only the arguments that are tmp variables(C_...,X_..) """
-        return [arg for arg in self.arg_list if arg.isVar()]
-
     def approxFreeSize(self, pG):
         """
         size of all instructions whose has reached its end-of-life (a.eol == 1)
@@ -184,18 +180,6 @@ class MalInstruction:
         """
         dp = Prediction(0, 0, 0, 0, 'bat[:lng]', 0)  # default case
         return sum([pG.get(a.name, dp).getMem()  for a in self.ret_args if a.eol == 0])
-
-    def typeof(self, rv):
-        """ search for the type of a variable """
-        return next(iter([r.atype for r in self.ret_args if r.name == rv]))
-
-    def printShort(self):
-        fmt = "Instr: {} nargs: {} time: {} mem_fprint: {}"
-        print(fmt.format(self.fname, self.nargs, self.time, self.mem_fprint))
-
-    def printVerbose(self):
-        fmt = "Instr: {} nargs: {} time: {} mem_fprint: {}"
-        print(fmt.format(self.short, self.nargs, self.time, self.mem_fprint))
 
     def isExact(self, other, ignoreScale=False):
         """if two instructions are the same or not, with/without ignoring the
@@ -220,6 +204,37 @@ class MalInstruction:
     # def __ne__(self, other):
     #     return self.__ne__(other)
 
+    # UNUSED?
+    # @staticmethod
+    # def removeDuplicates(ins_list):
+    #     bounds_set = set()
+    #     uniqs = []
+    #     for ins in ins_list:
+    #         if (ins.hi, ins.lo, ins.col) not in bounds_set:
+    #             bounds_set.add((ins.hi, ins.lo, ins.col))
+    #             uniqs.append(ins)
+
+    #    return uniqs
+
+    # UNUSED?
+    # def getArgVars(self):
+    #     """ returns only the arguments that are tmp variables(C_...,X_..) """
+    #     return [arg for arg in self.arg_list if arg.isVar()]
+
+    # UNUSED?
+    # def typeof(self, rv):
+    #      """ search for the type of a variable """
+    #      return next(iter([r.atype for r in self.ret_args if r.name == rv]))
+
+    # UNUSED?
+    # def printShort(self):
+    #     fmt = "Instr: {} nargs: {} time: {} mem_fprint: {}"
+    #     print(fmt.format(self.fname, self.nargs, self.time, self.mem_fprint))
+
+    # UNUSED?
+    # def printVerbose(self):
+    #     fmt = "Instr: {} nargs: {} time: {} mem_fprint: {}"
+    #     print(fmt.format(self.short, self.nargs, self.time, self.mem_fprint))
 
 class DirectIntruction(MalInstruction):
     """
@@ -514,17 +529,6 @@ class SelectInstruction(MalInstruction):
             self.hi = hi
             self.lo = lo
 
-    @staticmethod
-    def removeDuplicates(ins_list):
-        bounds_set = set()
-        uniqs = []
-        for ins in ins_list:
-            if (ins.hi, ins.lo, ins.col) not in bounds_set:
-                bounds_set.add((ins.hi, ins.lo, ins.col))
-                uniqs.append(ins)
-
-        return uniqs
-
     # for the range instructions
     def isIncluded(self, other):
         assert self.ctype == other.ctype
@@ -696,3 +700,4 @@ class SelectInstruction(MalInstruction):
             print("weird stuff in select", self.short)
             print("type ==", self.ctype, self.lo, self.hi)
             return None
+

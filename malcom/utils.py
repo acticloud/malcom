@@ -51,28 +51,6 @@ class Utils:
 
         return json.loads(''.join(lines))
 
-    # flatten a dictionary into a list
-    @staticmethod
-    def flatten(mdict):
-        lst = []
-        for v in mdict.values():
-            lst.extend(v)
-        return lst
-
-    @staticmethod
-    def listDiff(list1, list2):
-        return list(set(list1) - set(list2))
-
-    # checks if the two given lists are equal (could also have been implemented
-    # with a FOR loop :))
-    @staticmethod
-    def cmp_arg_list(l1, l2):
-        if(len(l1) != len(l2)):
-            return False
-        else:
-            land = lambda x, y: x and y
-            return reduce(land, [e1 == e2 for (e1, e2) in zip(l1, l2)], True)
-
     @staticmethod
     def dict2list(d):
         ilist = []
@@ -95,10 +73,6 @@ class Utils:
 
         return set(blacklist)
 
-    @staticmethod
-    def loadStatistics(sfile):
-        return ColumnStatsD.fromFile(sfile)
-
     # extract the MAL function name, args and its ret from a line of MAL
     #   statement. currently args and ret are not used
     @staticmethod
@@ -118,6 +92,7 @@ class Utils:
 
         return (fname.strip(), args, ret)
 
+    # TODO (kutsurak): Check this
     # find the exact operator associated with certain MAL instructions, because
     # the position of the operator depends on the MAL instruction
     @staticmethod
@@ -141,6 +116,7 @@ class Utils:
         else:
             raise ValueError("e??")
 
+    # TODO (kutsurak): Check this
     # Because we have e.g. SELECT operators with different number of
     # parameters, we neeed to find the hi/lo value depending on how many
     # parameters this operator has
@@ -183,20 +159,6 @@ class Utils:
         else:
             print(jobj["short"])
             raise ValueError("ttt")
-
-    @staticmethod
-    def extract_bounds(method, jobj):
-        args = jobj["args"]
-        # nargs = len(args)
-        if method == "select":
-            if args == 3:
-                return args[2]["value"]
-            elif args == 4:
-                return args[3]["value"]
-            else:
-                raise ValueError("da??")
-        else:
-            raise ValueError("e??")
 
     @staticmethod
     def plotBar(x, y, output, ylabel, xlabel, lscale=False):
@@ -249,3 +211,48 @@ class Utils:
             print(type_str)
             print(type_str == 'bat[:date]')
             raise TypeError("Unsupported type")
+
+    # UNUSED?
+    # @staticmethod
+    # def extract_bounds(method, jobj):
+    #     args = jobj["args"]
+    #     # nargs = len(args)
+    #     if method == "select":
+    #         if args == 3:
+    #             return args[2]["value"]
+    #         elif args == 4:
+    #             return args[3]["value"]
+    #         else:
+    #             raise ValueError("da??")
+    #     else:
+    #         raise ValueError("e??")
+
+    # UNUSED?
+    # @staticmethod
+    # def loadStatistics(sfile):
+    #    return ColumnStatsD.fromFile(sfile)
+
+    # UNUSED?
+    # flatten a dictionary into a list
+    # @staticmethod
+    # def flatten(mdict):
+    #    lst = []
+    #    for v in mdict.values():
+    #        lst.extend(v)
+    #    return lst
+
+    # UNUSED?
+    # @staticmethod
+    # def listDiff(list1, list2):
+    #     return list(set(list1) - set(list2))
+
+    # UNUSED?
+    # checks if the two given lists are equal (could also have been implemented
+    # with a FOR loop :))
+    # @staticmethod
+    # def cmp_arg_list(l1, l2):
+    #    if(len(l1) != len(l2)):
+    #        return False
+    #    else:
+    #        land = lambda x, y: x and y
+    #        return reduce(land, [e1 == e2 for (e1, e2) in zip(l1, l2)], True)
