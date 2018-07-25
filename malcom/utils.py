@@ -14,6 +14,8 @@ class Prediction():
     @attr mem : int            //predicted memory size (non trivial in case of str)
     TODO: add min,max ....
     """
+    # (kutsurak 2018-07-25): What is the purpose of keeping all this
+    # information around since we are only using mem or avg?
     def __init__(self, retv, ins, cnt, avg, t, mem=None):
         self.retv = retv
         self.ins = ins
@@ -68,8 +70,9 @@ class Utils:
     @staticmethod
     def init_blacklist(blfile):
         blacklist = []
-        for line in open(blfile).readlines():
-            blacklist.append(line.strip())
+        with open(blfile) as bf:
+            for line in bf.readlines():
+                blacklist.append(line.strip())
 
         return set(blacklist)
 
