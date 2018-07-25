@@ -39,7 +39,7 @@ class Utils:
         if line.endswith('}\n'):
             return line
 
-        lines = []
+        lines = [line]
         rbrace = False
         while not rbrace:
             line = f.readline()
