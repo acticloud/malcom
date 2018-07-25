@@ -1,0 +1,20 @@
+{"source":"trace","clk":247876185,"ctime":1531234942703932,"thread":26,"function":"user.update","pc":1360,"tag":8,"session":"b34a7de4-0e34-45dd-9a6b-1337d0d60596","state":"done","usec":138,"rss":2961,"size":0,"stmt":"X_115=<tmp_2536>[2]:bat[:hge] := aggr.subsum(X_2544=<tmp_2414>[64]:bat[:hge], X_105=<tmp_2446>[64]:bat[:oid], C_106=<tmp_1340>[2]:bat[:oid], true:bit, true:bit);","short":"X_115[2]:= subsum( X_2544[64], X_105[64], C_106[2], true, true )","prereq":[1359,1194,1194],"ret":[{"index":"0","name":"X_115","type":"bat[:hge]","kind":"transient","bid":"1374","count":"2","size":32,"eol":0}],"arg":[{"index":"1","name":"X_2544","type":"bat[:hge]","kind":"transient","bid":"1292","count":"64","size":1024,"eol":1},{"index":"2","name":"X_105","type":"bat[:oid]","kind":"transient","bid":"1318","count":"64","size":512,"eol":0},{"index":"3","name":"C_106","type":"bat[:oid]","kind":"transient","bid":"736","count":"2","size":0,"eol":0},{"index":"4","name":"X_111","type":"bit","value":"true","eol":0},{"index":"5","name":"X_111","type":"bit","value":"true","eol":0}]}
+{
+"user":"monetdb",
+"clk":10457943213,
+"ctime":1504629858.557532,
+"thread":5,
+"function":"user.s338_2",
+"pc":78,
+"tag":3451,
+"session":"10209e9f-cc05-4774-a811-52955e60e597",
+"state":"done",
+"usec":88,
+"rss":7491,
+"size":0,
+"stmt":"sql.resultSet(X_241=<tmp_2506>[4]:bat[:str], X_242=<tmp_4125>[4]:bat[:str], X_244=<tmp_3470>[4]:bat[:str], X_245=<tmp_4114>[4]:bat[:int], X_246=<tmp_4126>[4]:bat[:int], X_201=<tmp_3274>[10]:bat[:int], X_202=<tmp_3270>[10]:bat[:hge], X_203=<tmp_3325>[10]:bat[:date], X_204=<tmp_3251>[10]:bat[:int]);",
+"short":"resultSet( X_241[4], X_242[4], X_244[4], X_245[4], X_246[4], X_201[10], X_202[10], X_203[10], X_204[10] )",
+"prereq":[73,74,75,76,77,57,56,55,54],
+"ret":[{"index":"0","name":"X_205","type":"int","value":"199","eol":1}],
+"arg":[{"index":"1","name":"X_241","type":"bat[:str]","kind":"transient","bid":"1350","count":"4","size":8255,"eol":1},{"index":"2","name":"X_242","type":"bat[:str]","kind":"transient","bid":"2133","count":"4","size":8283,"eol":1},{"index":"3","name":"X_244","type":"bat[:str]","kind":"transient","bid":"1848","count":"4","size":8241,"eol":1},{"index":"4","name":"X_245","type":"bat[:int]","kind":"transient","bid":"2124","count":"4","size":16,"eol":1},{"index":"5","name":"X_246","type":"bat[:int]","kind":"transient","bid":"2134","count":"4","size":16,"eol":1},{"index":"6","name":"X_201","type":"bat[:int]","kind":"transient","bid":"1724","count":"10","size":40,"eol":1},{"index":"7","name":"X_202","type":"bat[:hge]","kind":"transient","bid":"1720","count":"10","size":160,"eol":1},{"index":"8","name":"X_203","type":"bat[:date]","kind":"transient","bid":"1749","count":"10","size":40,"eol":1},{"index":"9","name":"X_204","type":"bat[:int]","kind":"transient","bid":"1705","count":"10","size":40,"eol":1}] 
+}
