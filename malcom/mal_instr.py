@@ -236,6 +236,7 @@ class MalInstruction:
     #     fmt = "Instr: {} nargs: {} time: {} mem_fprint: {}"
     #     print(fmt.format(self.short, self.nargs, self.time, self.mem_fprint))
 
+
 class DirectIntruction(MalInstruction):
     """
     @desc What goes in, goes out....(hash,identity,mirror,year,delta,substring...)
@@ -244,6 +245,9 @@ class DirectIntruction(MalInstruction):
     @arg base_ret_i: int // index of the lead return var (should be one...)
     @arg fun: int -> int //
     """
+    # I am pretty sure that this definition is WRONG. *args and
+    # **kwars should be the END of the argument list:
+    # https://docs.python.org/3.6/tutorial/controlflow.html#arbitrary-argument-lists
     def __init__(self, *args, base_arg_i, base_ret_i=0, fun=lambda v: v):
         MalInstruction.__init__(self, *args)
         self.base_arg = self.arg_list[base_arg_i]

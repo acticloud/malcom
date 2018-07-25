@@ -30,6 +30,7 @@ class Arg:
         return Arg(name, atype, aval, size, eol, count, col)
 
     def isVar(self):
+        # TODO (kutsurak): Should the test be "self.aval is not None"???
         return (self.name.startswith("X_") or self.name.startswith("C_")) and self.aval is None
 
     def __eq__(self, other):
