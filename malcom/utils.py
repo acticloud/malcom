@@ -39,7 +39,7 @@ class Utils:
         # Check to see if the object is all in one line
         line = f.readline()
         if line.endswith('}\n'):
-            return line
+            return json.loads(line)
 
         lines = [line]
         rbrace = False
@@ -214,6 +214,10 @@ class Utils:
             print(type_str)
             print(type_str == 'bat[:date]')
             raise TypeError("Unsupported type")
+
+    @staticmethod
+    def isVar(v):
+        return (v.startswith("X_") or v.startswith("C_"))
 
     # UNUSED?
     # @staticmethod
