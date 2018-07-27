@@ -17,7 +17,6 @@ def parse_experiment_definition(filename):
 
 def leave_one_out(definition):
     root_path = definition['root_path']
-    data_path = definition['data_path']
     blacklist = Utils.init_blacklist(
         os.path.join(root_path, definition['blacklist'])
     )
@@ -30,9 +29,9 @@ def leave_one_out(definition):
     sys.stdout.flush()
     errors = list()
     indices = list()
-    dataset_file_name = 'Q{:02}_traces.json.gz'.format(query_num)
+    data_file = definition['data_file']
     dataset_dict = MalDictionary.fromJsonFile(
-        os.path.join(data_path, dataset_file_name),
+        data_file,
         blacklist,
         col_stats
     )

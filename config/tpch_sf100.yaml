@@ -5,4 +5,4 @@ blacklist: config/mal_blacklist.txt
 stats: config/tpch_sf100_stats.txt
 query: 1
 outdir: output/
-data_path: /home/kutsurak/work/monet/sources/data/SF-100_traces
+data_file: /home/kutsurak/work/monet/sources/data/SF-100_traces/Q01_traces_small.json.gz
