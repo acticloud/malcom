@@ -1,12 +1,46 @@
 import logging
 # import os
-from utils import Utils
-from stats import ColumnStatsD
-from mal_dict import MalDictionary
+import yaml
+from malcom.utils import Utils
+from malcom.stats import ColumnStatsD
+from malcom.mal_dict import MalDictionary
 
 
 def parse_experiment_definition(filename):
-    pass
+    with open(filename) as cfile:
+        definition = yaml.safe_load(cfile)
+
+    return definition
+
+
+def run_experiment(definition):
+    root_path = definition['root_path']
+    data_path = definition['data_path']
+    blacklist = Utils.init_blacklist(
+        os.path.join(root_path, definition['blacklist'])
+    )
+    col_stats = ColumnStatsD.fromFile(
+        os.path.join(root_path, definition['stats'])
+    )
+    query_num = definition['query']
+
+    errors = list()
+    training_file_name = 'Q{:02}_traces.json.gz'.format(query_num)
+    training_dict = MalDictionary.fromJsonFile(
+        os.path.join(data_path, training_file_name),
+        blacklist,
+        col_stats
+    )
+
+    test_filename = 'Q{:02}_test.json.gz'.format(query_num)
+    test_dict = MalDictionary.fromJsonFile(
+        os.path.join(data_path, test_filename),
+        blacklist,
+        col_stats
+    )
+
+
+
 
 
 # EVERYTHING BELOW THIS LINE IS DEPRECATED

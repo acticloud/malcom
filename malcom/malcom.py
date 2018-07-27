@@ -1,7 +1,8 @@
 #!/usr/bin/python3
 import logging
 import argparse
-import experiments
+
+import malcom.experiments
 
 
 def init_logger(log_level_str):
@@ -73,10 +74,14 @@ def init_parser():
 #         experiments.plot_mem_error_air('airtraffic', testq, trainq=q, output=out)
 #
 #
-if __name__ == '__main__':
+def main():
     parser = init_parser()
     args = parser.parse_args()
     init_logger(args.log_level)
+
+
+if __name__ == '__main__':
+    main()
 
     # experiments.predict_max_mem_tpch10()
     # experiments.plot_mem_error_air('airtraffic','11',path="./")
