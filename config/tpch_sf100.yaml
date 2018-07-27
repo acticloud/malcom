@@ -1,0 +1,5 @@
+---
+
+root_path: /home/kutsurak/work/monet/sources/malcom
+blacklist: config/mal_blacklist.txt
+stats: config/tpch_sf100_stats.txt
