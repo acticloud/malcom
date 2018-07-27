@@ -4,3 +4,5 @@ docs/report.log
 docs/report.out
 backup
 .pytest_cache/
+.eggs/
+malcom.egg-info/
