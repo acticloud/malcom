@@ -8,6 +8,9 @@ numpy = "*"
 matplotlib = "*"
 python-levenshtein = "*"
 pytest = "*"
+pyyaml = "*"
+setuptools = "*"
+malcom = {editable = true, path = "."}
 
 [dev-packages]
 
