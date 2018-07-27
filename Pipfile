@@ -11,6 +11,7 @@ pytest = "*"
 pyyaml = "*"
 setuptools = "*"
 malcom = {editable = true, path = "."}
+ipython = "*"
 
 [dev-packages]
 
