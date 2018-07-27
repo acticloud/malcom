@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 import yaml
 
 from malcom.utils import Utils
@@ -25,6 +26,8 @@ def leave_one_out(definition):
     )
     query_num = definition['query']
 
+    print('Loading traces for query: {:02}...'.format(query_num), end='')
+    sys.stdout.flush()
     errors = list()
     indices = list()
     dataset_file_name = 'Q{:02}_traces.json.gz'.format(query_num)
@@ -33,12 +36,14 @@ def leave_one_out(definition):
         blacklist,
         col_stats
     )
+    print('Done')
 
     cnt = 0
     for leaveout_tag in dataset_dict.query_tags:
         if cnt % 2 == 0:
-            print("\b\b\b", end='')
+            print("\b\b\b\b", end='')
             print('{:03}%'.format(cnt // 2), end='')
+            sys.stdout.flush()
         cnt += 1
         test_dict = dataset_dict.filter(lambda x: x.tag == leaveout_tag)
         train_dict = dataset_dict.filter(lambda x: x.tag != leaveout_tag)
