@@ -7,3 +7,4 @@ backup
 .eggs/
 malcom.egg-info/
 output/
+.cache/

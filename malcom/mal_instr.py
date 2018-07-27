@@ -335,6 +335,8 @@ class GroupInstruction(DirectIntruction):
         # self.base_ret = self.ret_vars[base_ret_i]
 
     def approxArgCnt(self, G, default=None):
+        if self.base_arg.name not in G:
+            return 0
         return G.get(self.base_arg.name, default).avg
 
     def argCnt(self):
