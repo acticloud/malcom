@@ -6,3 +6,4 @@ backup
 .pytest_cache/
 .eggs/
 malcom.egg-info/
+output/

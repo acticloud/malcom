@@ -2,7 +2,7 @@
 import logging
 import argparse
 
-import malcom.experiments
+import malcom.experiments as experiments
 
 
 def init_logger(log_level_str):
@@ -78,6 +78,8 @@ def main():
     parser = init_parser()
     args = parser.parse_args()
     init_logger(args.log_level)
+    experiment_definition = experiments.parse_experiment_definition(args.experiment)
+    experiments.leave_one_out(experiment_definition)
 
 
 if __name__ == '__main__':

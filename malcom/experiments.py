@@ -1,5 +1,5 @@
 import logging
-# import os
+import os
 import yaml
 
 from malcom.utils import Utils
@@ -14,7 +14,7 @@ def parse_experiment_definition(filename):
     return definition
 
 
-def run_experiment(definition):
+def leave_one_out(definition):
     root_path = definition['root_path']
     data_path = definition['data_path']
     blacklist = Utils.init_blacklist(
@@ -26,23 +26,36 @@ def run_experiment(definition):
     query_num = definition['query']
 
     errors = list()
-    training_file_name = 'Q{:02}_traces.json.gz'.format(query_num)
-    training_dict = MalDictionary.fromJsonFile(
-        os.path.join(data_path, training_file_name),
+    indices = list()
+    dataset_file_name = 'Q{:02}_traces.json.gz'.format(query_num)
+    dataset_dict = MalDictionary.fromJsonFile(
+        os.path.join(data_path, dataset_file_name),
         blacklist,
         col_stats
     )
 
-    test_filename = 'Q{:02}_test.json.gz'.format(query_num)
-    test_dict = MalDictionary.fromJsonFile(
-        os.path.join(data_path, test_filename),
-        blacklist,
-        col_stats
-    )
+    cnt = 0
+    for leaveout_tag in dataset_dict.query_tags:
+        if cnt % 2 == 0:
+            print("\b\b\b", end='')
+            print('{:03}%'.format(cnt // 2), end='')
+        cnt += 1
+        test_dict = dataset_dict.filter(lambda x: x.tag == leaveout_tag)
+        train_dict = dataset_dict.filter(lambda x: x.tag != leaveout_tag)
 
+        graph = test_dict.buildApproxGraph(train_dict)
 
+        predicted_mem = test_dict.predictMaxMem(graph)
+        actual_mem = test_dict.getMaxMem()
 
+        errors.append(100 * (predicted_mem - actual_mem) / actual_mem)
+        indices.append(leaveout_tag)
 
+        outfile = os.path.join(
+            os.path.join(definition['root_path'], definition['out_path']),
+            'Q{:02}_memerror.pdf'
+        )
+        Utils.plotLine(indices, errors, outfile, 'Error percent', 'Leave out query')
 
 # EVERYTHING BELOW THIS LINE IS DEPRECATED
 
