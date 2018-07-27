@@ -1,6 +1,7 @@
 import logging
 # import os
 import yaml
+
 from malcom.utils import Utils
 from malcom.stats import ColumnStatsD
 from malcom.mal_dict import MalDictionary

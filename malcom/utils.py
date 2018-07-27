@@ -38,7 +38,7 @@ class Utils:
     def readJsonObject(f):
         # Check to see if the object is all in one line
         line = f.readline()
-        if line.endswith('}\n'):
+        if line.endswith(u'}\n'):
             return json.loads(line)
 
         lines = [line]

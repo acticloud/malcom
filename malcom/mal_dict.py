@@ -54,7 +54,7 @@ class MalDictionary:
             open_func = gzip.open
         else:
             open_func = open
-        with open_func(mfile) as f:
+        with open_func(mfile, mode='rt', encoding='utf-8') as f:
             maldict = {}
             startd = {}
             query_tags = set()
