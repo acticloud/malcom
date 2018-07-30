@@ -53,13 +53,14 @@ def leave_one_out(definition):
         actual_mem = test_dict.getMaxMem()
 
         errors.append(100 * (predicted_mem - actual_mem) / actual_mem)
-        indices.append(leaveout_tag)
+        indices.append(cnt)
 
         outfile = os.path.join(
             os.path.join(definition['root_path'], definition['out_path']),
-            'Q{:02}_memerror.pdf'
+            'Q{:02}_memerror.pdf'.format(query_num)
         )
-        Utils.plotLine(indices, errors, outfile, 'Error percent', 'Leave out query')
+    print()
+    Utils.plotLine(indices, errors, outfile, 'Error percent', 'Leave out query')
 
 # EVERYTHING BELOW THIS LINE IS DEPRECATED
 
