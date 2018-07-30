@@ -182,8 +182,8 @@ class Utils:
     @staticmethod
     def plotLine(x, y, output, ylabel, xlabel, lscale=False):
         fig, ax = plt.subplots()
-        ax.xlabel(xlabel)
-        ax.ylabel(ylabel)
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
         # plt.xticks(x, ind)
 
         ax.plot(x, y, marker='o', color='b')
