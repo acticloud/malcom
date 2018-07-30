@@ -257,6 +257,8 @@ class DirectIntruction(MalInstruction):
         self.cntf = fun
 
     def approxArgCnt(self, G, default=None):
+        if self.base_arg.name not in G:
+            return 0
         return G[self.base_arg.name].avg
 
     def approxArgDist(self, other, G):
