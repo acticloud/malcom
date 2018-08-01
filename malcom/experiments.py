@@ -62,7 +62,49 @@ def leave_one_out(definition):
     print()
     Utils.plotLine(indices, errors, outfile, 'Error percent', 'Leave out query')
 
+
+def train_model(definition):
+    demo_dict = definition.get('demo', None)
+    if demo_dict is None:
+        raise RuntimeError('No demo section in definition file')
+    root_path = definition['root_path']
+    blacklist = Utils.init_blacklist(
+        os.path.join(root_path, definition['blacklist'])
+    )
+    col_stats = Utils.init_blacklist(
+        os.path.join(root_path, definition['stats'])
+    )
+    print('Loading traces for demo... ', end='')
+    sys.stdout.flush()
+    training_set = demo_dict['training_set']
+    dataset_mal = MalDictionary.fromJsonFile(
+        training_set,
+        blacklist,
+        col_stats
+    )
+    dataset_mal.writeToFile(demo_dict['model_storage'])
+
+    return dataset_mal
+
+
+def load_model(definition):
+    demo_dict = definition.get('demo', None)
+    if demo_dict is None:
+        raise RuntimeError('No demo section in definition file')
+    try:
+        model = MalDictionary.loadFromFile(demo_dict['model_storage'])
+    except:
+        logging.warning('Model not found on disk. Training')
+        model = train_model(definition)
+
+    return model
+
+
+def predict(plan, model):
+    pass
+
 # EVERYTHING BELOW THIS LINE IS DEPRECATED
+
 
 def plot_select_error_air(db, q, trainq=None, path="", ntrain=1000, step=25, output=None):
     assert db == 'tpch10' or db == 'airtraffic'

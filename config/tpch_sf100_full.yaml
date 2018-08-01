@@ -6,3 +6,7 @@ stats: config/tpch_sf100_stats.txt
 query: 1
 out_path: output/
 data_file: /home/kutsurak/work/monet/sources/data/SF-100_traces/full/Q01_total.json.gz
+
+demo:
+  training_set: /home/kutsurak/work/monet/sources/data/SF-100_traces/small/SF-100_small_training.json.gz
+  model_storage: /home/kutsurak/work/monet/data/malcom_experiments/sf_100_small_model
