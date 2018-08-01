@@ -1,4 +1,3 @@
-import binascii
 import gzip
 import sys
 import random
@@ -37,12 +36,6 @@ class MalDictionary:
         return MalDictionary.fromInsList(union_ilist)
 
     @staticmethod
-    def is_gzipped(mfile):
-        '''Checks the if the first two bytes of the file match the gzip magic number'''
-        with open(mfile, 'rb') as ff:
-            return binascii.hexlify(ff.read(2)) == b'1f8b'
-
-    @staticmethod
     def fromJsonFile(mfile, blacklist, col_stats):
         """
         @des Construct a MalDictionary object from a JSON file
@@ -50,7 +43,7 @@ class MalDictionary:
         @arg blacklist: list<str>             //list of blacklisted mal ins
         @arg col_stats: dict<str,ColumnStats> //column statistics
         """
-        if MalDictionary.is_gzipped(mfile):
+        if Utils.is_gzipped(mfile):
             open_func = gzip.open
         else:
             open_func = open

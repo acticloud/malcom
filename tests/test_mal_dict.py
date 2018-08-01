@@ -55,18 +55,3 @@ class TestMalDict():
 
         d = mal_dict.MalDictionary.fromJsonFile(fn, blist_stats[0], blist_stats[1])
         assert len(d.query_tags) > 0
-
-    def test_gzip_detection(self):
-        fn_commpressed = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
-            'data/test_compressed_trace.json.gz'
-        )
-
-        assert mal_dict.MalDictionary.is_gzipped(fn_commpressed)
-
-        fn_uncompressed = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
-            'data/test_uncompressed_trace.json'
-        )
-
-        assert not mal_dict.MalDictionary.is_gzipped(fn_uncompressed)

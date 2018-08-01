@@ -1,3 +1,4 @@
+import binascii
 import json
 import logging
 import matplotlib
@@ -35,6 +36,11 @@ class Prediction():
 
 
 class Utils:
+    @staticmethod
+    def is_gzipped(mfile):
+        '''Checks the if the first two bytes of the file match the gzip magic number'''
+        with open(mfile, 'rb') as ff:
+            return binascii.hexlify(ff.read(2)) == b'1f8b'
     # This function helps us reading the MonetDB JSON traces
     # readline until you reach '}' or EOF
     @staticmethod
