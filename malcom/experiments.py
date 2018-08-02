@@ -49,10 +49,12 @@ def leave_one_out(definition):
     errors = list()
     indices = list()
     cnt = 0
+    total = len(dataset_dict.query_tags)
+    progress = 100 // total
     for leaveout_tag in dataset_dict.query_tags:
-        if cnt % 2 == 0:
+        if cnt % progress == 0:
             print("\b\b\b\b", end='')
-            print('{:03}%'.format(cnt // 2), end='')
+            print('{:03}%'.format(cnt // progress), end='')
             sys.stdout.flush()
         cnt += 1
         test_dict = dataset_dict.filter(lambda x: x.tag == leaveout_tag)
