@@ -26,12 +26,12 @@ def leave_one_out(definition):
     query_num = definition['query']
 
     dataset_dict = None
-    if os.path.exists(definition['model_file']) and os.path.isfile(definition['model_file']):
-        try:
-            dataset_dict = MalDictionary.loadFromFile(definition['model_file'])
-        except:
-            logging.warning('Could not load model file: {}. Rebuilding.'.format(definition['model_file']))
-            dataset_dict = None
+    # if os.path.exists(definition['model_file']) and os.path.isfile(definition['model_file']):
+    #     try:
+    #         dataset_dict = MalDictionary.loadFromFile(definition['model_file'])
+    #     except:
+    #         logging.warning('Could not load model file: {}. Rebuilding.'.format(definition['model_file']))
+    #         dataset_dict = None
 
 
     if dataset_dict is None:
@@ -44,7 +44,7 @@ def leave_one_out(definition):
             col_stats
         )
         print('Done')
-        dataset_dict.writeToFile(definition['model_file'])
+        # dataset_dict.writeToFile(definition['model_file'])
 
     errors = list()
     indices = list()
