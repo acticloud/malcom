@@ -50,7 +50,7 @@ def leave_one_out(definition):
     indices = list()
     cnt = 0
     total = len(dataset_dict.query_tags)
-    progress = 100 // total
+    progress = total // 100
     for leaveout_tag in dataset_dict.query_tags:
         if cnt % progress == 0:
             print("\b\b\b\b", end='')
