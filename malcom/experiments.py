@@ -25,18 +25,29 @@ def leave_one_out(definition):
     )
     query_num = definition['query']
 
-    print('Loading traces for query: {:02}...'.format(query_num), end='')
-    sys.stdout.flush()
+    dataset_dict = None
+    if os.path.exists(definition['model_file']) and os.path.isfile(definition['model_file']):
+        try:
+            dataset_dict = MalDictionary.loadFromFile(definition['model_file'])
+        except:
+            logging.warning('Could not load model file: {}. Rebuilding.'.format(definition['model_file']))
+            dataset_dict = None
+
+
+    if dataset_dict is None:
+        print('Loading traces for query: {:02}...'.format(query_num), end='')
+        sys.stdout.flush()
+        data_file = definition['data_file']
+        dataset_dict = MalDictionary.fromJsonFile(
+            data_file,
+            blacklist,
+            col_stats
+        )
+        print('Done')
+        dataset_dict.writeToFile(definition['model_file'])
+
     errors = list()
     indices = list()
-    data_file = definition['data_file']
-    dataset_dict = MalDictionary.fromJsonFile(
-        data_file,
-        blacklist,
-        col_stats
-    )
-    print('Done')
-
     cnt = 0
     for leaveout_tag in dataset_dict.query_tags:
         if cnt % 2 == 0:
@@ -82,7 +93,10 @@ def train_model(definition):
         blacklist,
         col_stats
     )
+    print('Done')
+    print('Writing model to disk: {}... '.format(demo_dict['model_storage']), end='')
     dataset_mal.writeToFile(demo_dict['model_storage'])
+    print('Done')
 
     return dataset_mal
 
@@ -100,8 +114,18 @@ def load_model(definition):
     return model
 
 
-def predict(plan, model):
-    pass
+def predict(definition):
+    root_path = definition['root_path']
+    blacklist = Utils.init_blacklist(
+        os.path.join(root_path, definition['blacklist'])
+    )
+    col_stats = Utils.init_blacklist(
+        os.path.join(root_path, definition['stats'])
+    )
+
+    model = load_model(definition)
+    plan = definition['plan_file']
+    plan_dict = MalDictionary.fromJsonFile(plan, blacklist, col_stats)
 
 # EVERYTHING BELOW THIS LINE IS DEPRECATED
 
