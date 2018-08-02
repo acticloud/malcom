@@ -103,7 +103,6 @@ class MalDictionary:
                     logging.error("None in the graph: {}".format(ins.short))
         return pg
 
-
     def findInstr(self, mals, ignoreScale=False):
         """
         @arg self: MalDictionary
