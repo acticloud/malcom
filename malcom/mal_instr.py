@@ -60,6 +60,14 @@ class MalInstruction:
         self.arg_vars = arg_vars
         self.ret_vars = ret_vars
         self.cnt = cnt
+        self.default_prediction = Prediction(
+            'default',
+            None,  # this is not accessed in the code so None should be ok.
+            0,
+            0,
+            'nil',
+            0
+        )
 
     # jobj was built in mal_dict.py, in fromJsonFile
     @staticmethod
@@ -257,9 +265,7 @@ class DirectIntruction(MalInstruction):
         self.cntf = fun
 
     def approxArgCnt(self, G, default=None):
-        if self.base_arg.name not in G:
-            return 0
-        return G[self.base_arg.name].avg
+        return G.get(self.base_arg.name, self.default_prediction).avg
 
     def approxArgDist(self, other, G):
         return abs(self.approxArgCnt(G, sys.maxsize) - other.argCnt())
@@ -287,7 +293,15 @@ class SetInstruction(MalInstruction):
         self.cntf = fun
 
     def approxArgCnt(self, pG):
-        return [pG[self.arg1.name].avg, pG[self.arg2.name].avg]
+        # Please do not crash.
+        # Note: Not sure if a default value of 0
+        # is correct but it seems like a good choice in the sense that
+        # if we don't have info for an argument, it does not use
+        # memory
+        return [
+            pG.get(self.arg1.name, self.default_prediction).avg,
+            pG.get(self.arg2.name, self.default_prediction).avg
+        ]
 
     def argCnt(self):
         return [self.arg1.cnt, self.arg2.cnt]
@@ -337,9 +351,7 @@ class GroupInstruction(DirectIntruction):
         # self.base_ret = self.ret_vars[base_ret_i]
 
     def approxArgCnt(self, G, default=None):
-        if self.base_arg.name not in G:
-            return 0
-        return G.get(self.base_arg.name, default).avg
+        return G.get(self.base_arg.name, self.default_prediction).avg
 
     def argCnt(self):
         return self.base_arg.cnt
@@ -387,7 +399,7 @@ class ReduceInstruction(MalInstruction):
         return self.base_arg.cnt
 
     def approxArgCnt(self, G, default=None):
-        return G.get(self.base_arg.name, default).avg
+        return G.get(self.base_arg.name, self.default_prediction).avg
 
     def predict(self, traind, G, default=None):
         t = self.ret_args[0].atype
@@ -437,7 +449,15 @@ class JoinInstruction(MalInstruction):
         self.arg2 = self.arg_list[1]
 
     def approxArgCnt(self, G):
-        return [G.get(self.arg1.name, None).avg, G.get(self.arg2.name, None).avg]
+        # Please do not crash.
+        # Note: Not sure if a default value of 0
+        # is correct but it seems like a good choice in the sense that
+        # if we don't have info for an argument, it does not use
+        # memory
+        return [
+            G.get(self.arg1.name, self.default_prediction).avg,
+            G.get(self.arg2.name, self.default_prediction).avg
+        ]
 
     def argCnt(self):
         return [self.arg1.cnt, self.arg2.cnt]
@@ -464,7 +484,7 @@ class JoinInstruction(MalInstruction):
     def approxArgDist(self, ins, G):
         assert G is not None
         lead_args = [self.arg1, self.arg2]
-        self_cnt = [float(G.get(a.name, None).avg) for a in lead_args]
+        self_cnt = [float(G.get(a.name, self.default_prediction).avg) for a in lead_args]
         ins_count = [arg.cnt for arg in [ins.arg1, ins.arg2]]
         return sum([(c1 - c2)**2 for (c1, c2) in zip(self_cnt, ins_count)])
 
@@ -564,7 +584,7 @@ class SelectInstruction(MalInstruction):
 
     def approxArgCnt(self, G, default=None):
         # logging.error("lead arg: {}".format(self.lead_arg.name))
-        return G.get(self.lead_arg.name, default).avg
+        return G.get(self.lead_arg.name, self.default_prediction).avg
 
     def argCnt(self):
         return self.lead_arg.cnt
@@ -576,7 +596,7 @@ class SelectInstruction(MalInstruction):
         """
         assert G is not None
         lead_arg = self.lead_arg
-        ac = G[lead_arg.name].avg if lead_arg.name in G else 'inf'
+        ac = G.get(lead_arg.name, self.default_prediction).avg if lead_arg.name in G else 'inf'
         return abs(other.lead_arg.cnt - float(ac))
 
     def argDist(self, other):
