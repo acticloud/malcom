@@ -602,7 +602,7 @@ class SelectInstruction(MalInstruction):
             return float((max_lo - min_lo).days + (max_hi - min_hi).days)
         elif self.ctype == 'bat[:str]':
             assert self.lo == self.hi and other.lo == other.hi
-            return Levenshtein.levenshtein(self.lo, other.lo)
+            return Levenshtein.distance(self.lo, other.lo)
         elif self.ctype == 'bat[:bit]':  # just try to find something close to the argument size
             return self.approxArgDist(other, G)
 

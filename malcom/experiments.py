@@ -160,6 +160,8 @@ def plot_select_error_air(db, q, trainq=None, path="", ntrain=1000, step=25, out
     train_tags.sort()
     e = []
     ind = []
+    # kutsurak: This loop increases the queries we use to train the
+    # model.
     for i in range(1, ntrain + 2, step):
         d12 = traind.filter(lambda ins: ins.tag in train_tags[0:i])
         print(len(d12.query_tags))
@@ -176,7 +178,6 @@ def plot_select_error_air(db, q, trainq=None, path="", ntrain=1000, step=25, out
         ind.append(i)
 
     print("error array:", e)
-    # TODO: use os.path.join for the following
     outpdf = path+'{}_sel{}_error.pdf'.format(db, q) if output is None else output
     Utils.plotLine(ind, e, outpdf, 'Error perc', 'Nof training queries')
 
@@ -215,7 +216,6 @@ def plot_mem_error_air(db, q, trainq=None, path="", output=None, ntrain=1000, st
         ind.append(i)
 
     print(e)
-    # TODO: use os.path.join for the following
     outf = path+'{}_q{}_memerror.pdf'.format(db, q) if output is None else output
     Utils.plotLine(ind, e, outf, 'Error perc', 'Nof training queries')
 
