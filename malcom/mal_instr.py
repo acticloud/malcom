@@ -523,6 +523,12 @@ class SelectInstruction(MalInstruction):
 
         lo, hi = Utils.hi_lo(self.fname, self.op, jobj, stats.get(self.col, ColumnStats(0, 0, 0, 0, 0)))
 
+        if lo == 'nil':
+            lo = 0
+
+        if hi == 'nil':
+            hi = 0
+
         if self.ctype in ['bat[:int]', 'bat[:lng]', 'lng', 'bat[:hge]', 'bat[:bte]', 'bat[:sht]']:
             if self.op in ['>=', 'between'] and self.col in stats:
                 s = stats[self.col]
