@@ -222,7 +222,8 @@ class Utils:
             logging.error("Wtf type?? {}".format(type_str))
             print(type_str)
             print(type_str == 'bat[:date]')
-            raise TypeError("Unsupported type")
+            # raise TypeError("Unsupported type")
+            return 0
 
     @staticmethod
     def isVar(v):
