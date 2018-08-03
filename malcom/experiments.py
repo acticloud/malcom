@@ -1,3 +1,4 @@
+import datetime
 import logging
 import os
 import sys
@@ -16,6 +17,7 @@ def parse_experiment_definition(filename):
 
 
 def leave_one_out(definition):
+    initial_time = datetime.datetime.now()
     root_path = definition['root_path']
     blacklist = Utils.init_blacklist(
         os.path.join(root_path, definition['blacklist'])
@@ -33,25 +35,27 @@ def leave_one_out(definition):
     #         logging.warning('Could not load model file: {}. Rebuilding.'.format(definition['model_file']))
     #         dataset_dict = None
 
-
     if dataset_dict is None:
         print('Loading traces for query: {:02}...'.format(query_num), end='')
         sys.stdout.flush()
         data_file = definition['data_file']
+        load_start = datetime.datetime.now()
         dataset_dict = MalDictionary.fromJsonFile(
             data_file,
             blacklist,
             col_stats
         )
-        print('Done')
+        load_end = datetime.datetime.now()
+        print('Done: {}'.format(load_end - load_start))
         # dataset_dict.writeToFile(definition['model_file'])
 
     errors = list()
-    indices = list()
+    pl = open('/tmp/partial_result.txt', 'w')
     cnt = 0
     total = len(dataset_dict.query_tags)
     progress = total // 100
     for leaveout_tag in dataset_dict.query_tags:
+        iter_start = datetime.datetime.now()
         if cnt % progress == 0:
             print("\b\b\b\b", end='')
             print('{:03}%'.format(cnt // progress), end='')
@@ -62,18 +66,24 @@ def leave_one_out(definition):
 
         graph = test_dict.buildApproxGraph(train_dict)
 
+        predict_start = datetime.datetime.now()
         predicted_mem = test_dict.predictMaxMem(graph)
         actual_mem = test_dict.getMaxMem()
+        iter_end = datetime.datetime.now()
 
         errors.append(100 * (predicted_mem - actual_mem) / actual_mem)
-        indices.append(cnt)
+        pl.write("{} {} {}\n".format(iter_end - iter_start,
+                                     iter_end - predict_start,
+                                     errors[cnt - 1]))
+        pl.flush()
 
-        outfile = os.path.join(
-            os.path.join(definition['root_path'], definition['out_path']),
-            'Q{:02}_memerror.pdf'.format(query_num)
-        )
+    outfile = os.path.join(
+        os.path.join(definition['root_path'], definition['out_path']),
+        'Q{:02}_memerror.pdf'.format(query_num)
+    )
     print()
-    Utils.plotLine(indices, errors, outfile, 'Error percent', 'Leave out query')
+    pl.close()
+    Utils.plotLine(numpy.arange(1, cnt), errors, outfile, 'Error percent', 'Leave out query')
 
 
 def train_model(definition):
