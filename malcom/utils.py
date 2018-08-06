@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 import numpy
 
 
-
 class Prediction():
     """
     @attr retv: str            //name of the returned value
@@ -210,12 +209,17 @@ class Utils:
             return 8
         elif type_str in ["bat[:hge]", 'hge']:
             return 16
-        elif type_str in ["bat[:bit]", 'bat[:bte]']:
+        elif type_str in ["bat[:bit]", 'bat[:bte]', 'bit']:
             return 1
         elif type_str == 'bat[:date]':
             return 4
         elif type_str == 'bat[:str]':
-            return 8  # TODO fix this
+            # kutsurak 2018-08-06: Information on the heap size should
+            # be included in the statistics file. This can be obtained
+            # from the storage() SQL function in monetdb. This should
+            # be used to estimate a measure of the size of each
+            # individual element of the bat like the average.
+            return 8  # TODO fix this.
         elif type_str is None:
             return 0
         else:
