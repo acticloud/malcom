@@ -1,5 +1,6 @@
 import datetime
 import logging
+import numpy
 import os
 import sys
 import yaml
@@ -50,10 +51,14 @@ def leave_one_out(definition):
         # dataset_dict.writeToFile(definition['model_file'])
 
     errors = list()
-    pl = open('/tmp/partial_result.txt', 'w')
+    pl = open(
+        os.path.join(
+            os.path.join(root_path, definition['out_path']),
+            definition['result_file']), 'w'
+    )
     cnt = 0
     total = len(dataset_dict.query_tags)
-    progress = total // 100
+    progress = (total // 100) + 1
     for leaveout_tag in dataset_dict.query_tags:
         iter_start = datetime.datetime.now()
         if cnt % progress == 0:
