@@ -74,12 +74,27 @@ def init_parser():
 #         experiments.plot_mem_error_air('airtraffic', testq, trainq=q, output=out)
 #
 #
+
+experiment_dispatcher = {
+    'leave one out': experiments.leave_one_out,
+    'actual memory': experiments.plot_actual_memory
+}
+
+
+def default_function(definition):
+    print('Unknown experiment type. Valid experiments are:')
+    for k in experiment_dispatcher:
+        print("  ", k)
+
+
 def main():
     parser = init_parser()
     args = parser.parse_args()
     init_logger(args.log_level)
     experiment_definition = experiments.parse_experiment_definition(args.experiment)
-    experiments.leave_one_out(experiment_definition)
+
+    func = experiment_dispatcher.get(experiment_definition['experiment'], default_function)
+    func(experiment_definition)
 
 
 if __name__ == '__main__':
