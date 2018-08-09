@@ -69,6 +69,7 @@ class MalDictionary:
                         maldict[fname] = maldict.get(fname, []) + [new_mals]
                         query_tags.add(int(jobj["tag"]))
 
+        print("")
         return MalDictionary(maldict, list(query_tags), col_stats)
 
     @staticmethod

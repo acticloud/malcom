@@ -29,6 +29,11 @@ def leave_one_out(definition):
     query_num = definition['query']
 
     dataset_dict = None
+    # Note: the commented code below does not work because
+    # writeToFile, and loadFromFile are broken. When they are fixed
+    # this should speed up the whole procedure a bit, because we will
+    # not need to parse a big trace file.
+
     # if os.path.exists(definition['model_file']) and os.path.isfile(definition['model_file']):
     #     try:
     #         dataset_dict = MalDictionary.loadFromFile(definition['model_file'])
@@ -51,20 +56,19 @@ def leave_one_out(definition):
         # dataset_dict.writeToFile(definition['model_file'])
 
     errors = list()
-    pl = open(
-        os.path.join(
-            os.path.join(root_path, definition['out_path']),
-            definition['result_file']), 'w'
+    filename = os.path.join(
+        root_path,
+        definition['out_path'],
+        definition['result_file']
     )
+    pl = open(filename, 'w')
     cnt = 0
     total = len(dataset_dict.query_tags)
-    progress = (total // 100) + 1
     for leaveout_tag in dataset_dict.query_tags:
         iter_start = datetime.datetime.now()
-        if cnt % progress == 0:
-            print("\b\b\b\b", end='')
-            print('{:03}%'.format(cnt // progress), end='')
-            sys.stdout.flush()
+        print("\b\b\b\b", end='')
+        print('{:03}%'.format(int(100 * cnt / total)), end='')
+        sys.stdout.flush()
         cnt += 1
         test_dict = dataset_dict.filter(lambda x: x.tag == leaveout_tag)
         train_dict = dataset_dict.filter(lambda x: x.tag != leaveout_tag)
@@ -80,15 +84,65 @@ def leave_one_out(definition):
         pl.write("{} {} {}\n".format(iter_end - iter_start,
                                      iter_end - predict_start,
                                      errors[cnt - 1]))
-        pl.flush()
 
+    print("")
     outfile = os.path.join(
-        os.path.join(definition['root_path'], definition['out_path']),
+        definition['root_path'],
+        definition['out_path'],
         'Q{:02}_memerror.pdf'.format(query_num)
     )
     print()
     pl.close()
     Utils.plotLine(numpy.arange(1, cnt), errors, outfile, 'Error percent', 'Leave out query')
+
+
+def plot_actual_memory(definition):
+    root_path = definition['root_path']
+    blacklist = Utils.init_blacklist(
+        os.path.join(root_path, definition['blacklist'])
+    )
+    col_stats = ColumnStatsD.fromFile(
+        os.path.join(root_path, definition['stats'])
+    )
+
+    print('Loading traces...', end='')
+    sys.stdout.flush()
+    data_file = definition['data_file']
+    load_start = datetime.datetime.now()
+    dataset_dict = MalDictionary.fromJsonFile(
+        data_file,
+        blacklist,
+        col_stats
+    )
+    load_end = datetime.datetime.now()
+    print('Done: {}'.format(load_end - load_start))
+
+    print('Computing footprint...     ', end='')
+    sys.stdout.flush()
+    result = dict()
+    cnt = 0
+    total = len(dataset_dict.query_tags)
+    for t in dataset_dict.query_tags:
+        print("\b\b\b\b", end='')
+        print('{:03}%'.format(int(100 * cnt / total)), end='')
+        sys.stdout.flush()
+        cnt += 1
+        tq = dataset_dict.filter(lambda x: x.tag == t)
+        total_mem = tq.getMaxMem()
+        result[t] = total_mem
+
+    print("")
+
+    outfile = os.path.join(
+        definition['root_path'],
+        definition['out_path'],
+        definition['result_file']
+    )
+
+    with open(outfile, 'w') as fl:
+        for k, v in result.items():
+            fl.write("{},{}\n".format(k, v))
+
 
 
 # The functions below might be useful, but are not currently used, and
