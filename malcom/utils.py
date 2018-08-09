@@ -5,6 +5,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy
+import sys
 
 
 class Prediction():
@@ -34,32 +35,59 @@ class Prediction():
             return self.avg * Utils.sizeof(self.t)
 
 
+idx = 0
+trace_lines = None
+
+
 class Utils:
     @staticmethod
     def is_gzipped(mfile):
         '''Checks the if the first two bytes of the file match the gzip magic number'''
         with open(mfile, 'rb') as ff:
             return binascii.hexlify(ff.read(2)) == b'1f8b'
+
     # This function helps us reading the MonetDB JSON traces
     # readline until you reach '}' or EOF
+    # @staticmethod
+    # def readJsonObject(f):
+    #     # Check to see if the object is all in one line
+    #     line = f.readline()
+    #     if line.endswith(u'}\n'):
+    #         return json.loads(line)
+
+    #     lines = [line]
+    #     rbrace = False
+    #     while not rbrace:
+    #         line = f.readline()
+    #         if line == '':  # no more lines to read
+    #             return None
+    #         lines += line
+    #         if line == '}\n':
+    #             rbrace = True
+
+    #     return json.loads(''.join(lines))
+
+    # Note: we cheat a bit by ignoring the pretty printed JSON in
+    # order to speed up IO
     @staticmethod
     def readJsonObject(f):
-        # Check to see if the object is all in one line
-        line = f.readline()
-        if line.endswith(u'}\n'):
-            return json.loads(line)
+        global trace_lines
+        global idx
+        if trace_lines is None:
+            print("\n  Reading from disk...", end='')
+            sys.stdout.flush()
+            trace_lines = f.readlines()
+            print("Done")
 
-        lines = [line]
-        rbrace = False
-        while not rbrace:
-            line = f.readline()
-            if line == '':  # no more lines to read
-                return None
-            lines += line
-            if line == '}\n':
-                rbrace = True
+        print("\b\b\b\b", end='')
+        print("{:03}%".format(int(100 * (idx / len(trace_lines)))), end='')
+        sys.stdout.flush()
 
-        return json.loads(''.join(lines))
+        if idx >= len(trace_lines):
+            return None
+        ret = trace_lines[idx]
+        idx += 1
+        return json.loads(ret)
 
     @staticmethod
     def dict2list(d):
