@@ -79,8 +79,8 @@ class Utils:
             trace_lines = f.readlines()
             print("Done")
 
-        print("\b\b\b\b", end='')
-        print("{:03}%".format(int(100 * (idx / len(trace_lines)))), end='')
+        print("\b\b\b\b\b\b", end='')
+        print("  {:03}%".format(int(100 * (idx / len(trace_lines)))), end='')
         sys.stdout.flush()
 
         if idx >= len(trace_lines):
