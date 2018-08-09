@@ -91,6 +91,10 @@ def leave_one_out(definition):
     Utils.plotLine(numpy.arange(1, cnt), errors, outfile, 'Error percent', 'Leave out query')
 
 
+# The functions below might be useful, but are not currently used, and
+# cannot be used unless the methods writeToFile and loadFromFile are
+# fixed
+
 def train_model(definition):
     demo_dict = definition.get('demo', None)
     if demo_dict is None:

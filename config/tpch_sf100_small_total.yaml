@@ -6,4 +6,4 @@ stats: config/tpch_sf100_stats.txt
 query: 0
 out_path: output/
 data_file: /home/kutsurak/work/monet/sources/data/SF-100_traces/small/SF-100_small_training.json.gz
-model_file: /home/kutsurak/work/monet/sources/data/SF-100_traces/small/SF-100_small_training.model
+result_file: result.csv
