@@ -117,6 +117,13 @@ def plot_actual_memory(definition):
     load_end = datetime.datetime.now()
     print('Done: {}'.format(load_end - load_start))
 
+    outfile = os.path.join(
+        definition['root_path'],
+        definition['out_path'],
+        definition['result_file']
+    )
+    ofl = open(outfile, 'w')
+
     print('Computing footprint...     ', end='')
     sys.stdout.flush()
     result = dict()
@@ -127,22 +134,13 @@ def plot_actual_memory(definition):
         print('{:03}%'.format(int(100 * cnt / total)), end='')
         sys.stdout.flush()
         cnt += 1
+        # get the total memory for a specific query
         tq = dataset_dict.filter(lambda x: x.tag == t)
         total_mem = tq.getMaxMem()
-        result[t] = total_mem
+        ofl.write("{},{}\n".format(t, total_mem))
 
     print("")
-
-    outfile = os.path.join(
-        definition['root_path'],
-        definition['out_path'],
-        definition['result_file']
-    )
-
-    with open(outfile, 'w') as fl:
-        for k, v in result.items():
-            fl.write("{},{}\n".format(k, v))
-
+    ofl.close()
 
 
 # The functions below might be useful, but are not currently used, and
