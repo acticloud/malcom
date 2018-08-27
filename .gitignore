@@ -8,3 +8,5 @@ backup
 malcom.egg-info/
 output/
 .cache/
+/Pipfile.lock
+.*.swp

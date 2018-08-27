@@ -4,14 +4,14 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-numpy = "*"
-matplotlib = "*"
-python-levenshtein = "*"
-pytest = "*"
-pyyaml = "*"
+numpy = ">= 1.15"
+matplotlib = ">= 2.2"
+python-levenshtein = ">= 0.12"
+pytest = ">= 3.6"
+pyyaml = ">= 3.13"
 setuptools = "*"
 malcom = {editable = true, path = "."}
-ipython = "*"
+ipython = ">= 0.2"
 
 [dev-packages]
 
