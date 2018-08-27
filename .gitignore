@@ -12,3 +12,8 @@ output/
 .*.swp
 *.pyc
 *.pyo
+
+# these are either directories with too much data,
+# or symlinks to such
+/data
+/models

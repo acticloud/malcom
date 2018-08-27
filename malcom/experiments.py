@@ -9,24 +9,81 @@ from malcom.utils import Utils
 from malcom.stats import ColumnStatsD
 from malcom.mal_dict import MalDictionary
 
+class Definition:
+    """Data loaded from an experiment definition file
+
+    Provides methods to extract all sorts of paths
+    """
+
+    def __init__(self, filename):
+        file = open(filename)
+        self.conf = yaml.safe_load(file)
+        self.filename = os.path.abspath(filename)
+
+    def get(self, field):
+        value = self.conf.get(field)
+        if value == None:
+            raise RuntimeError('no field {} in definition file {}', field, self.filename)
+        return value
+
+    def path(self, *path_components):
+        base_dir = os.path.dirname(self.filename)
+        if os.path.basename(base_dir) == 'config':
+            base_dir = os.path.dirname(base_dir)  # ../
+        return os.path.join(
+            base_dir, 
+            self.conf.get('root_path', '.'),
+            *path_components)
+
+    def out_path(self, *path_components):
+        return self.path(self.get('out_path'), *path_components)
+
+    def blacklist_path(self):
+        return self.path(self.get('blacklist'))
+
+    def stats_path(self):
+        return self.path(self.get('stats'))
+
+    def result_file(self):
+        return self.out_path(self.get('result_file'))
+
+    def data_file(self):
+        return self.path(self.get('data_file'))
+
+    def query_num(self):
+        return self.get('query')
+
+    def experiment(self):
+        return self.get('experiment')
+
+    def demo_get(self, field):
+        demo = self.conf.get('demo', None)
+        if not demo:
+            raise RuntimeError('No demo section in definition file')
+        value = self.conf.get(field)
+        if value == None:
+            raise RuntimeError('no field demo.{} in definition file {}', field, self.filename)
+        return value
+
+    def demo_training_set(self):
+        return self.path(self.demo_get('training_set'))
+
+    def demo_model_storage(self):
+        return self.path(self.demo_get('model_storage'))
+
+    def demo_plan_file(self):
+        return self.path(self.demo_get('plan_file'))
+
 
 def parse_experiment_definition(filename):
-    with open(filename) as cfile:
-        definition = yaml.safe_load(cfile)
-
-    return definition
+    return Definition(filename)
 
 
 def leave_one_out(definition):
     initial_time = datetime.datetime.now()
-    root_path = definition['root_path']
-    blacklist = Utils.init_blacklist(
-        os.path.join(root_path, definition['blacklist'])
-    )
-    col_stats = ColumnStatsD.fromFile(
-        os.path.join(root_path, definition['stats'])
-    )
-    query_num = definition['query']
+    blacklist = Utils.init_blacklist(definition.blacklist_path())
+    col_stats = ColumnStatsD.fromFile(definition.stats_path())
+    query_num = definition.query_num()
 
     dataset_dict = None
     # Note: the commented code below does not work because
@@ -44,10 +101,9 @@ def leave_one_out(definition):
     if dataset_dict is None:
         print('Loading traces for query: {:02}...'.format(query_num), end='')
         sys.stdout.flush()
-        data_file = definition['data_file']
         load_start = datetime.datetime.now()
         dataset_dict = MalDictionary.fromJsonFile(
-            data_file,
+            self.data_file(),
             blacklist,
             col_stats
         )
@@ -56,12 +112,7 @@ def leave_one_out(definition):
         # dataset_dict.writeToFile(definition['model_file'])
 
     errors = list()
-    filename = os.path.join(
-        root_path,
-        definition['out_path'],
-        definition['result_file']
-    )
-    pl = open(filename, 'w')
+    pl = open(definition.result_file(), 'w')
     cnt = 0
     total = len(dataset_dict.query_tags)
     for leaveout_tag in dataset_dict.query_tags:
@@ -86,28 +137,19 @@ def leave_one_out(definition):
                                      errors[cnt - 1]))
 
     print("")
-    outfile = os.path.join(
-        definition['root_path'],
-        definition['out_path'],
-        'Q{:02}_memerror.pdf'.format(query_num)
-    )
+    outfile = definition.out_path('Q{:02}_memerror.pdf'.format(query_num))
     print()
     pl.close()
     Utils.plotLine(numpy.arange(1, cnt), errors, outfile, 'Error percent', 'Leave out query')
 
 
 def plot_actual_memory(definition):
-    root_path = definition['root_path']
-    blacklist = Utils.init_blacklist(
-        os.path.join(root_path, definition['blacklist'])
-    )
-    col_stats = ColumnStatsD.fromFile(
-        os.path.join(root_path, definition['stats'])
-    )
+    blacklist = Utils.init_blacklist(definition.blacklist_path())
+    col_stats = ColumnStatsD.fromFile(definition.stats_path())
 
     print('Loading traces...', end='')
     sys.stdout.flush()
-    data_file = definition['data_file']
+    data_file = definition.data_file()
     load_start = datetime.datetime.now()
     dataset_dict = MalDictionary.fromJsonFile(
         data_file,
@@ -117,11 +159,7 @@ def plot_actual_memory(definition):
     load_end = datetime.datetime.now()
     print('Done: {}'.format(load_end - load_start))
 
-    outfile = os.path.join(
-        definition['root_path'],
-        definition['out_path'],
-        definition['result_file']
-    )
+    outfile = definition.result_file()
     ofl = open(outfile, 'w')
 
     print('Computing footprint...     ', end='')
@@ -148,38 +186,27 @@ def plot_actual_memory(definition):
 # fixed
 
 def train_model(definition):
-    demo_dict = definition.get('demo', None)
-    if demo_dict is None:
-        raise RuntimeError('No demo section in definition file')
-    root_path = definition['root_path']
-    blacklist = Utils.init_blacklist(
-        os.path.join(root_path, definition['blacklist'])
-    )
-    col_stats = Utils.init_blacklist(
-        os.path.join(root_path, definition['stats'])
-    )
+    blacklist = Utils.init_blacklist(definition.blacklist_path())
+    col_stats = Utils.init_blacklist(definition.stats_path())
     print('Loading traces for demo... ', end='')
     sys.stdout.flush()
-    training_set = demo_dict['training_set']
+    training_set = definition.demo_training_set()
     dataset_mal = MalDictionary.fromJsonFile(
         training_set,
         blacklist,
         col_stats
     )
     print('Done')
-    print('Writing model to disk: {}... '.format(demo_dict['model_storage']), end='')
-    dataset_mal.writeToFile(demo_dict['model_storage'])
+    print('Writing model to disk: {}... '.format(definition.demo_model_storage()), end='')
+    dataset_mal.writeToFile(definition.demo_model_storage())
     print('Done')
 
     return dataset_mal
 
 
 def load_model(definition):
-    demo_dict = definition.get('demo', None)
-    if demo_dict is None:
-        raise RuntimeError('No demo section in definition file')
     try:
-        model = MalDictionary.loadFromFile(demo_dict['model_storage'])
+        model = MalDictionary.loadFromFile(definition.demo_model_storage())
     except:
         logging.warning('Model not found on disk. Training')
         model = train_model(definition)
@@ -188,16 +215,11 @@ def load_model(definition):
 
 
 def predict(definition):
-    root_path = definition['root_path']
-    blacklist = Utils.init_blacklist(
-        os.path.join(root_path, definition['blacklist'])
-    )
-    col_stats = Utils.init_blacklist(
-        os.path.join(root_path, definition['stats'])
-    )
+    blacklist = Utils.init_blacklist(definition.blacklist_path())
+    col_stats = Utils.init_blacklist(definition.stats_path())
 
     model = load_model(definition)
-    plan = definition['plan_file']
+    plan = definition.demo_plan_file()
     plan_dict = MalDictionary.fromJsonFile(plan, blacklist, col_stats)
 
 # EVERYTHING BELOW THIS LINE IS DEPRECATED

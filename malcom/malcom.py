@@ -93,7 +93,7 @@ def main():
     init_logger(args.log_level)
     experiment_definition = experiments.parse_experiment_definition(args.experiment)
 
-    func = experiment_dispatcher.get(experiment_definition['experiment'], default_function)
+    func = experiment_dispatcher.get(experiment_definition.experiment(), default_function)
     func(experiment_definition)
 
 
