@@ -10,3 +10,5 @@ output/
 .cache/
 /Pipfile.lock
 .*.swp
+*.pyc
+*.pyo
