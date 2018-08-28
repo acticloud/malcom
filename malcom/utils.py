@@ -1,4 +1,5 @@
 import binascii
+import datetime
 import json
 import logging
 import matplotlib
@@ -74,16 +75,18 @@ class Utils:
         global trace_lines
         global idx
         if trace_lines is None:
-            print("\n  Reading from disk...", end='')
-            sys.stdout.flush()
+            sys.stderr.write("\n  Reading from disk...")
+            start_time = datetime.datetime.now()
             trace_lines = f.readlines()
-            print("Done")
+            sys.stderr.write('{}\n'.format(datetime.datetime.now() - start_time))
 
-        print("\b\b\b\b\b\b", end='')
-        print("  {:03}%".format(int(100 * (idx / len(trace_lines)))), end='')
-        sys.stdout.flush()
+        num_traces = len(trace_lines)
+        percentage = int(100.0 * idx / num_traces)
+        sys.stderr.write('\r  {:02}% {}/{}'.format(percentage, idx, num_traces))
 
-        if idx >= len(trace_lines):
+        if idx >= num_traces:
+            if idx == num_traces:
+                sys.stderr.write('\n')
             return None
         ret = trace_lines[idx]
         idx += 1

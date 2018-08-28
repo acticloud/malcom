@@ -193,6 +193,7 @@ def read_dataset(definition):
 
 def banana(definition):
     # now = datetime.datetime.now
+    print(datetime.datetime.now())
     now = time.time
 
     start = now()
