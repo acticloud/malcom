@@ -90,13 +90,6 @@ class Utils:
         return json.loads(ret)
 
     @staticmethod
-    def dict2list(d):
-        ilist = []
-        for l in d.values():
-            ilist.extend(l)
-        return ilist
-
-    @staticmethod
     def is_blacklisted(blacklist, instr):
         for mali in blacklist:
             if mali in instr:

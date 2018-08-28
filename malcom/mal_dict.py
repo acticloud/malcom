@@ -4,9 +4,13 @@ import random
 import pickle
 import logging
 
+from collections import defaultdict
+
 from malcom.utils import Utils
 from malcom.mal_instr import MalInstruction
 
+def _make_list():
+    return []
 
 class MalDictionary:
     """
@@ -17,7 +21,7 @@ class MalDictionary:
     def __init__(self, mal_dict, q_tags, col_stats={}):
         self.mal_dict = mal_dict
         self.query_tags = q_tags
-        self.ins_list = Utils.dict2list(mal_dict)
+        self.ins_list = [i for instr_list in mal_dict.values() for i in instr_list ]
 
     @staticmethod
     def loadFromFile(file_name):
@@ -48,7 +52,7 @@ class MalDictionary:
         else:
             open_func = open
         with open_func(mfile, mode='rt', encoding='utf-8') as f:
-            maldict = {}
+            maldict = defaultdict(_make_list)
             startd = {}
             query_tags = set()
 
@@ -66,7 +70,7 @@ class MalDictionary:
                         new_mals = MalInstruction.fromJsonObj(jobj, col_stats)
                         new_mals.time = int(jobj["clk"]) - int(startd[jobj["pc"]])
                         new_mals.start = int(startd[jobj["pc"]])
-                        maldict[fname] = maldict.get(fname, []) + [new_mals]
+                        maldict[fname].append(new_mals)
                         query_tags.add(int(jobj["tag"]))
 
         print("")
@@ -79,10 +83,10 @@ class MalDictionary:
         @arg varflow
         @ret MalDictionary
         """
-        mdict = {}
+        mdict = defaultdict(_make_list)
         qtags = set()
         for i in ilist:
-            mdict[i.fname] = mdict.get(i.fname, []) + [i]
+            mdict[i.fname].append(i)
             qtags.add(i.tag)
         return MalDictionary(mdict, list(qtags))
 
@@ -238,9 +242,9 @@ class MalDictionary:
         ilist = self.getInsList()
         ilist.sort(key=fun)  # bda ins: -ins.mem_fprint)
         bestp = ilist[0:int(perc * len(ilist))]
-        d = {}
+        d = defaultdict(_make_list)
         tags = set()
         for i in bestp:
-            d[i.fname] = d.get(i.fname, []) + [i]
+            d[i.fname].append(i)
             tags.add(i.tag)
         return MalDictionary(d, tags, self.varflow)
