@@ -135,8 +135,10 @@ class MalDictionary:
         max_mem = 0
         curr_mem = 0
         for i in ilist:
-            max_mem = max(max_mem, curr_mem + i.mem_fprint)
-            curr_mem = curr_mem + i.ret_size - i.free_size
+            # Assume the worst case: all memory is only freed at the end.
+            curr_mem += i.mem_fprint
+            max_mem = max(max_mem, curr_mem)
+            curr_mem -= i.free_size
 
         return max_mem
 
@@ -152,8 +154,10 @@ class MalDictionary:
         max_mem = 0
         curr_mem = 0
         for i in ilist:
-            max_mem = max(max_mem, curr_mem + i.approxMemSize(pG))
-            curr_mem = curr_mem + i.approxMemSize(pG) - i.approxFreeSize(pG)
+            # Assume the worst case: all memory is only freed at the end.
+            curr_mem += i.approxMemSize(pG)
+            max_mem = max(max_mem, curr_mem)
+            curr_mem -= i.approxFreeSize(pG)
 
         return max_mem
 
