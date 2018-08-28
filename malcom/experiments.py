@@ -3,6 +3,7 @@ import logging
 import numpy
 import os
 import sys
+import time
 import yaml
 
 from malcom.utils import Utils
@@ -190,6 +191,27 @@ def read_dataset(definition):
     )
     return dataset_dict
 
+def banana(definition):
+    # now = datetime.datetime.now
+    now = time.time
+
+    start = now()
+    dataset0 = read_dataset(definition)
+    print('Reading took {}'.format(now() - start))
+
+    start = now()
+    dataset0.writeToFile('data.pickle')
+    print('Pickling took {}'.format(now() - start))
+
+    start = now()
+    dataset = MalDictionary.loadFromFile('data.pickle')
+    print('Unpickling took {}'.format(now() - start))
+
+    print('it has {} query tags'.format(len(dataset.query_tags)))
+
+
+
+    
 
 def predicted_vs_actual(definition):
     timestamp_initial = datetime.datetime.now()
