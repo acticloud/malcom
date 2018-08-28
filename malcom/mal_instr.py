@@ -21,6 +21,18 @@ from malcom.utils import Utils
 from malcom.utils import Prediction
 from malcom.stats import ColumnStats
 
+def _lambda_add(a, b):
+    return a + b
+
+def _lambda_lefthand(a, b):
+    return a
+
+def _lambda_inc(v):
+    return v + 1
+
+def _lambda_identity(v):
+    return v
+
 
 class MalInstruction:
     """ MalInstruction Class:
@@ -111,14 +123,14 @@ class MalInstruction:
         # Set Instructions: the last parameter determines how to compute the
         #     prediction for this MAL instruction
         elif fname in ['intersect']:
-            return SetInstruction(*con_args, i1=0, i2=1, fun=lambda a, b: min(a, b))
+            return SetInstruction(*con_args, i1=0, i2=1, fun=min)
         elif fname in ['mergecand']:
-            return SetInstruction(*con_args, i1=0, i2=1, fun=lambda a, b: a + b)
+            return SetInstruction(*con_args, i1=0, i2=1, fun=_lambda_add)
         elif fname in ['difference']:
-            return SetInstruction(*con_args, i1=0, i2=1, fun=lambda a, b: a)
+            return SetInstruction(*con_args, i1=0, i2=1, fun=_lambda_lefthand)
         elif fname in['<', '>', '>=', '<=']:
             if arg_list[1].isVar():
-                return SetInstruction(*con_args, i1=0, i2=1, fun=lambda a, b: min(a, b))
+                return SetInstruction(*con_args, i1=0, i2=1, fun=min)
             else:
                 return DirectIntruction(*con_args, base_arg_i=0)
         # Direct Intructions
@@ -141,7 +153,7 @@ class MalInstruction:
             argl = len(arg_list)
             assert argl == 4 or argl == 6
             n = int(arg_list[3].aval) if argl == 6 else int(arg_list[1].aval)
-            return DirectIntruction(*con_args, base_arg_i=0, fun=lambda v: min(n, v))
+            return DirectIntruction(*con_args, base_arg_i=0, fun=min)
         elif fname in ['hash', 'bulk_rotate_xor_hash', 'identity', 'mirror', 'year', 'ifthenelse', 'delta', 'substring', 'project', 'int', 'floor']:
             return DirectIntruction(*con_args, base_arg_i=0)
         elif fname in ['dbl']:
@@ -152,7 +164,7 @@ class MalInstruction:
             else:
                 return ReduceInstruction(*con_args)
         elif fname in ['append']:
-            return DirectIntruction(*con_args, base_arg_i=0, fun=lambda v: v + 1)
+            return DirectIntruction(*con_args, base_arg_i=0, fun=_lambda_inc) 
         elif fname in ['max', 'min']:
             if len(arg_list) == 1:
                 return ReduceInstruction(*con_args)
@@ -257,7 +269,7 @@ class DirectIntruction(MalInstruction):
     # I am pretty sure that this definition is WRONG. *args and
     # **kwars should be the END of the argument list:
     # https://docs.python.org/3.6/tutorial/controlflow.html#arbitrary-argument-lists
-    def __init__(self, *args, base_arg_i, base_ret_i=0, fun=lambda v: v):
+    def __init__(self, *args, base_arg_i, base_ret_i=0, fun=_lambda_identity):
         MalInstruction.__init__(self, *args)
         self.base_arg = self.arg_list[base_arg_i]
         self.base_ret = self.ret_args[base_ret_i].name
