@@ -23,7 +23,7 @@ class Definition:
     def get(self, field):
         value = self.conf.get(field)
         if value == None:
-            raise RuntimeError('no field {} in definition file {}', field, self.filename)
+            raise RuntimeError('no field {} in definition file {}'.format(field, self.filename))
         return value
 
     def path(self, *path_components):
@@ -62,7 +62,7 @@ class Definition:
             raise RuntimeError('No demo section in definition file')
         value = self.conf.get(field)
         if value == None:
-            raise RuntimeError('no field demo.{} in definition file {}', field, self.filename)
+            raise RuntimeError('no field demo.{} in definition file {}'.format(field, self.filename))
         return value
 
     def demo_training_set(self):
@@ -103,7 +103,7 @@ def leave_one_out(definition):
         sys.stdout.flush()
         load_start = datetime.datetime.now()
         dataset_dict = MalDictionary.fromJsonFile(
-            self.data_file(),
+            definition.data_file(),
             blacklist,
             col_stats
         )
