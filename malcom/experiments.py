@@ -180,6 +180,58 @@ def plot_actual_memory(definition):
     print("")
     ofl.close()
 
+def read_dataset(definition):
+    blacklist = Utils.init_blacklist(definition.blacklist_path())
+    col_stats = ColumnStatsD.fromFile(definition.stats_path())
+    dataset_dict = MalDictionary.fromJsonFile(
+        definition.data_file(),
+        blacklist,
+        col_stats
+    )
+    return dataset_dict
+
+
+def predicted_vs_actual(definition):
+    timestamp_initial = datetime.datetime.now()
+
+    dataset = read_dataset(definition)
+    timestamp_loaded = datetime.datetime.now()
+    print('Loaded {} query tags in {}'.format(
+        len(dataset.query_tags), 
+        timestamp_loaded - timestamp_initial))
+
+    # errors = list()
+    # pl = open(definition.result_file(), 'w')
+    # cnt = 0
+    # total = len(dataset_dict.query_tags)
+    # for leaveout_tag in dataset_dict.query_tags:
+    #     iter_start = datetime.datetime.now()
+    #     print("\b\b\b\b", end='')
+    #     print('{:03}%'.format(int(100 * cnt / total)), end='')
+    #     sys.stdout.flush()
+    #     cnt += 1
+    #     test_dict = dataset_dict.filter(lambda x: x.tag == leaveout_tag)
+    #     train_dict = dataset_dict.filter(lambda x: x.tag != leaveout_tag)
+
+    #     graph = test_dict.buildApproxGraph(train_dict)
+
+    #     predict_start = datetime.datetime.now()
+    #     predicted_mem = test_dict.predictMaxMem(graph)
+    #     actual_mem = test_dict.getMaxMem()
+    #     iter_end = datetime.datetime.now()
+
+    #     errors.append(100 * (predicted_mem - actual_mem) / actual_mem)
+    #     pl.write("{} {} {}\n".format(iter_end - iter_start,
+    #                                  iter_end - predict_start,
+    #                                  errors[cnt - 1]))
+
+    # print("")
+    # outfile = definition.out_path('Q{:02}_memerror.pdf'.format(query_num))
+    # print()
+    # pl.close()
+    # Utils.plotLine(numpy.arange(1, cnt), errors, outfile, 'Error percent', 'Leave out query')
+
+
 
 # The functions below might be useful, but are not currently used, and
 # cannot be used unless the methods writeToFile and loadFromFile are

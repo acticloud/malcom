@@ -1,0 +1,16 @@
+---
+
+blacklist: config/mal_blacklist.txt
+stats: config/tpch_sf100_stats.txt
+query: 1
+out_path: output/
+# data_file: data/SF-100_traces/small/Q01_total.json.gz
+# data_file: data/SF100_traces/SF100_traces/Q01_total.json.gz
+data_file: data/SF100_traces/SF100_traces/SF-100_big_training.json.gz
+experiment: predicted vs actual memory
+result_file: total_memory.csv
+
+# demo:
+#   training_set: data/SF-100_traces/small/SF-100_small_training.json.gz
+#   # 'models' used to be: /home/kutsurak/work/monet/data
+#   model_storage: models/malcom_experiments/sf_100_small_model
