@@ -1,10 +1,14 @@
 import datetime
+import glob
 import logging
+import lz4.frame
 import numpy
 import os
+import pickle
 import sys
 import time
 import yaml
+
 
 from malcom.utils import Utils
 from malcom.stats import ColumnStatsD
@@ -24,7 +28,7 @@ class Definition:
     def get(self, field):
         value = self.conf.get(field)
         if value == None:
-            raise RuntimeError('no field {} in definition file {}'.format(field, self.filename))
+            raise RuntimeError("no field '{}' in definition file {}".format(field, self.filename))
         return value
 
     def path(self, *path_components):
@@ -35,6 +39,25 @@ class Definition:
             base_dir, 
             self.conf.get('root_path', '.'),
             *path_components)
+
+    def paths(self, pattern_or_pattern_list):
+        if isinstance(pattern_or_pattern_list, list):
+            patterns = pattern_or_pattern_list
+        elif pattern_or_pattern_list.strip():
+            # nonempty string
+            patterns = [ pattern_or_pattern_list ]
+        else:
+            # whitespace only, maybe intended as yaml empty list?
+            patterns = []
+
+        paths = []
+        for pattern in patterns:
+            glob_path = self.path(pattern)
+            matches = glob.glob(glob_path)
+            paths.extend(matches)
+        if patterns and not matches:
+            raise RuntimeError('None of the patterns matched')
+        return paths
 
     def out_path(self, *path_components):
         return self.path(self.get('out_path'), *path_components)
@@ -50,6 +73,12 @@ class Definition:
 
     def data_file(self):
         return self.path(self.get('data_file'))
+
+    def query_files(self):
+        return self.paths(self.get('query_files'))
+
+    def training_files(self):
+        return self.paths(self.get('training_files'))
 
     def query_num(self):
         return self.get('query')
@@ -181,79 +210,77 @@ def plot_actual_memory(definition):
     print("")
     ofl.close()
 
-def read_dataset(definition):
-    blacklist = Utils.init_blacklist(definition.blacklist_path())
-    col_stats = ColumnStatsD.fromFile(definition.stats_path())
-    dataset_dict = MalDictionary.fromJsonFile(
-        definition.data_file(),
-        blacklist,
-        col_stats
-    )
-    return dataset_dict
 
-def banana(definition):
-    # now = datetime.datetime.now
-    print(datetime.datetime.now())
-    now = time.time
+def read_pickles(pickle_paths):
+    assert pickle_paths
 
-    start = now()
-    dataset0 = read_dataset(definition)
-    print('Reading took {}'.format(now() - start))
+    maldicts = []
+    for i, p in enumerate(pickle_paths):
+        sys.stderr.write('{}/{}\r'.format(i, len(pickle_paths)))
+        maldict = None
+        with open(p, 'rb') as raw_file:
+            if p.endswith('.lz4'):
+                with lz4.frame.LZ4FrameFile(raw_file, mode='rb') as lz_file:
+                    maldict = pickle.load(lz_file) 
+            else:
+                maldict = pickle.load(raw_file)
+        assert maldict
+        maldicts.append(maldict)
 
-    start = now()
-    dataset0.writeToFile('data.pickle')
-    print('Pickling took {}'.format(now() - start))
-
-    start = now()
-    dataset = MalDictionary.loadFromFile('data.pickle')
-    print('Unpickling took {}'.format(now() - start))
-
-    print('it has {} query tags'.format(len(dataset.query_tags)))
-
-
-
+    sys.stderr.write('merging\r'.format(i, len(pickle_paths)))
+    [first, *rest] = maldicts
+    union = first.union(*rest)
+    sys.stderr.write('           \r'.format(i, len(pickle_paths)))
+    return union
     
 
+class Stopwatch:
+    def __init__(self):
+        self.get_current_time = datetime.datetime.now
+        self.ref = self.get_current_time()
+    
+    def __call__(self):
+        now = self.get_current_time()
+        delta = now - self.ref
+        self.ref = now
+        return delta
+
+
 def predicted_vs_actual(definition):
-    timestamp_initial = datetime.datetime.now()
+    stopwatch = Stopwatch()
 
-    dataset = read_dataset(definition)
-    timestamp_loaded = datetime.datetime.now()
-    print('Loaded {} query tags in {}'.format(
-        len(dataset.query_tags), 
-        timestamp_loaded - timestamp_initial))
+    query_files = definition.query_files()
+    sys.stderr.write('reading {} query files\n'.format(len(query_files)))
+    stopwatch()
+    test_set = read_pickles(query_files)
+    sys.stderr.write('reading took {}\n'.format(stopwatch()))
+    assert len(query_files) == len(test_set.query_tags)
 
-    # errors = list()
-    # pl = open(definition.result_file(), 'w')
-    # cnt = 0
-    # total = len(dataset_dict.query_tags)
-    # for leaveout_tag in dataset_dict.query_tags:
-    #     iter_start = datetime.datetime.now()
-    #     print("\b\b\b\b", end='')
-    #     print('{:03}%'.format(int(100 * cnt / total)), end='')
-    #     sys.stdout.flush()
-    #     cnt += 1
-    #     test_dict = dataset_dict.filter(lambda x: x.tag == leaveout_tag)
-    #     train_dict = dataset_dict.filter(lambda x: x.tag != leaveout_tag)
+    training_files = definition.training_files()
+    sys.stderr.write('reading {} training files\n'.format(len(training_files)))
+    stopwatch()
+    training_set = read_pickles(training_files)
+    sys.stderr.write('reading took {}\n'.format(stopwatch()))
+    assert len(training_files) == len(training_set.query_tags)
 
-    #     graph = test_dict.buildApproxGraph(train_dict)
+    result_file = definition.result_file()
+    with open(result_file, 'w') as results:
+        for q_tag in test_set.query_tags:
+            sys.stderr.write('query {}  '.format(q_tag))
+            sys.stderr.flush() # shouldn't be needed
+            iterwatch = Stopwatch()
+            query_set = test_set.filter(lambda i: i.tag == q_tag)
+            actual_mem = query_set.getMaxMem()
+            graph = query_set.buildApproxGraph(training_set)
+            sys.stderr.write('build {}  '.format(iterwatch()))
+            sys.stderr.flush()
+            predicted_mem = query_set.predictMaxMem(graph)
+            sys.stderr.write('predict {}\n'.format(iterwatch()))
+            line = '{}:{}:{}\n'.format(q_tag, actual_mem, predicted_mem)
+            print(line)
+            results.write(line)
 
-    #     predict_start = datetime.datetime.now()
-    #     predicted_mem = test_dict.predictMaxMem(graph)
-    #     actual_mem = test_dict.getMaxMem()
-    #     iter_end = datetime.datetime.now()
-
-    #     errors.append(100 * (predicted_mem - actual_mem) / actual_mem)
-    #     pl.write("{} {} {}\n".format(iter_end - iter_start,
-    #                                  iter_end - predict_start,
-    #                                  errors[cnt - 1]))
-
-    # print("")
-    # outfile = definition.out_path('Q{:02}_memerror.pdf'.format(query_num))
-    # print()
-    # pl.close()
-    # Utils.plotLine(numpy.arange(1, cnt), errors, outfile, 'Error percent', 'Leave out query')
-
+    sys.stderr.write('Experiment took {}\n'.format(stopwatch()))
 
 
 # The functions below might be useful, but are not currently used, and

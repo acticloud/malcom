@@ -1,16 +1,34 @@
 ---
 
-blacklist: config/mal_blacklist.txt
-stats: config/tpch_sf100_stats.txt
-query: 1
 out_path: output/
-# data_file: data/SF-100_traces/small/Q01_total.json.gz
-# data_file: data/SF100_traces/SF100_traces/Q01_total.json.gz
-data_file: data/SF100_traces/SF100_traces/SF-100_big_training.json.gz
 experiment: predicted vs actual memory
-result_file: total_memory.csv
+result_file: tag_actual_predicted.csv
+training_files: data/SF100_traces/separate/Q??V01?.pickled.lz4
+query_files:
+  # The ones with ## are commented out because they crash the experiment. 
+  # To be investigated.
+  - data/SF100_traces/separate/Q01V000.pickled.lz4
+  ## - data/SF100_traces/separate/Q02V000.pickled.lz4
+  ## - data/SF100_traces/separate/Q03V000.pickled.lz4
+  - data/SF100_traces/separate/Q04V000.pickled.lz4
+  - data/SF100_traces/separate/Q05V000.pickled.lz4
+  - data/SF100_traces/separate/Q06V000.pickled.lz4
+  - data/SF100_traces/separate/Q07V000.pickled.lz4
+  - data/SF100_traces/separate/Q08V000.pickled.lz4
+  - data/SF100_traces/separate/Q09V000.pickled.lz4
+  ##- data/SF100_traces/separate/Q10V000.pickled.lz4
+  - data/SF100_traces/separate/Q11V000.pickled.lz4
+  - data/SF100_traces/separate/Q12V000.pickled.lz4
+  - data/SF100_traces/separate/Q13V000.pickled.lz4
+  - data/SF100_traces/separate/Q14V000.pickled.lz4
+  - data/SF100_traces/separate/Q15V000.pickled.lz4
+  - data/SF100_traces/separate/Q16V000.pickled.lz4
+  - data/SF100_traces/separate/Q17V000.pickled.lz4
+  ## - data/SF100_traces/separate/Q18V000.pickled.lz4
+  - data/SF100_traces/separate/Q19V000.pickled.lz4
+  - data/SF100_traces/separate/Q20V000.pickled.lz4
+  - data/SF100_traces/separate/Q22V000.pickled.lz4
 
-# demo:
-#   training_set: data/SF-100_traces/small/SF-100_small_training.json.gz
-#   # 'models' used to be: /home/kutsurak/work/monet/data
-#   model_storage: models/malcom_experiments/sf_100_small_model
+  # This one is commented out because it is so slow.
+  # - data/SF100_traces/separate/Q21V000.pickled.lz4
+

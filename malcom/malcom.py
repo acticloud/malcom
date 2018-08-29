@@ -79,7 +79,6 @@ experiment_dispatcher = {
     'leave one out': experiments.leave_one_out,
     'actual memory': experiments.plot_actual_memory,
     'predicted vs actual memory': experiments.predicted_vs_actual,
-    'banana': experiments.banana,
 }
 
 

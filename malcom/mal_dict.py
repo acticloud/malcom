@@ -34,9 +34,10 @@ class MalDictionary:
             pickle.dump(self, f)
 
     # add info. from another dictionary into this one, just a simple append, no
-    #   duplication elemination
-    def union(self, other):
-        union_ilist = self.getInsList() + other.getInsList()
+    #   duplication elimination
+    def union(self, *others):
+        dict_list = [self, *others]
+        union_ilist = [ i for d in dict_list for i in d.getInsList() ]
         return MalDictionary.fromInsList(union_ilist)
 
     @staticmethod
