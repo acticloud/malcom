@@ -1,0 +1,13 @@
+#!/bin/bash
+
+tag_map=data/SF100_traces/separate/tags.txt
+
+rm -f "$tag_map"
+
+for i in 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22
+do
+    infile="data/SF100_traces/SF100_traces/Q${i}_total.json.gz"
+    outpattern="data/SF100_traces/separate/Q${i}VXXX.pickled.lz4"
+    echo "Working on $infile"
+    python3 splitout.py  "$infile" "$outpattern" --tag-map "$tag_map"
+done

@@ -12,6 +12,7 @@ pyyaml = ">= 3.13"
 setuptools = "*"
 malcom = {editable = true, path = "."}
 ipython = ">= 0.2"
+lz4 = ">= 2.1"
 
 [dev-packages]
 
