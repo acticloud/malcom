@@ -12,6 +12,7 @@ output/
 .*.swp
 *.pyc
 *.pyo
+/.vscode
 
 # these are either directories with too much data,
 # or symlinks to such
