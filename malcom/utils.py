@@ -7,6 +7,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy
 import sys
+import time
 
 
 class Prediction():
@@ -72,6 +73,7 @@ class Utils:
     # order to speed up IO
     @staticmethod
     def readJsonObject(f):
+        global progress_timestamp
         global trace_lines
         global idx
         if trace_lines is None:
@@ -79,10 +81,13 @@ class Utils:
             start_time = datetime.datetime.now()
             trace_lines = f.readlines()
             sys.stderr.write('{}\n'.format(datetime.datetime.now() - start_time))
+            progress_timestamp = time.time()
 
         num_traces = len(trace_lines)
         percentage = int(100.0 * idx / num_traces)
-        sys.stderr.write('\r  {:02}% {}/{}'.format(percentage, idx, num_traces))
+        if time.time() - progress_timestamp > 0.5:
+            sys.stderr.write('\r  {:02}% {}/{}'.format(percentage, idx, num_traces))
+            progress_timestamp = time.time()
 
         if idx >= num_traces:
             if idx == num_traces:
