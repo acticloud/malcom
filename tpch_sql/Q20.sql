@@ -1,0 +1,1 @@
+SELECT 'Query Q20';
