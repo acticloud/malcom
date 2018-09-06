@@ -250,7 +250,18 @@ def uhoh(definition):
             f.write(line + '\n')
 
 
-   derr.write('Experiment took {}\n'.format(stopwatch()))
+def mem_use_per_file(definition):
+    blacklist = Utils.init_blacklist(definition.blacklist_path())
+    col_stats = ColumnStatsD.fromFile(definition.stats_path())
+
+    trace_files = definition.training_files()
+    traces = {}
+    for path in trace_files:
+        traces[path] = MalDictionary.fromJsonFile(path, blacklist, col_stats)
+    for path in trace_files:
+        name = os.path.basename(path)
+        trace = traces[path]
+        print(name, trace.query_tags)
 
 
 

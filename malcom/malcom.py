@@ -80,6 +80,7 @@ experiment_dispatcher = {
     'actual memory': experiments.plot_actual_memory,
     'predicted vs actual memory': experiments.predicted_vs_actual,
     'uh oh': experiments.uhoh,
+    'memory use per file': experiments.mem_use_per_file,
 }
 
 
