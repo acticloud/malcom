@@ -232,7 +232,29 @@ def read_pickles(pickle_paths):
     union = first.union(*rest)
     sys.stderr.write('           \r'.format(i, len(pickle_paths)))
     return union
-    
+
+
+def uhoh(definition):
+    stopwatch = Stopwatch()
+
+    trace_files = definition.training_files()
+    traces = read_pickles(trace_files)
+    # print(sorted(traces.query_tags))
+
+    with open('output/uhoh.pickle', 'w') as f:
+        for tag in sorted(traces.query_tags):
+            filtered = traces.filter(lambda i: i.tag == tag)
+            actual = filtered.getMaxMem()
+            line = "{},{}".format(tag, actual)
+            print(line)
+            f.write(line + '\n')
+
+
+   derr.write('Experiment took {}\n'.format(stopwatch()))
+
+
+
+
 
 class Stopwatch:
     def __init__(self):

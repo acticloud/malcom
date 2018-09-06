@@ -1,0 +1,9 @@
+---
+
+blacklist: config/mal_blacklist.txt
+stats: config/tpch_sf100_stats.txt
+query: 0
+
+
+training_files: data/SF100_traces/separate/Q13V*.pickled.lz4
+experiment: uh oh
