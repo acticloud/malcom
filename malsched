@@ -3,9 +3,12 @@
 import configparser
 import glob
 import os
+import pickle
 import sys
 import string
 import time
+
+import lz4.frame
 
 class QueryError(Exception):
     def __init__(self, msg, exit_code = None):
@@ -66,26 +69,27 @@ class Interaction:
         self.at_beginning_of_line = True
         return answer
 
+interact = Interaction()
 
-def main(interact):
+def main():
     interact("Welcome to the Malcom scheduler.\n")
 
     conf = default_config()
     conf.read(["malsched.ini", "malsched-local.ini"])
 
     connections = connect_to_databases(conf)
-    model = load_model(interact, conf)
+    model = load_model(conf)
 
     while True:
         try:
-            qname = ask_which_query(interact)
+            qname = ask_which_query()
             if not qname:
                 return 0
 
             query = read_query(conf, qname)
             interact("Query:\n{}\n", query)
 
-            expected = predict_memory_use(interact, model, qname)
+            expected = predict_memory_use(model, qname, query)
             interact("Predicted memory use: {}\n", format_size(expected))
 
             (db_name, size_gb) = chose_best_database(conf, expected)
@@ -111,12 +115,31 @@ def default_config():
     return conf
 
 
-def load_model(interact, conf):
+def load_model(conf):
     prefix = conf['malsched']['trace_directory']
-    globs = [word.strip() for word in conf['traces']['training'].split(',')]
+    globs = [word.strip() for word in conf['traces']['training'].split(',') if word]
     paths = [p for g in globs for p in glob.glob(os.path.join(prefix, g))]
-    interact("Loading {} traces..", len(paths))
-    interact.delay(2)
+    if not paths:
+        raise RuntimeError("no training traces configured in [traces]training")
+    
+    interact("Loading {} traces\n", len(paths))
+    maldicts = []
+    for i, p in enumerate(paths):
+        interact("{}/{}\r", i, len(paths))
+        with open(p, 'rb') as raw_file:
+            if p.endswith('.lz4'):
+                with lz4.frame.LZ4FrameFile(raw_file, mode='rb') as lz_file:
+                    maldict = pickle.load(lz_file) 
+            else:
+                maldict = pickle.load(raw_file)
+        assert maldict
+        maldicts.append(maldict)
+    interact(' ' * 16 + '\r\n')
+
+    [first, *rest] = maldicts
+    union = first.union(*rest)
+    return union
+
 
 
 def connect_to_databases(conf):
@@ -139,7 +162,7 @@ def connect_to_databases(conf):
     return clients
 
 
-def ask_which_query(interact):
+def ask_which_query():
     """Interacts with the user via `interact`, returning either a query name 
     or None if the user wants to quit
     """
@@ -169,7 +192,7 @@ def read_query(conf, qname):
         return f.read()
 
 
-def predict_memory_use(interact, model, query):
+def predict_memory_use(model, qname, query):
     query = query.upper()
     if query == 'Q13':
         gb = 224
@@ -210,7 +233,7 @@ def chose_best_database(conf, bytes_needed):
     return (choice, best)
 
 
-def send_query_to_database(interact, conf, query):
+def send_query_to_database(conf, query):
     raise QueryError("unimplemented")
 
 # Copied from StackOverflow 
@@ -225,8 +248,7 @@ def format_size(num, suffix='B'):
 
 if __name__ == "__main__":
     try:
-        interact = Interaction()
-        ret = main(interact) or 0
+        ret = main() or 0
         sys.exit(ret)
     finally:
         interact.close()
