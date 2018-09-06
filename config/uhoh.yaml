@@ -1,0 +1,14 @@
+---
+
+root_path: /home/kutsurak/work/monet/sources/malcom
+blacklist: config/mal_blacklist.txt
+stats: config/tpch_sf100_stats.txt
+query: 0
+out_path: output/
+data_file: /home/kutsurak/work/monet/sources/data/SF-100_traces/small/Q01_total.json.gz
+# data_file: /home/kutsurak/work/monet/sources/data/SF-100_traces/small/SF-100_small_training.json.gz
+# data_file: /home/kutsurak/work/monet/sources/data/SF-100_traces/full/SF-100_big_training.json.gz
+# result_file: result.csv
+# experiment: leave one out
+result_file: total_memory.csv
+experiment: actual memory
