@@ -251,17 +251,16 @@ def uhoh(definition):
 
 
 def mem_use_per_file(definition):
-    blacklist = Utils.init_blacklist(definition.blacklist_path())
-    col_stats = ColumnStatsD.fromFile(definition.stats_path())
-
     trace_files = definition.training_files()
     traces = {}
     for path in trace_files:
-        traces[path] = MalDictionary.fromJsonFile(path, blacklist, col_stats)
-    for path in trace_files:
         name = os.path.basename(path)
-        trace = traces[path]
-        print(name, trace.query_tags)
+        name = name[:3]
+        traces[name] = read_pickles([path])
+    for name, trace in sorted(traces.items()):
+        mem = trace.getMaxMem()
+        mem /= 1.0 * 1024**3
+        print("{},{}".format(name, mem))
 
 
 

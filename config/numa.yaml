@@ -6,6 +6,5 @@ query: 0
 
 
 training_files: 
-  - data/20180906-numa/trs/Q09.json
-  - data/20180906-numa/trs/Q13.json
+  - data/20180906-numa/separate/Q??V000.pickled.lz4
 experiment: memory use per file
