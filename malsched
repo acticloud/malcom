@@ -162,13 +162,13 @@ def main():
             interact("Query:\n{}\n", query)
 
             expected = predict_memory_use(conf, model, qname, query)
-            interact("Predicted memory use: {}\n", format_size(expected))
+            interact("Estimated intermediate data size: {}\n", format_size(expected))
 
             (db_name, size_gb) = chose_best_database(conf, expected)
             interact("Advise to send this to {} which has {}\n", db_name, format_size(size_gb))
 
             for _, con in connections.items():
-                measure_query(conf, con, query)
+                measure_query(conf, con, qname, query)
 
         except QueryError as e:
             if e.exit_code != None:
@@ -201,7 +201,7 @@ def load_model(conf):
         maldicts.append(maldict)
     interact(' ' * 16 + '\r')
 
-    interact("Training...")
+    interact("Processing...")
     [first, *rest] = maldicts
     union = first.union(*rest)
     return union
@@ -306,8 +306,8 @@ def chose_best_database(conf, bytes_needed):
     return (choice, best)
 
 
-def measure_query(conf, con, query):
-    interact("Trying at {}.. ", con.name)
+def measure_query(conf, con, qname, query):
+    interact("\nExecuting {} on {}.. ", qname, con.name)
     con.tracer.start()
     c = con.cursor()
     t0 = time.time()
@@ -315,6 +315,7 @@ def measure_query(conf, con, query):
     t1 = time.time()
     c.close()
     trace = con.tracer.stop()
+    interact("{} rows in {:.2f}s,\n", nrows, t1 - t0)
     #
     blacklist = Utils.init_blacklist(conf['malsched']['blacklist'])
     stats = ColumnStatsD.fromFile(conf['malsched']['stats'])
@@ -322,10 +323,9 @@ def measure_query(conf, con, query):
     d = MalDictionary.fromJsonFile(whole_trace, blacklist, stats)
     max_mem = d.getMaxMem()
     #
-    max_rss = 1024 * 1024 * max(json.loads(line).get('rss', 0) for line in trace)
+    max_rss = 1024 * 1024 * max((json.loads(line).get('rss', 0) for line in trace), default=0)
     #
-    interact("{} rows in {:.2f}s, {} ops, data size {}, rss {}\n", 
-        nrows, t1 - t0, 
+    interact("{} ops, max intermediate data size {}, server rss {}\n", 
         len(trace), format_size(max_mem), format_size(max_rss))
 
 
