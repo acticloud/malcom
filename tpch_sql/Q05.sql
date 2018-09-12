@@ -1,1 +1,0 @@
-SELECT 'Query Q05';
