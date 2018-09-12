@@ -180,7 +180,7 @@ class MalInstruction:
         elif fname in ['tid', 'bind', 'bind_idxbat']:
             return LoadInstruction(*con_args)
         else:
-            logging.error("What instruction is this ?? {}".format(fname))
+            # logging.error("What instruction is this ?? {}".format(fname))
             return MalInstruction(*con_args)
 
     def approxFreeSize(self, pG):

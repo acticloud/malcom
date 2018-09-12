@@ -77,21 +77,15 @@ class Utils:
         global trace_lines
         global idx
         if trace_lines is None:
-            sys.stderr.write("\n  Reading from disk...")
             start_time = datetime.datetime.now()
             trace_lines = f.readlines()
-            sys.stderr.write('{}\n'.format(datetime.datetime.now() - start_time))
             progress_timestamp = time.time()
 
         num_traces = len(trace_lines)
-        percentage = int(100.0 * idx / num_traces)
         if time.time() - progress_timestamp > 0.5:
-            sys.stderr.write('\r  {:02}% {}/{}'.format(percentage, idx, num_traces))
             progress_timestamp = time.time()
 
         if idx >= num_traces:
-            if idx == num_traces:
-                sys.stderr.write('\n')
             return None
         ret = trace_lines[idx]
         idx += 1
