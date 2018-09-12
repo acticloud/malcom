@@ -60,6 +60,9 @@ class Connection:
     def cursor(self):
         return self.conn.cursor()
 
+    def disconnect(self):
+        self.tracer.close()
+
 class Tracer:
     def __init__(self, mapi_url):
         self.url = mapi_url
@@ -86,6 +89,9 @@ class Tracer:
             trace = self.trace
             self.trace = None
             return trace
+
+    def close(self):
+        self.proc.kill()
 
 
 class Interaction:
@@ -170,6 +176,9 @@ def main():
                 return e.exit_code
             else:
                 interact("Error: {}\n\n", e.message)
+        finally:
+            for conn in connections.values():
+                conn.disconnect()
 
 
 def default_config():
