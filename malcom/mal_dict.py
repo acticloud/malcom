@@ -1,8 +1,9 @@
 import gzip
-import sys
-import random
-import pickle
+import io
 import logging
+import pickle
+import random
+import sys
 
 from collections import defaultdict
 
@@ -48,7 +49,9 @@ class MalDictionary:
         @arg blacklist: list<str>             //list of blacklisted mal ins
         @arg col_stats: dict<str,ColumnStats> //column statistics
         """
-        if Utils.is_gzipped(mfile):
+        if type(mfile) == bytes:
+            open_func = lambda b, mode, encoding: io.StringIO(b.decode(encoding))
+        elif Utils.is_gzipped(mfile):
             open_func = gzip.open
         else:
             open_func = open
