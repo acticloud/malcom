@@ -167,7 +167,8 @@ def main():
             (db_name, size_gb) = chose_best_database(conf, expected)
             interact("Advise to send this to {} which has {}\n", db_name, format_size(size_gb))
 
-            for _, con in connections.items():
+            others = [ c for c in connections.values() if c.name != db_name ]
+            for con in [connections[db_name]] + sorted(others, key=lambda c: -c.size):
                 measure_query(conf, con, qname, query)
 
         except QueryError as e:
