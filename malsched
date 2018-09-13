@@ -143,11 +143,14 @@ class Interaction:
 
 interact = Interaction()
 
-def main():
-    interact("Welcome to the Malcom scheduler.\n")
-
+def main(conf_file):
+    if not os.path.isfile(conf_file):
+        print("No such config file: {}".format(conf_file))
+        return 1
     conf = default_config()
-    conf.read(["malsched.ini", "malsched-local.ini"])
+    conf.read([conf_file])
+
+    interact("Welcome to the Malcom scheduler.\n")
 
     connections = connect_to_databases(conf)
     model = load_model(conf)
@@ -343,8 +346,12 @@ def format_size(num, suffix='B'):
 
 if __name__ == "__main__":
     try:
-        ret = main() or 0
-        sys.exit(ret)
+        if len(sys.argv) == 2:
+            ret = main(sys.argv[1]) or 0
+            sys.exit(ret)
+        else:
+            print("Usage: {} CONFIG_FILE.ini".format(sys.argv[0]))
+            sys.exit(1)
     finally:
         interact.close()
 
