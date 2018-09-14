@@ -317,8 +317,8 @@ def measure_query(conf, con, qname, query):
     trace_lines = trace.splitlines()
     max_rss = 1024 * 1024 * max((json.loads(line).get('rss', 0) for line in trace_lines), default=0)
     #
-    interact("\n{} ops, max intermediate data size {}, server rss {}\n",
-        len(trace_lines), format_size(max_mem), format_size(max_rss))
+    interact("\nmax intermediate data size {}, server rss {}\n",
+        format_size(max_mem), format_size(max_rss))
 
 
 
