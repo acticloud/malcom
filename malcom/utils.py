@@ -48,49 +48,6 @@ class Utils:
         with open(mfile, 'rb') as ff:
             return binascii.hexlify(ff.read(2)) == b'1f8b'
 
-    # This function helps us reading the MonetDB JSON traces
-    # readline until you reach '}' or EOF
-    # @staticmethod
-    # def readJsonObject(f):
-    #     # Check to see if the object is all in one line
-    #     line = f.readline()
-    #     if line.endswith(u'}\n'):
-    #         return json.loads(line)
-
-    #     lines = [line]
-    #     rbrace = False
-    #     while not rbrace:
-    #         line = f.readline()
-    #         if line == '':  # no more lines to read
-    #             return None
-    #         lines += line
-    #         if line == '}\n':
-    #             rbrace = True
-
-    #     return json.loads(''.join(lines))
-
-    # Note: we cheat a bit by ignoring the pretty printed JSON in
-    # order to speed up IO
-    @staticmethod
-    def readJsonObject(f):
-        global progress_timestamp
-        global trace_lines
-        global idx
-        if trace_lines is None:
-            start_time = datetime.datetime.now()
-            trace_lines = f.readlines()
-            progress_timestamp = time.time()
-
-        num_traces = len(trace_lines)
-        if time.time() - progress_timestamp > 0.5:
-            progress_timestamp = time.time()
-
-        if idx >= num_traces:
-            return None
-        ret = trace_lines[idx]
-        idx += 1
-        return json.loads(ret)
-
     @staticmethod
     def is_blacklisted(blacklist, instr):
         for mali in blacklist:

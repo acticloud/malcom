@@ -1,5 +1,6 @@
 import gzip
 import io
+import json
 import logging
 import pickle
 import random
@@ -60,8 +61,9 @@ class MalDictionary:
             startd = {}
             query_tags = set()
 
-            while True:  # while not EOF
-                jobj = Utils.readJsonObject(f)
+            lines = f.readlines()
+            for line in lines:
+                jobj = json.loads(line)
                 if jobj is None:
                     break
                 fname, args, ret = Utils.extract_fname(jobj["short"])
