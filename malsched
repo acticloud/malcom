@@ -307,7 +307,7 @@ def measure_query(conf, con, qname, query):
     t1 = time.time()
     c.close()
     trace = tracer.finish()
-    interact("{} rows in {:.2f}s,", nrows, t1 - t0)
+    interact("{} rows returned in {:.2f}s,", nrows, t1 - t0)
     #
     blacklist = Utils.init_blacklist(conf['malsched']['blacklist'])
     stats = ColumnStatsD.fromFile(conf['malsched']['stats'])
