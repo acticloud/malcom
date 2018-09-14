@@ -68,7 +68,7 @@ class Tracer:
     def __init__(self, mapi_url):
         self.url = mapi_url
         self.tmp = tempfile.TemporaryFile()
-        self.proc = subprocess.Popen(['stethoscope', '-j', '-d', self.url], stdout=self.tmp)
+        self.proc = subprocess.Popen(['stethoscope', '-j', '-d', self.url], stdout=self.tmp, stderr=subprocess.DEVNULL)
         self.data = None
         time.sleep(0.2)  # random sleeps in the name of reliability
         
@@ -307,7 +307,7 @@ def measure_query(conf, con, qname, query):
     t1 = time.time()
     c.close()
     trace = tracer.finish()
-    interact("{} rows in {:.2f}s, ", nrows, t1 - t0)
+    interact("{} rows in {:.2f}s,", nrows, t1 - t0)
     #
     blacklist = Utils.init_blacklist(conf['malsched']['blacklist'])
     stats = ColumnStatsD.fromFile(conf['malsched']['stats'])
@@ -317,7 +317,7 @@ def measure_query(conf, con, qname, query):
     trace_lines = trace.splitlines()
     max_rss = 1024 * 1024 * max((json.loads(line).get('rss', 0) for line in trace_lines), default=0)
     #
-    interact("{} ops, max intermediate data size {}, server rss {}\n", 
+    interact("\n{} ops, max intermediate data size {}, server rss {}\n",
         len(trace_lines), format_size(max_mem), format_size(max_rss))
 
 
