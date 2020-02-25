@@ -1,3 +1,6 @@
+# Acknowledgments
+This software has been funded by the European Unions Horizon 2020 research and innovation programme under Grant Agreement no. 732366 (ACTiCLOUD).
+
 # malcom
 Early Stage cost model for mal statements
 work in progress....
